@@ -20,7 +20,8 @@ public class Muckraker extends Robot {
 				}
 			}
 		}
-		if (nav.tryMove(nav.randomDirection()))
+		if (nav.tryMove(nav.randomDirection())) {
 			System.out.println("I moved!");
+		}
 	}
 }

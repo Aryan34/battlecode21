@@ -30,4 +30,8 @@ public class Util {
 	static RobotType randomSpawnableRobotType() {
 		return spawnableRobot[(int) (Math.random() * spawnableRobot.length)];
 	}
+
+
+
+
 }
