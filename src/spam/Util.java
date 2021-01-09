@@ -70,5 +70,57 @@ public class Util {
 		return false;
 	}
 
+	static int concatFlag(int[] arr){
+		assert(arr.length % 2 == 0);
+		int flag = 0;
+		int bits = 0;
+		for(int i = 0; i < arr.length; i += 2){
+			int val = arr[i]; // the number you want to send
+			int bitlen = arr[i + 1]; // how many bits you want the number to occupy
+			// Add the value to flag
+			flag <<= bitlen;
+			flag |= val;
+			bits += bitlen;
+		}
+		assert(bits <= 24);
+		flag <<= (24 - bits); // Add 0s at the end of the flag
+		return flag;
+	}
+
+	static int[] parseFlag(int flag){
+		int purpose = flag >> 20;
+		switch(purpose){
+			case 1: // Scouting
+				int[] splits  = {4, 2, 15};
+				return splitFlag(flag, splits);
+		}
+		int[] empty = new int[0];
+		return empty;
+
+	}
+
+	static int[] splitFlag(int flag, int[] splits){
+		int[] ret = new int[splits.length];
+		int before = 0;
+		for(int i = 0; i < splits.length; i++){
+			// Hopefully this works. It should basically split the flag bitstring by the given split values
+			int temp = flag >> (24 - splits[i] - before);
+			temp = temp & ((1 << splits[i]) - 1);
+			ret[i] = temp;
+			before += splits[i];
+		}
+		assert(before <= 24);
+		return ret;
+	}
+
+
+	static String printFlag(int flag){
+		String flagString = Integer.toBinaryString(flag);
+		for(int i = flagString.length(); i < 24; i++){
+			flagString = "0" + flagString;
+		}
+		return flagString;
+	}
+
 
 }

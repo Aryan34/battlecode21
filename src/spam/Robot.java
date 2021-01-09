@@ -10,6 +10,7 @@ public class Robot {
 	MapLocation creatorLoc;
 	Team myTeam;
 	RobotType myType;
+	int teamID;
 
 	public Robot (RobotController rc) throws GameActionException {
 		// Initialize classes
@@ -21,6 +22,12 @@ public class Robot {
 		myType = rc.getType();
 		// Find the location of the EC that spawned you
 		creatorLoc = Util.findAdjacentEC();
+		if(myTeam == Team.A){
+			teamID = 10;
+		}
+		else{
+			teamID = 12;
+		}
 	}
 
 	public void run() throws GameActionException {

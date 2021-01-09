@@ -35,6 +35,8 @@ public class Muckraker extends Robot {
 		}
 	}
 
+	// METHODS FOR SCOUT BOT (which find the boundary of the map)
+
 	public void runScout() throws GameActionException {
 		if(creatorLoc == null){
 			return;
@@ -46,27 +48,59 @@ public class Muckraker extends Robot {
 		}
 		// Check if you can sense the out of bounds area
 		if(outOfBounds == null) {
-			MapLocation curr = Util.copyLoc(myLoc);
-			boolean found = false;
+			MapLocation curr = Util.copyLoc(myLoc).add(targetDir);
 			while (curr.distanceSquaredTo(myLoc) <= myType.sensorRadiusSquared) {
-				curr.add(targetDir);
 				if (!rc.onTheMap(curr)) {
+					// Save the out of bounds location
+					System.out.println("Found the out of bounds location!");
 					outOfBounds = Util.copyLoc(curr);
+					break;
 				}
-				break;
+				curr = curr.add(targetDir);
 			}
 		}
 		// If I haven't found the out of bounds location yet, keep going in that direction
 		if(outOfBounds == null){
+			Util.setFlag(0);
 			nav.goTo(targetLocation);
 		}
 		else{
-			// I've found the OB location, so report back to home base
-			nav.goTo(creatorLoc);
+			// I've found the OB location, so set my flag to correspond with that
+			int purpose = 1;
+			int directionCode = 0;
+			int borderValue = 0;
+			if(targetDir == Direction.WEST) {
+				directionCode = 0;
+				borderValue = outOfBounds.x + 1;
+			}
+			if(targetDir == Direction.EAST) {
+				directionCode = 1;
+				borderValue = outOfBounds.x - 1;
+			}
+			if(targetDir == Direction.SOUTH) {
+				directionCode = 2;
+				borderValue = outOfBounds.y + 1;
+			}
+			if(targetDir == Direction.NORTH) {
+				directionCode = 3;
+				borderValue = outOfBounds.y - 1;
+			}
+			assert(borderValue > 0);
+
+			int[] flagArray = {purpose, 4, directionCode, 2, borderValue, 15};
+			int flag = Util.concatFlag(flagArray);
+			System.out.println("Purpose: " + purpose);
+			System.out.println("Direction code: " + directionCode);
+			System.out.println("Border value: " + borderValue);
+			System.out.println("Setting flag: " + Util.printFlag(flag));
+			Util.setFlag(flag);
+
+			// Also since I'm useless now, just go venture out to random places
+//			nav.goTo(creatorLoc);
 		}
 
-
 	}
+
 
 
 

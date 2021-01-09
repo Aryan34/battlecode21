@@ -50,6 +50,7 @@ public class Navigation {
 	}
 
 	public boolean goTo(MapLocation target) throws GameActionException {
+		rc.setIndicatorLine(robot.myLoc, target, 0, 255, 0);
 		Direction targetDir = robot.myLoc.directionTo(target);
 		Direction[] toTry = {targetDir, targetDir.rotateLeft(), targetDir.rotateRight(), targetDir.rotateLeft().rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.opposite().rotateLeft(), targetDir.opposite().rotateRight(), targetDir.opposite()};
 		for(Direction dir : toTry){
