@@ -10,7 +10,7 @@ public class EnlightenmentCenter extends Robot {
 	int[] spawnedAllies;
 	HashSet<Integer> spawnedAlliesSet;
 	int numSpawned;
-	int[] mapBoundaries; // Format for this is [minX, maxX, minY, maxY]
+	int[] mapBoundaries; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
 	int mapWidth;
 	int mapHeight;
 	boolean doneScouting;
@@ -31,7 +31,7 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		saveSpawnedAlliesIDs();
-		checkFlags();
+		checkRobotFlags();
 		spawnScouts();
 	}
 
@@ -53,7 +53,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public void checkFlags() throws GameActionException {
+	public void checkRobotFlags() throws GameActionException {
 		for(int i = 0; i < numSpawned; i++){
 			int robotID = spawnedAllies[i];
 			if(rc.canGetFlag(robotID)){
@@ -67,22 +67,35 @@ public class EnlightenmentCenter extends Robot {
 						if(doneScouting){
 							continue;
 						}
-						Direction[] directions = {Direction.WEST, Direction.EAST, Direction.SOUTH, Direction.NORTH};
 						int dirIdx = splits[1];
 						if(mapBoundaries[dirIdx] == 0){
 							mapBoundaries[dirIdx] = splits[2];
 						}
 						if(mapBoundaries[0] != 0 && mapBoundaries[1] != 0){
-							System.out.println("Map width: " + mapWidth);
 							mapWidth = mapBoundaries[1] - mapBoundaries[0];
+							System.out.println("Map width: " + mapWidth);
 						}
 						if(mapBoundaries[2] != 0 && mapBoundaries[3] != 0){
-							System.out.println("Map height: " + mapHeight);
 							mapHeight = mapBoundaries[3] - mapBoundaries[2];
+							System.out.println("Map height: " + mapHeight);
 						}
 						if(mapWidth != 0 && mapHeight != 0){
 							doneScouting = true;
 						}
+						break;
+					case 2:
+						int idx = splits[1];
+						// 0: Enemy EC, 1: Friendly EC, 2: Enemy slanderer
+						RobotType[] robotTypes = {RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, RobotType.SLANDERER};
+						Team[] robotTeams = {myTeam.opponent(), myTeam, myTeam.opponent()};
+						RobotType detectedType = robotTypes[idx];
+						Team detectedTeam = robotTeams[idx];
+						int x = splits[2];
+						int y = splits[3];
+						MapLocation detectedLoc = new MapLocation(x, y);
+						robotLocations[robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
+						robotLocationsIdx++;
+						System.out.println("Detected Robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
 						break;
 				}
 			}

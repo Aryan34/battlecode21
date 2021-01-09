@@ -2,6 +2,18 @@ package spam;
 
 import battlecode.common.*;
 
+class DetectedInfo {
+	Team team;
+	RobotType type;
+	MapLocation loc;
+
+	public DetectedInfo(Team team, RobotType type, MapLocation loc){
+		this.team = team;
+		this.type = type;
+		this.loc = loc;
+	}
+}
+
 public class Robot {
 	RobotController rc;
 	Navigation nav;
@@ -11,6 +23,9 @@ public class Robot {
 	Team myTeam;
 	RobotType myType;
 	int teamID;
+	int myFlag;
+	DetectedInfo[] robotLocations;
+	int robotLocationsIdx;
 
 	public Robot (RobotController rc) throws GameActionException {
 		// Initialize classes
@@ -28,6 +43,9 @@ public class Robot {
 		else{
 			teamID = 12;
 		}
+		myFlag = 0;
+		robotLocations = new DetectedInfo[50];
+		robotLocationsIdx = 0;
 	}
 
 	public void run() throws GameActionException {

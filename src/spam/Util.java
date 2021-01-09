@@ -37,6 +37,7 @@ public class Util {
 	static boolean setFlag(int flag) throws GameActionException {
 		if(rc.canSetFlag(flag)){
 			rc.setFlag(flag);
+			robot.myFlag = flag;
 			return true;
 		}
 		return false;
@@ -93,6 +94,9 @@ public class Util {
 			case 1: // Scouting
 				int[] splits  = {4, 2, 15};
 				return splitFlag(flag, splits);
+			case 2:
+				int[] splits2 = {4, 2, 7, 7};
+				return splitFlag(flag, splits2);
 		}
 		int[] empty = new int[0];
 		return empty;
@@ -120,6 +124,16 @@ public class Util {
 			flagString = "0" + flagString;
 		}
 		return flagString;
+	}
+
+	static MapLocation xyToMapLocation(int x, int y){
+		// TODO: Implement this
+		return null;
+	}
+
+	static int[] mapLocationToXY(MapLocation loc){
+		int[] arr = {loc.x % 128, loc.y % 128};
+		return arr;
 	}
 
 

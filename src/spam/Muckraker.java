@@ -2,36 +2,81 @@ package spam;
 
 import battlecode.common.*;
 
+class FlagObj {
+	int flag;
+	int priority;
+	boolean added;
+
+	public FlagObj(){
+		flag = 0;
+		priority = Integer.MAX_VALUE;
+		added = false;
+	}
+}
+
 public class Muckraker extends Robot {
 
 	Direction targetDir;
 	MapLocation targetLocation;
 	MapLocation outOfBounds;
+	FlagObj[] flagQueue;
+	int flagQueueIdx;
 
 	public Muckraker (RobotController rc) throws GameActionException {
 		super(rc);
+		flagQueue = new FlagObj[20];
+		for(int i = 0; i < flagQueue.length; i++){
+			flagQueue[i] = new FlagObj();
+		}
+		flagQueueIdx = 0;
 	}
 
 	public void run() throws GameActionException {
 		super.run();
+		RobotInfo[] nearby = rc.senseNearbyRobots();
+		exposeSlanderers(nearby);
+		relayEnemyLocations(nearby);
 		runScout();
-	}
-
-	public void runRandom() throws GameActionException {
-		Team enemy = rc.getTeam().opponent();
-		int actionRadius = rc.getType().actionRadiusSquared;
-		for (RobotInfo robot : rc.senseNearbyRobots(actionRadius, enemy)) {
-			if (robot.type.canBeExposed()) {
-				// It's a slanderer... go get them!
-				if (rc.canExpose(robot.location)) {
-					System.out.println("e x p o s e d");
-					rc.expose(robot.location);
-					return;
-				}
+		int minIdx = 0;
+		for(int i = 0; i < flagQueue.length; i++){
+			if(flagQueue[i].priority < flagQueue[minIdx].priority && !flagQueue[i].added){
+				minIdx = i;
 			}
 		}
-		if (nav.tryMove(nav.randomDirection())) {
-			System.out.println("I moved!");
+		FlagObj flagobj = flagQueue[minIdx];
+		if(flagobj.priority != Integer.MAX_VALUE || flagobj.added){
+			Util.setFlag(flagobj.flag);
+			flagobj.added = true;
+		}
+	}
+
+	public void addFlagToQueue(int flag, int priority){
+		flagQueue[flagQueueIdx].flag = flag;
+		flagQueue[flagQueueIdx].priority = priority;
+		flagQueue[flagQueueIdx].added = false;
+	}
+
+	public void exposeSlanderers(RobotInfo[] nearby) throws GameActionException {
+		for(RobotInfo info : nearby){
+			if(rc.canExpose(info.getLocation())){
+				rc.expose(info.getLocation());
+			}
+		}
+	}
+
+	public void relayEnemyLocations(RobotInfo[] nearby) throws GameActionException {
+		for(RobotInfo info : nearby){
+			if(info.getTeam() == myTeam.opponent() && info.getType() == RobotType.ENLIGHTENMENT_CENTER){
+				int purpose = 2;
+				int robot_type = 0;
+				int[] xy = Util.mapLocationToXY(info.getLocation());
+				int x = xy[0];
+				int y = xy[1];
+				int[] flagArray = {purpose, 4, robot_type, 2, x, 7, y, 7};
+				int flag = Util.concatFlag(flagArray);
+				System.out.println("Setting flag: " + Util.printFlag(flag));
+				addFlagToQueue(flag, 2);
+			}
 		}
 	}
 
@@ -93,7 +138,8 @@ public class Muckraker extends Robot {
 			System.out.println("Direction code: " + directionCode);
 			System.out.println("Border value: " + borderValue);
 			System.out.println("Setting flag: " + Util.printFlag(flag));
-			Util.setFlag(flag);
+			addFlagToQueue(flag, 1);
+
 
 			// Also since I'm useless now, just go venture out to random places
 //			nav.goTo(creatorLoc);

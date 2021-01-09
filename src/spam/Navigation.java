@@ -73,6 +73,7 @@ public class Navigation {
 		return false;
 	}
 
+	// IGNORE THIS
 	// Returns the distance to the next row
 	public double[] srikarRecur(MapLocation[] locs, double[] costs, Direction targetDir) throws GameActionException {
 		double[][] nextPossibleCosts = new double[locs.length][3];
@@ -120,6 +121,7 @@ public class Navigation {
 		return nextCosts;
 	}
 
+	// Ignore this too
 	public void srikarNav(){
 
 		double[][] distArr = new double[10][5]; // x, y
