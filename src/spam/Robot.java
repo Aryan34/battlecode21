@@ -23,6 +23,8 @@ public class Robot {
 	Team myTeam;
 	RobotType myType;
 	int teamID;
+	int teamVotes;
+	boolean wonPrevVote;
 	int myFlag;
 	DetectedInfo[] robotLocations;
 	int robotLocationsIdx;
@@ -51,5 +53,12 @@ public class Robot {
 	public void run() throws GameActionException {
 		turnCount += 1;
 		myLoc = rc.getLocation();
+		if(rc.getTeamVotes() == teamVotes) {
+			wonPrevVote = false;
+		}
+		else {
+			wonPrevVote = true;
+			teamVotes = rc.getTeamVotes();
+		}
 	}
 }
