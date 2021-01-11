@@ -13,6 +13,7 @@ public class EnlightenmentCenter extends Robot {
 	int[] mapBoundaries; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
 	int mapWidth;
 	int mapHeight;
+	int lastBid;
 	boolean doneScouting;
 
 
@@ -25,11 +26,13 @@ public class EnlightenmentCenter extends Robot {
 		mapBoundaries = new int[4];
 		mapWidth = 0;
 		mapHeight = 0;
+		lastBid = 5;
 		doneScouting = false;
 	}
 
 	public void run() throws GameActionException {
 		super.run();
+		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 		spawnScouts();
@@ -126,6 +129,32 @@ public class EnlightenmentCenter extends Robot {
 			if(Util.tryBuild(RobotType.MUCKRAKER, spawnDir, influence)){
 				scoutSpawnedIn[i] = turnCount;
 			}
+		}
+	}
+
+	public void bid() throws GameActionException {
+		System.out.println("Got to bid method");
+		int myInfluence = rc.getInfluence();
+		int newBid;
+		if(this.turnCount == 0) {
+			newBid = myInfluence / 4;
+			System.out.println("New Bid 1: " + newBid);
+		}
+		else if(this.wonPrevVote) {
+			newBid = (int)(lastBid * .90);
+			System.out.println("New Bid 2: " + newBid);
+		}
+		else {
+			newBid = (int)(lastBid * 1.50);
+			System.out.println("New Bid 3: " + newBid);
+		}
+		if(rc.canBid(newBid)) {
+			rc.bid(lastBid);
+			lastBid = newBid;
+			System.out.println("Spent influence on bid: " + lastBid);
+		}
+		else {
+			System.out.println("Cannot bid");
 		}
 	}
 }
