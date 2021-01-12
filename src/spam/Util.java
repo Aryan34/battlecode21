@@ -95,6 +95,8 @@ public class Util {
 	static int[] parseFlag(int flag){
 		int purpose = flag >> 20;
 		switch(purpose){
+			case 0:
+				break;
 			case 1: // Scouting
 				int[] splits  = {4, 2, 15};
 				return splitFlag(flag, splits);
@@ -102,7 +104,7 @@ public class Util {
 				int[] splits2 = {4, 2, 7, 7};
 				return splitFlag(flag, splits2);
 			case 3:
-				int[] splits3 = {4, 7, 7};
+				int[] splits3 = {4, 7, 7, 1, 1};
 				return splitFlag(flag, splits3);
 			default:
 				System.out.println("Unknown flag purpose detected!");
@@ -169,6 +171,56 @@ public class Util {
 			}
 		}
 		return closest;
+	}
+
+	static void checkECFlags() throws GameActionException {
+		assert(robot.creatorID >= 0);
+		System.out.println("READING EC Flag data");
+		if(rc.canGetFlag(robot.creatorID)){
+			int flag = rc.getFlag(robot.creatorID);
+			int[] splits = Util.parseFlag(flag);
+			if(splits.length == 0){
+				return; //continue;
+			}
+			int x, y;
+			switch(splits[0]){
+				case 2:
+					int idx = splits[1];
+					// 0: Enemy EC, 1: Friendly EC, 2: Enemy slanderer
+					RobotType[] robotTypes = {RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, RobotType.SLANDERER};
+					Team[] robotTeams = {robot.myTeam.opponent(), robot.myTeam, robot.myTeam.opponent()};
+					RobotType detectedType = robotTypes[idx];
+					Team detectedTeam = robotTeams[idx];
+					x = splits[2];
+					y = splits[3];
+					MapLocation detectedLoc = Util.xyToMapLocation(x, y);
+					boolean alreadySaved = false;
+					for(int j = 0; j < robot.robotLocationsIdx; j++){
+						if(robot.robotLocations[j].loc == detectedLoc){
+							robot.robotLocations[j].team = detectedTeam;
+							robot.robotLocations[j].type = detectedType;
+							alreadySaved = true;
+							break;
+						}
+					}
+					if(!alreadySaved) {
+						robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
+						robot.robotLocationsIdx++;
+						System.out.println("Detected new robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
+					}
+					break;
+				case 3: // Corner location to hide in
+					System.out.println("GETTING CORNER LOC FROM EC");
+					x = splits[1];
+					y = splits[2];
+					boolean isXMax = splits[3] == 1;
+					boolean isYMax = splits[4] == 1;
+					robot.cornerLoc = Util.xyToMapLocation(x, y);
+					robot.isCornerXMax = isXMax;
+					robot.isCornerYMax = isYMax;
+					break;
+			}
+		}
 	}
 
 

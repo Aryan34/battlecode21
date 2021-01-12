@@ -14,6 +14,7 @@ public class EnlightenmentCenter extends Robot {
 	int mapWidth;
 	int mapHeight;
 	int lastBid;
+	int slanderersSpawned;
 	boolean doneScouting;
 	int EC_MIN_INFLUENCE = 50;
 	MapLocation nearestCorner;
@@ -31,6 +32,7 @@ public class EnlightenmentCenter extends Robot {
 		lastBid = 5;
 		doneScouting = false;
 		nearestCorner = null;
+		slanderersSpawned = 0;
 	}
 
 	public void run() throws GameActionException {
@@ -45,7 +47,13 @@ public class EnlightenmentCenter extends Robot {
 			}
 			broadcastNearestCorner();
 		}
-		spawnSlanderers();
+		if(slanderersSpawned < 10){
+			spawnSlanderers();
+		}
+		else{
+			spawnPoliticians();
+		}
+
 	}
 
 	public void saveSpawnedAlliesIDs() throws GameActionException {
@@ -150,24 +158,34 @@ public class EnlightenmentCenter extends Robot {
 		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
 		// Figure out spawn direction
 		Direction spawnDir = nav.randomDirection();
-		/*
-		DetectedInfo closestEnemyEC = Util.getClosestEnemyEC();
-		if(closestEnemyEC != null){
-			System.out.println("CLOSEST ENEMY LOC: " + closestEnemyEC.loc.toString());
-			System.out.println("CLOSEST ENEMY DIRECTION: " + myLoc.directionTo(closestEnemyEC.loc).toString());
-			spawnDir = myLoc.directionTo(closestEnemyEC.loc).opposite();
-		}
-		*/
 		if(nearestCorner != null){
 			spawnDir = myLoc.directionTo(nearestCorner);
 		}
 
 		System.out.println("Spawning Slanderers in " + spawnDir.toString() + " direction");
 
-		Util.tryBuild(RobotType.SLANDERER, spawnDir, spawnInfluence);
-		Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateLeft(), spawnInfluence);
-		Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateRight(), spawnInfluence);
+		boolean spawned = false;
+		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir, spawnInfluence);
+		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateLeft(), spawnInfluence);
+		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateRight(), spawnInfluence);
+		if(spawned){
+			slanderersSpawned++;
+		}
 
+	}
+
+	public void spawnPoliticians() throws GameActionException {
+		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
+		// Figure out spawn influence
+		if(rc.getInfluence() < EC_MIN_INFLUENCE){
+			return;
+		}
+		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
+		// Figure out spawn direction
+
+		for(Direction dir : Navigation.directions){
+			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
+		}
 	}
 
 	public MapLocation findNearestCorner() throws GameActionException {
@@ -195,7 +213,9 @@ public class EnlightenmentCenter extends Robot {
 		int[] xy = Util.mapLocationToXY(nearestCorner);
 		int x = xy[0];
 		int y = xy[1];
-		int[] flagArray = {purpose, 4, x, 7, y, 7};
+		int isCornerXMax = nearestCorner.x == mapBoundaries[0] ? 0 : 1;
+		int isCornerYMax = nearestCorner.y == mapBoundaries[2] ? 0 : 1;
+		int[] flagArray = {purpose, 4, x, 7, y, 7, isCornerXMax, 1, isCornerYMax, 1};
 		int flag = Util.concatFlag(flagArray);
 		Util.setFlag(flag);
 	}

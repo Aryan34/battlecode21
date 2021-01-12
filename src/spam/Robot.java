@@ -42,6 +42,8 @@ public class Robot {
 	DetectedInfo[] robotLocations;
 	int robotLocationsIdx;
 	int EC_id;
+	MapLocation cornerLoc;
+	boolean isCornerXMax, isCornerYMax;
 
 	public Robot (RobotController rc) throws GameActionException {
 		// Initialize classes
@@ -67,6 +69,7 @@ public class Robot {
 		robotLocations = new DetectedInfo[50];
 		robotLocationsIdx = 0;
 		EC_id = 0;
+		cornerLoc = null;
 	}
 
 	public void run() throws GameActionException {
