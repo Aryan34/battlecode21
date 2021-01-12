@@ -2,18 +2,6 @@ package spam;
 
 import battlecode.common.*;
 
-class FlagObj {
-	int flag;
-	int priority;
-	boolean added;
-
-	public FlagObj(){
-		flag = 0;
-		priority = Integer.MAX_VALUE;
-		added = false;
-	}
-}
-
 public class Muckraker extends Robot {
 
 	Direction targetDir;
@@ -21,6 +9,7 @@ public class Muckraker extends Robot {
 	MapLocation outOfBounds;
 	FlagObj[] flagQueue;
 	int flagQueueIdx;
+	MapLocation targetECLoc;
 
 	public Muckraker (RobotController rc) throws GameActionException {
 		super(rc);
@@ -29,6 +18,7 @@ public class Muckraker extends Robot {
 			flagQueue[i] = new FlagObj();
 		}
 		flagQueueIdx = 0;
+		targetECLoc = null;
 	}
 
 	public void run() throws GameActionException {
@@ -36,7 +26,12 @@ public class Muckraker extends Robot {
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		exposeSlanderers(nearby);
 		relayEnemyLocations(nearby);
-		runScout();
+		if(outOfBounds == null){
+			runScout();
+		}
+		else{
+			runAttack();
+		}
 		int minIdx = 0;
 		for(int i = 0; i < flagQueue.length; i++){
 			if(flagQueue[i].priority < flagQueue[minIdx].priority && !flagQueue[i].added){
@@ -83,9 +78,6 @@ public class Muckraker extends Robot {
 	// METHODS FOR SCOUT BOT (which find the boundary of the map)
 
 	public void runScout() throws GameActionException {
-		if(creatorLoc == null){
-			return;
-		}
 		if(turnCount == 1){
 //			assert(creatorLoc != null);
 			targetDir = creatorLoc.directionTo(myLoc);
@@ -145,6 +137,24 @@ public class Muckraker extends Robot {
 //			nav.goTo(creatorLoc);
 		}
 
+	}
+
+	public void runAttack() throws GameActionException {
+		// Go towards closest enemy EC
+		if(targetECLoc == null){
+			DetectedInfo detected = Util.getClosestEnemyEC();
+			if(detected == null){
+				// TODO: Search for closest enemy EC instead of just moving randomly
+				nav.tryMove(nav.randomDirection());
+			}
+			else{
+				targetECLoc = detected.loc;
+				nav.fuzzyNav(targetECLoc);
+			}
+		}
+		else{
+			nav.fuzzyNav(targetECLoc);
+		}
 	}
 
 

@@ -35,6 +35,10 @@ public class Util {
 	static MapLocation copyLoc(MapLocation loc){ return loc.add(Direction.CENTER); }
 
 	static boolean setFlag(int flag) throws GameActionException {
+		if(robot.myFlag == flag){
+			// Flag is already set to that
+			return true;
+		}
 		if(rc.canSetFlag(flag)){
 			rc.setFlag(flag);
 			robot.myFlag = flag;
@@ -97,6 +101,11 @@ public class Util {
 			case 2:
 				int[] splits2 = {4, 2, 7, 7};
 				return splitFlag(flag, splits2);
+			case 3:
+				int[] splits3 = {4, 7, 7};
+				return splitFlag(flag, splits3);
+			default:
+				System.out.println("Unknown flag purpose detected!");
 		}
 		int[] empty = new int[0];
 		return empty;
@@ -127,13 +136,39 @@ public class Util {
 	}
 
 	static MapLocation xyToMapLocation(int x, int y){
-		// TODO: Implement this
-		return null;
+		int myX = robot.myLoc.x % 128;
+		int myY = robot.myLoc.y % 128;
+		int diffX = (x - myX) % 128;
+		int diffY = (y - myY) % 128;
+		if(diffX > 64){
+			diffX = diffX - 128;
+		}
+		if(diffY > 64){
+			diffY = diffY - 128;
+		}
+		return new MapLocation(robot.myLoc.x + diffX, robot.myLoc.y + diffY);
 	}
 
 	static int[] mapLocationToXY(MapLocation loc){
 		int[] arr = {loc.x % 128, loc.y % 128};
 		return arr;
+	}
+
+	static DetectedInfo getClosestEnemyEC(){
+		int min_dist = Integer.MAX_VALUE;
+		DetectedInfo closest = null;
+		for(int i = 0; i < robot.robotLocationsIdx; i++){
+			// Find the closest enemy EC
+			DetectedInfo detected = robot.robotLocations[i];
+			if(detected.team != robot.myTeam.opponent() || detected.type != RobotType.ENLIGHTENMENT_CENTER){
+				continue;
+			}
+			int distance = robot.myLoc.distanceSquaredTo(detected.loc);
+			if(distance < min_dist){
+				closest = detected;
+			}
+		}
+		return closest;
 	}
 
 

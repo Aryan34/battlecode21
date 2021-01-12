@@ -15,6 +15,8 @@ public class EnlightenmentCenter extends Robot {
 	int mapHeight;
 	int lastBid;
 	boolean doneScouting;
+	int EC_MIN_INFLUENCE = 50;
+	MapLocation nearestCorner;
 
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
@@ -28,14 +30,22 @@ public class EnlightenmentCenter extends Robot {
 		mapHeight = 0;
 		lastBid = 5;
 		doneScouting = false;
+		nearestCorner = null;
 	}
 
 	public void run() throws GameActionException {
 		super.run();
-		bid();
+//		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 		spawnScouts();
+		if(doneScouting){
+			if(nearestCorner == null){
+				nearestCorner = findNearestCorner();
+			}
+			broadcastNearestCorner();
+		}
+		spawnSlanderers();
 	}
 
 	public void saveSpawnedAlliesIDs() throws GameActionException {
@@ -75,11 +85,11 @@ public class EnlightenmentCenter extends Robot {
 							mapBoundaries[dirIdx] = splits[2];
 						}
 						if(mapBoundaries[0] != 0 && mapBoundaries[1] != 0){
-							mapWidth = mapBoundaries[1] - mapBoundaries[0];
+							mapWidth = mapBoundaries[1] - mapBoundaries[0] + 1;
 							System.out.println("Map width: " + mapWidth);
 						}
 						if(mapBoundaries[2] != 0 && mapBoundaries[3] != 0){
-							mapHeight = mapBoundaries[3] - mapBoundaries[2];
+							mapHeight = mapBoundaries[3] - mapBoundaries[2] + 1;
 							System.out.println("Map height: " + mapHeight);
 						}
 						if(mapWidth != 0 && mapHeight != 0){
@@ -95,25 +105,23 @@ public class EnlightenmentCenter extends Robot {
 						Team detectedTeam = robotTeams[idx];
 						int x = splits[2];
 						int y = splits[3];
-						MapLocation detectedLoc = new MapLocation(x, y);
-						robotLocations[robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
-						robotLocationsIdx++;
-						System.out.println("Detected Robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
+						MapLocation detectedLoc = Util.xyToMapLocation(x, y);
+						boolean alreadySaved = false;
+						for(int j = 0; j < robotLocationsIdx; j++){
+							if(robotLocations[j].loc == detectedLoc){
+								robotLocations[j].team = detectedTeam;
+								robotLocations[j].type = detectedType;
+								alreadySaved = true;
+								break;
+							}
+						}
+						if(!alreadySaved) {
+							robotLocations[robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
+							robotLocationsIdx++;
+							System.out.println("Detected new robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
+						}
 						break;
 				}
-			}
-		}
-	}
-
-	public void spawnRandom() throws GameActionException {
-		RobotType toBuild = RobotType.MUCKRAKER;
-		int influence = 50;
-		for (Direction dir : Util.directions) {
-			if (rc.canBuildRobot(toBuild, dir, influence)) {
-				rc.buildRobot(toBuild, dir, influence);
-			}
-			else {
-				break;
 			}
 		}
 	}
@@ -132,6 +140,68 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
+
+	public void spawnSlanderers() throws GameActionException {
+		System.out.println("spawnSlanderers -- Cooldown left: " + rc.getCooldownTurns());
+		// Figure out spawn influence
+		if(rc.getInfluence() < EC_MIN_INFLUENCE){
+			return;
+		}
+		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
+		// Figure out spawn direction
+		Direction spawnDir = nav.randomDirection();
+		/*
+		DetectedInfo closestEnemyEC = Util.getClosestEnemyEC();
+		if(closestEnemyEC != null){
+			System.out.println("CLOSEST ENEMY LOC: " + closestEnemyEC.loc.toString());
+			System.out.println("CLOSEST ENEMY DIRECTION: " + myLoc.directionTo(closestEnemyEC.loc).toString());
+			spawnDir = myLoc.directionTo(closestEnemyEC.loc).opposite();
+		}
+		*/
+		if(nearestCorner != null){
+			spawnDir = myLoc.directionTo(nearestCorner);
+		}
+
+		System.out.println("Spawning Slanderers in " + spawnDir.toString() + " direction");
+
+		Util.tryBuild(RobotType.SLANDERER, spawnDir, spawnInfluence);
+		Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateLeft(), spawnInfluence);
+		Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateRight(), spawnInfluence);
+
+	}
+
+	public MapLocation findNearestCorner() throws GameActionException {
+		int diffX1 = myLoc.x - mapBoundaries[0];
+		int diffX2 = mapBoundaries[1] - myLoc.x;
+		int diffY1 = myLoc.y - mapBoundaries[2];
+		int diffY2 = mapBoundaries[3] - myLoc.y;
+		int cornerX = mapBoundaries[0];
+		if(diffX2 < diffX1){
+			cornerX = mapBoundaries[1];
+		}
+		int cornerY = mapBoundaries[2];
+		if(diffY2 < diffY1){
+			cornerY = mapBoundaries[3];
+		}
+		return new MapLocation(cornerX, cornerY);
+	}
+
+	public void broadcastNearestCorner() throws GameActionException {
+		if(nearestCorner == null){
+			return;
+		}
+		System.out.println("Broadcasting that nearest corner is: " + nearestCorner.toString());
+		int purpose = 3;
+		int[] xy = Util.mapLocationToXY(nearestCorner);
+		int x = xy[0];
+		int y = xy[1];
+		int[] flagArray = {purpose, 4, x, 7, y, 7};
+		int flag = Util.concatFlag(flagArray);
+		Util.setFlag(flag);
+	}
+
+
+	/*
 	public void bid() throws GameActionException {
 		System.out.println("Got to bid method");
 		int myInfluence = rc.getInfluence();
@@ -157,4 +227,5 @@ public class EnlightenmentCenter extends Robot {
 			System.out.println("Cannot bid");
 		}
 	}
+	*/
 }

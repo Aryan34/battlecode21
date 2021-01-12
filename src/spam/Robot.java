@@ -14,12 +14,25 @@ class DetectedInfo {
 	}
 }
 
+class FlagObj {
+	int flag;
+	int priority;
+	boolean added;
+
+	public FlagObj(){
+		flag = 0;
+		priority = Integer.MAX_VALUE;
+		added = false;
+	}
+}
+
 public class Robot {
 	RobotController rc;
 	Navigation nav;
 	int turnCount;
 	MapLocation myLoc;
 	MapLocation creatorLoc;
+	int creatorID;
 	Team myTeam;
 	RobotType myType;
 	int teamID;
@@ -28,6 +41,7 @@ public class Robot {
 	int myFlag;
 	DetectedInfo[] robotLocations;
 	int robotLocationsIdx;
+	int EC_id;
 
 	public Robot (RobotController rc) throws GameActionException {
 		// Initialize classes
@@ -39,6 +53,10 @@ public class Robot {
 		myType = rc.getType();
 		// Find the location of the EC that spawned you
 		creatorLoc = Util.findAdjacentEC();
+		creatorID = -1;
+		if(creatorLoc != null){
+			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
+		}
 		if(myTeam == Team.A){
 			teamID = 10;
 		}
@@ -48,6 +66,7 @@ public class Robot {
 		myFlag = 0;
 		robotLocations = new DetectedInfo[50];
 		robotLocationsIdx = 0;
+		EC_id = 0;
 	}
 
 	public void run() throws GameActionException {
