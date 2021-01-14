@@ -10,7 +10,8 @@ public class Slanderer extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
-		Util.checkECFlags();
+		System.out.println("Running check flag on EC id");
+		Comms.checkFlag(creatorID);
 		runEco();
 	}
 
@@ -20,12 +21,12 @@ public class Slanderer extends Robot {
 	}
 
 	public void runEco() throws GameActionException {
-		if(cornerLoc == null){
+		if(targetCorner == null){
 			moveRandom();
 		}
 		else{
 			System.out.println("Going towards corner");
-			nav.goTo(cornerLoc);
+			nav.goTo(targetCorner.loc);
 		}
 	}
 

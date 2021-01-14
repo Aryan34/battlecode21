@@ -21,6 +21,10 @@ public class Navigation {
 			Direction.NORTHWEST,
 	};
 
+	static final Direction[] cardinalDirections = {
+			Direction.WEST, Direction.EAST, Direction.SOUTH, Direction.NORTH
+	};
+
 	RobotController rc;
 	Robot robot;
 

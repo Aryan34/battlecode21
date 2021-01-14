@@ -2,12 +2,9 @@ package spam;
 
 import battlecode.common.*;
 
+import java.util.Arrays;
+
 public class Util {
-	static final RobotType[] spawnableRobot = {
-			RobotType.POLITICIAN,
-			RobotType.SLANDERER,
-			RobotType.MUCKRAKER,
-	};
 
 	static final Direction[] directions = {
 			Direction.NORTH,
@@ -23,29 +20,7 @@ public class Util {
 	static RobotController rc;
 	static Robot robot;
 
-	/**
-	 * Returns a random spawnable RobotType
-	 *
-	 * @return a random RobotType
-	 */
-	static RobotType randomSpawnableRobotType() {
-		return spawnableRobot[(int) (Math.random() * spawnableRobot.length)];
-	}
-
 	static MapLocation copyLoc(MapLocation loc){ return loc.add(Direction.CENTER); }
-
-	static boolean setFlag(int flag) throws GameActionException {
-		if(robot.myFlag == flag){
-			// Flag is already set to that
-			return true;
-		}
-		if(rc.canSetFlag(flag)){
-			rc.setFlag(flag);
-			robot.myFlag = flag;
-			return true;
-		}
-		return false;
-	}
 
 	// Finds the EC that spawned you
 	static MapLocation findAdjacentEC() throws GameActionException{
@@ -75,87 +50,6 @@ public class Util {
 		return false;
 	}
 
-	static int concatFlag(int[] arr){
-		assert(arr.length % 2 == 0);
-		int flag = 0;
-		int bits = 0;
-		for(int i = 0; i < arr.length; i += 2){
-			int val = arr[i]; // the number you want to send
-			int bitlen = arr[i + 1]; // how many bits you want the number to occupy
-			// Add the value to flag
-			flag <<= bitlen;
-			flag |= val;
-			bits += bitlen;
-		}
-		assert(bits <= 24);
-		flag <<= (24 - bits); // Add 0s at the end of the flag
-		return flag;
-	}
-
-	static int[] parseFlag(int flag){
-		int purpose = flag >> 20;
-		switch(purpose){
-			case 0:
-				break;
-			case 1: // Scouting
-				int[] splits  = {4, 2, 15};
-				return splitFlag(flag, splits);
-			case 2:
-				int[] splits2 = {4, 2, 7, 7};
-				return splitFlag(flag, splits2);
-			case 3:
-				int[] splits3 = {4, 7, 7, 1, 1};
-				return splitFlag(flag, splits3);
-			default:
-				System.out.println("Unknown flag purpose detected!");
-		}
-		int[] empty = new int[0];
-		return empty;
-
-	}
-
-	static int[] splitFlag(int flag, int[] splits){
-		int[] ret = new int[splits.length];
-		int before = 0;
-		for(int i = 0; i < splits.length; i++){
-			// Hopefully this works. It should basically split the flag bitstring by the given split values
-			int temp = flag >> (24 - splits[i] - before);
-			temp = temp & ((1 << splits[i]) - 1);
-			ret[i] = temp;
-			before += splits[i];
-		}
-		assert(before <= 24);
-		return ret;
-	}
-
-
-	static String printFlag(int flag){
-		String flagString = Integer.toBinaryString(flag);
-		for(int i = flagString.length(); i < 24; i++){
-			flagString = "0" + flagString;
-		}
-		return flagString;
-	}
-
-	static MapLocation xyToMapLocation(int x, int y){
-		int myX = robot.myLoc.x % 128;
-		int myY = robot.myLoc.y % 128;
-		int diffX = (x - myX) % 128;
-		int diffY = (y - myY) % 128;
-		if(diffX > 64){
-			diffX = diffX - 128;
-		}
-		if(diffY > 64){
-			diffY = diffY - 128;
-		}
-		return new MapLocation(robot.myLoc.x + diffX, robot.myLoc.y + diffY);
-	}
-
-	static int[] mapLocationToXY(MapLocation loc){
-		int[] arr = {loc.x % 128, loc.y % 128};
-		return arr;
-	}
-
 	static DetectedInfo getClosestEnemyEC(){
 		int min_dist = Integer.MAX_VALUE;
 		DetectedInfo closest = null;
@@ -173,55 +67,30 @@ public class Util {
 		return closest;
 	}
 
-	static void checkECFlags() throws GameActionException {
-		assert(robot.creatorID >= 0);
-		System.out.println("READING EC Flag data");
-		if(rc.canGetFlag(robot.creatorID)){
-			int flag = rc.getFlag(robot.creatorID);
-			int[] splits = Util.parseFlag(flag);
-			if(splits.length == 0){
-				return; //continue;
+	static DetectedInfo[] getCorrespondingRobots(Team team, RobotType type, MapLocation loc){
+
+		DetectedInfo[] copy = new DetectedInfo[robot.robotLocationsIdx];
+		int count = 0;
+
+		for(int i = 0; i < robot.robotLocationsIdx; i++){
+			DetectedInfo info = robot.robotLocations[i];
+			if(team != null && info.team != team){
+				continue;
 			}
-			int x, y;
-			switch(splits[0]){
-				case 2:
-					int idx = splits[1];
-					// 0: Enemy EC, 1: Friendly EC, 2: Enemy slanderer
-					RobotType[] robotTypes = {RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, RobotType.SLANDERER};
-					Team[] robotTeams = {robot.myTeam.opponent(), robot.myTeam, robot.myTeam.opponent()};
-					RobotType detectedType = robotTypes[idx];
-					Team detectedTeam = robotTeams[idx];
-					x = splits[2];
-					y = splits[3];
-					MapLocation detectedLoc = Util.xyToMapLocation(x, y);
-					boolean alreadySaved = false;
-					for(int j = 0; j < robot.robotLocationsIdx; j++){
-						if(robot.robotLocations[j].loc == detectedLoc){
-							robot.robotLocations[j].team = detectedTeam;
-							robot.robotLocations[j].type = detectedType;
-							alreadySaved = true;
-							break;
-						}
-					}
-					if(!alreadySaved) {
-						robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
-						robot.robotLocationsIdx++;
-						System.out.println("Detected new robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
-					}
-					break;
-				case 3: // Corner location to hide in
-					System.out.println("GETTING CORNER LOC FROM EC");
-					x = splits[1];
-					y = splits[2];
-					boolean isXMax = splits[3] == 1;
-					boolean isYMax = splits[4] == 1;
-					robot.cornerLoc = Util.xyToMapLocation(x, y);
-					robot.isCornerXMax = isXMax;
-					robot.isCornerYMax = isYMax;
-					break;
+			if(type != null && info.type != type){
+				continue;
 			}
+			if(loc != null && !info.loc.equals(loc)){
+				continue;
+			}
+			copy[count] = info;
+			count++;
 		}
+		DetectedInfo[] copy2 = Arrays.copyOfRange(copy, 0, count);
+		return copy2;
 	}
+
+
 
 
 }

@@ -16,7 +16,7 @@ public class Politician extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
-		Util.checkECFlags();
+		Comms.checkFlag(creatorID);
 		runDefense();
 	}
 
@@ -26,14 +26,15 @@ public class Politician extends Robot {
 	}
 
 	public void runDefense() throws GameActionException {
-		if(cornerLoc == null){
+		if(targetCorner == null){
 			moveRandom();
 		}
 		else{
-			if(myLoc.distanceSquaredTo(cornerLoc) > WALL_LENGTH * WALL_LENGTH * 2) {
+			System.out.println("Target corner: " + targetCorner.toString());
+			if(myLoc.distanceSquaredTo(targetCorner.loc) > WALL_LENGTH * WALL_LENGTH * 2) {
 				// Go towards the corner if you're not alr there
 				System.out.println("Going towards corner");
-				nav.goTo(cornerLoc);
+				nav.goTo(targetCorner.loc);
 			}
 			else{
 				// Make a wall (half square) around the corner
@@ -73,22 +74,16 @@ public class Politician extends Robot {
 	}
 
 	public MapLocation[] getWallLocs(){
-		int xoff = cornerLoc.x + WALL_LENGTH;
-		if(isCornerXMax){
-			xoff = cornerLoc.x - WALL_LENGTH;
-		}
-		int yoff = cornerLoc.y + WALL_LENGTH;
-		if(isCornerYMax){
-			yoff = cornerLoc.y - WALL_LENGTH;
-		}
+		int xoff = targetCorner.loc.x + targetCorner.xoff * WALL_LENGTH;
+		int yoff = targetCorner.loc.y + targetCorner.yoff * WALL_LENGTH;
 
 		MapLocation[] wallLocs = new MapLocation[WALL_LENGTH * 2 + 1];
 		int idx = 0;
-		for(int x = Math.min(cornerLoc.x, xoff); x <= Math.max(cornerLoc.x, xoff); x++){
+		for(int x = Math.min(targetCorner.loc.x, xoff); x <= Math.max(targetCorner.loc.x, xoff); x++){
 			wallLocs[idx] = new MapLocation(x, yoff);
 			idx++;
 		}
-		for(int y = Math.min(cornerLoc.y, yoff); y <= Math.max(cornerLoc.y, yoff); y++){
+		for(int y = Math.min(targetCorner.loc.y, yoff); y <= Math.max(targetCorner.loc.y, yoff); y++){
 			if(y == yoff){
 				continue;
 			}
@@ -101,9 +96,9 @@ public class Politician extends Robot {
 		assert(idx == wallLocs.length);
 
 		wallCheckLocs[0] = new MapLocation(xoff, yoff);
-		wallCheckLocs[1] = new MapLocation(cornerLoc.x, yoff);
+		wallCheckLocs[1] = new MapLocation(targetCorner.loc.x, yoff);
 		wallCheckLocs[2] = new MapLocation(xoff, yoff);
-		wallCheckLocs[3] = new MapLocation(xoff, cornerLoc.y);
+		wallCheckLocs[3] = new MapLocation(xoff, targetCorner.loc.y);
 
 		return wallLocs;
 	}

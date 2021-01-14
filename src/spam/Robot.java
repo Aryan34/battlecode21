@@ -27,29 +27,41 @@ class FlagObj {
 }
 
 public class Robot {
+	// General variables
 	RobotController rc;
 	Navigation nav;
-	int turnCount;
-	MapLocation myLoc;
-	MapLocation creatorLoc;
-	int creatorID;
+	MapLocation myLoc = null;
+	int turnCount = 0;
 	Team myTeam;
 	RobotType myType;
-	int teamID;
-	int teamVotes;
-	boolean wonPrevVote;
 	int myFlag;
 	DetectedInfo[] robotLocations;
+
+	// Moving robots variables
+	int creatorID;
+	MapLocation creatorLoc;
 	int robotLocationsIdx;
-	int EC_id;
-	MapLocation cornerLoc;
-	boolean isCornerXMax, isCornerYMax;
+	CornerInfo targetCorner;
+	MapLocation[] visited = new MapLocation[50];
+	int visitedIdx = 0;
+
+	// EC variables
+	boolean doneScouting = false;
+	int[] mapBoundaries = new int[4]; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
+	int mapWidth = 0;
+	int mapHeight = 0;
+	boolean wonPrevVote;
+	int teamVotes;
+	boolean enemySpotted = false;
+
 
 	public Robot (RobotController rc) throws GameActionException {
 		// Initialize classes
 		this.rc = rc;
 		Util.rc = rc;
 		Util.robot = this;
+		Comms.rc = rc;
+		Comms.robot = this;
 		nav = new Navigation(rc, this);
 		myTeam = rc.getTeam();
 		myType = rc.getType();
@@ -59,21 +71,20 @@ public class Robot {
 		if(creatorLoc != null){
 			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
 		}
-		if(myTeam == Team.A){
-			teamID = 10;
-		}
-		else{
-			teamID = 12;
-		}
 		myFlag = 0;
 		robotLocations = new DetectedInfo[50];
 		robotLocationsIdx = 0;
-		EC_id = 0;
-		cornerLoc = null;
+		targetCorner = null;
+
 	}
 
 	public void run() throws GameActionException {
+		System.out.println("---------------------------------");
 		turnCount += 1;
+		if(myLoc != null && rc.getLocation().equals(myLoc)){
+			visited[visitedIdx] = rc.getLocation();
+			visitedIdx = (visitedIdx + 1) % visited.length;
+		}
 		myLoc = rc.getLocation();
 		if(rc.getTeamVotes() == teamVotes) {
 			wonPrevVote = false;
@@ -83,4 +94,24 @@ public class Robot {
 			teamVotes = rc.getTeamVotes();
 		}
 	}
+
+	public boolean haveVisited(MapLocation loc) throws GameActionException {
+		for(int i = 0; i < visited.length; i++){
+			if(visited[i] == null) { continue; }
+			if(visited[i].equals(loc)){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public int distanceToEdge(int i, MapLocation loc){
+		if(mapBoundaries[i] == 0){
+			return Integer.MAX_VALUE;
+		}
+		int val = Math.abs(loc.x - mapBoundaries[i]);
+		if(i == 2 || i == 3){ val = Math.abs(loc.y - mapBoundaries[i]); }
+		return val;
+	}
+
 }

@@ -2,37 +2,23 @@ package spam;
 
 import battlecode.common.*;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 public class EnlightenmentCenter extends Robot {
 
-	int[] scoutSpawnedIn;
-	int[] spawnedAllies;
-	HashSet<Integer> spawnedAlliesSet;
-	int numSpawned;
-	int[] mapBoundaries; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
-	int mapWidth;
-	int mapHeight;
+	int[] spawnedAllies = new int[3000];
+	HashSet<Integer> spawnedAlliesSet = new HashSet<Integer>();
+	int numSpawned = 0;
 	int lastBid;
-	int slanderersSpawned;
-	boolean doneScouting;
+	int slanderersSpawned = 0;
 	int EC_MIN_INFLUENCE = 50;
-	MapLocation nearestCorner;
+	CornerInfo nearestCorner = null;
 
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
 		super(rc);
-		scoutSpawnedIn = new int[4];
-		spawnedAllies = new int[3000];
-		spawnedAlliesSet = new HashSet<Integer>();
-		numSpawned = 0;
-		mapBoundaries = new int[4];
-		mapWidth = 0;
-		mapHeight = 0;
 		lastBid = 5;
-		doneScouting = false;
-		nearestCorner = null;
-		slanderersSpawned = 0;
 	}
 
 	public void run() throws GameActionException {
@@ -40,20 +26,24 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		spawnScouts();
-		if(doneScouting){
-			if(nearestCorner == null){
-				nearestCorner = findNearestCorner();
-			}
-			broadcastNearestCorner();
+		if(numSpawned < 40 && !enemySpotted){
+			System.out.println("Spawning scouts");
+			spawnScouts();
 		}
-		if(slanderersSpawned < 10){
+		else if(slanderersSpawned < 10){
 			spawnSlanderers();
 		}
 		else{
 			spawnPoliticians();
 		}
 
+	}
+
+	public void checkRobotFlags() throws GameActionException {
+		for (int i = 0; i < numSpawned; i++) {
+			int robotID = spawnedAllies[i];
+			Comms.checkFlag(robotID);
+		}
 	}
 
 	public void saveSpawnedAlliesIDs() throws GameActionException {
@@ -74,100 +64,46 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public void checkRobotFlags() throws GameActionException {
-		for(int i = 0; i < numSpawned; i++){
-			int robotID = spawnedAllies[i];
-			if(rc.canGetFlag(robotID)){
-				int flag = rc.getFlag(robotID);
-				int[] splits = Util.parseFlag(flag);
-				if(splits.length == 0){
-					continue;
-				}
-				switch(splits[0]){
-					case 1: // Scouting
-						if(doneScouting){
-							continue;
-						}
-						int dirIdx = splits[1];
-						if(mapBoundaries[dirIdx] == 0){
-							mapBoundaries[dirIdx] = splits[2];
-						}
-						if(mapBoundaries[0] != 0 && mapBoundaries[1] != 0){
-							mapWidth = mapBoundaries[1] - mapBoundaries[0] + 1;
-							System.out.println("Map width: " + mapWidth);
-						}
-						if(mapBoundaries[2] != 0 && mapBoundaries[3] != 0){
-							mapHeight = mapBoundaries[3] - mapBoundaries[2] + 1;
-							System.out.println("Map height: " + mapHeight);
-						}
-						if(mapWidth != 0 && mapHeight != 0){
-							doneScouting = true;
-						}
-						break;
-					case 2:
-						int idx = splits[1];
-						// 0: Enemy EC, 1: Friendly EC, 2: Enemy slanderer
-						RobotType[] robotTypes = {RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, RobotType.SLANDERER};
-						Team[] robotTeams = {myTeam.opponent(), myTeam, myTeam.opponent()};
-						RobotType detectedType = robotTypes[idx];
-						Team detectedTeam = robotTeams[idx];
-						int x = splits[2];
-						int y = splits[3];
-						MapLocation detectedLoc = Util.xyToMapLocation(x, y);
-						boolean alreadySaved = false;
-						for(int j = 0; j < robotLocationsIdx; j++){
-							if(robotLocations[j].loc == detectedLoc){
-								robotLocations[j].team = detectedTeam;
-								robotLocations[j].type = detectedType;
-								alreadySaved = true;
-								break;
-							}
-						}
-						if(!alreadySaved) {
-							robotLocations[robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
-							robotLocationsIdx++;
-							System.out.println("Detected new robot of type: " + detectedType.toString() + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
-						}
-						break;
-				}
-			}
-		}
-	}
 
 	public void spawnScouts() throws GameActionException {
-		Direction[] spawnDirections = {Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST};
-		int influence = 1;
-		for (int i = 0; i < spawnDirections.length; i++) {
-			if(scoutSpawnedIn[i] != 0){
-				continue;
-			}
-			Direction spawnDir = spawnDirections[i];
-			if(Util.tryBuild(RobotType.MUCKRAKER, spawnDir, influence)){
-				scoutSpawnedIn[i] = turnCount;
+		// Find a list of directions that I could spawn the robot in (list of unsearched directions)
+		Direction[] spawnDirections = new Direction[8];
+		int tempIdx = 0;
+		if(mapBoundaries[0] == 0){ spawnDirections[tempIdx] = Direction.WEST; tempIdx++; }
+		if(mapBoundaries[1] == 0){ spawnDirections[tempIdx] = Direction.EAST; tempIdx++; }
+		if(mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTH; tempIdx++; }
+		if(mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTH; tempIdx++; }
+		if(mapBoundaries[0] == 0 && mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTHWEST; tempIdx++; }
+		if(mapBoundaries[0] == 0 && mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTHWEST; tempIdx++; }
+		if(mapBoundaries[1] == 0 && mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTHEAST; tempIdx++; }
+		if(mapBoundaries[1] == 0 && mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTHEAST; tempIdx++; }
+
+		System.out.println(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
+		for (int i = numSpawned; i < numSpawned + tempIdx; i++) {
+			Direction spawnDir = spawnDirections[numSpawned % tempIdx];
+			if(Util.tryBuild(RobotType.MUCKRAKER, spawnDir, 1)){
+				break;
 			}
 		}
 	}
 
 
 	public void spawnSlanderers() throws GameActionException {
-		System.out.println("spawnSlanderers -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
 		if(rc.getInfluence() < EC_MIN_INFLUENCE){
 			return;
 		}
 		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
-		// Figure out spawn direction
-		Direction spawnDir = nav.randomDirection();
-		if(nearestCorner != null){
-			spawnDir = myLoc.directionTo(nearestCorner);
+
+		// Spawn in random direction
+		boolean spawned = false;
+		for(Direction dir : Navigation.directions){
+			if(Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence)){
+				spawned = true;
+				break;
+			}
 		}
 
-		System.out.println("Spawning Slanderers in " + spawnDir.toString() + " direction");
-
-		boolean spawned = false;
-		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir, spawnInfluence);
-		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateLeft(), spawnInfluence);
-		spawned |= Util.tryBuild(RobotType.SLANDERER, spawnDir.rotateRight(), spawnInfluence);
 		if(spawned){
 			slanderersSpawned++;
 		}
@@ -188,20 +124,25 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public MapLocation findNearestCorner() throws GameActionException {
+	public CornerInfo findNearestCorner() throws GameActionException {
 		int diffX1 = myLoc.x - mapBoundaries[0];
 		int diffX2 = mapBoundaries[1] - myLoc.x;
 		int diffY1 = myLoc.y - mapBoundaries[2];
 		int diffY2 = mapBoundaries[3] - myLoc.y;
 		int cornerX = mapBoundaries[0];
+		int xoff = 1;
 		if(diffX2 < diffX1){
 			cornerX = mapBoundaries[1];
+			xoff = -1;
 		}
 		int cornerY = mapBoundaries[2];
+		int yoff = 1;
 		if(diffY2 < diffY1){
 			cornerY = mapBoundaries[3];
+			yoff = -1;
 		}
-		return new MapLocation(cornerX, cornerY);
+		MapLocation cornerLoc = new MapLocation(cornerX, cornerY);
+		return new CornerInfo(cornerLoc, xoff, yoff);
 	}
 
 	public void broadcastNearestCorner() throws GameActionException {
@@ -210,14 +151,10 @@ public class EnlightenmentCenter extends Robot {
 		}
 		System.out.println("Broadcasting that nearest corner is: " + nearestCorner.toString());
 		int purpose = 3;
-		int[] xy = Util.mapLocationToXY(nearestCorner);
-		int x = xy[0];
-		int y = xy[1];
-		int isCornerXMax = nearestCorner.x == mapBoundaries[0] ? 0 : 1;
-		int isCornerYMax = nearestCorner.y == mapBoundaries[2] ? 0 : 1;
-		int[] flagArray = {purpose, 4, x, 7, y, 7, isCornerXMax, 1, isCornerYMax, 1};
-		int flag = Util.concatFlag(flagArray);
-		Util.setFlag(flag);
+		int[] xy = Comms.mapLocationToXY(nearestCorner.loc);
+		int[] flagArray = {purpose, 4, xy[0], 7, xy[1], 7, nearestCorner.getCornerDirection(), 2};
+		int flag = Comms.concatFlag(flagArray);
+		Comms.setFlag(flag);
 	}
 
 
