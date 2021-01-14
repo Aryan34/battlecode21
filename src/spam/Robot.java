@@ -65,6 +65,7 @@ public class Robot {
 		nav = new Navigation(rc, this);
 		myTeam = rc.getTeam();
 		myType = rc.getType();
+		myLoc = rc.getLocation();
 		// Find the location of the EC that spawned you
 		creatorLoc = Util.findAdjacentEC();
 		creatorID = -1;

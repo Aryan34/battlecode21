@@ -90,6 +90,12 @@ public class Util {
 		return copy2;
 	}
 
+	static boolean isGridSquare(MapLocation loc, MapLocation ECLoc){
+		int xdiff = Math.abs(loc.x - ECLoc.x);
+		int ydiff = Math.abs(loc.y - ECLoc.y);
+		return xdiff % 2 == ydiff % 2;
+	}
+
 
 
 

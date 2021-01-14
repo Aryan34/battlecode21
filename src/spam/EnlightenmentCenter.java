@@ -26,11 +26,11 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		if(numSpawned < 40 && !enemySpotted){
-			System.out.println("Spawning scouts");
-			spawnScouts();
-		}
-		else if(slanderersSpawned < 10){
+//		if(numSpawned < 40 && !enemySpotted){
+//			System.out.println("Spawning scouts");
+//			spawnScouts();
+//		}
+		if(slanderersSpawned < 10000){
 			spawnSlanderers();
 		}
 		else{
@@ -97,12 +97,15 @@ public class EnlightenmentCenter extends Robot {
 
 		// Spawn in random direction
 		boolean spawned = false;
-		for(Direction dir : Navigation.directions){
-			if(Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence)){
-				spawned = true;
-				break;
-			}
+		if(Util.tryBuild(RobotType.SLANDERER, Direction.NORTH, spawnInfluence)){
+			spawned = true;
 		}
+//		for(Direction dir : Navigation.directions){
+//			if(Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence)){
+//				spawned = true;
+//				break;
+//			}
+//		}
 
 		if(spawned){
 			slanderersSpawned++;

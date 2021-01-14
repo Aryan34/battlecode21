@@ -25,6 +25,19 @@ public class Navigation {
 			Direction.WEST, Direction.EAST, Direction.SOUTH, Direction.NORTH
 	};
 
+	static final Direction[] nonCardinalDirections = {
+			Direction.NORTHWEST, Direction.NORTHEAST, Direction.SOUTHEAST, Direction.SOUTHWEST
+	};
+
+	static boolean isCardinal(Direction dir){
+		for(Direction card : cardinalDirections){
+			if(card.equals(dir)){
+				return true;
+			}
+		}
+		return false;
+	}
+
 	RobotController rc;
 	Robot robot;
 
