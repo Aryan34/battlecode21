@@ -18,11 +18,6 @@ public class Slanderer extends Robot {
 		runEco();
 	}
 
-	public void moveRandom() throws GameActionException {
-		System.out.println("Moving randomly");
-		nav.tryMove(nav.randomDirection());
-	}
-
 	public void runEco() throws GameActionException {
 		System.out.println("Am I on the grid? " + Util.isGridSquare(myLoc, creatorLoc));
 		if(!inGrid && Util.isGridSquare(myLoc, creatorLoc)){
@@ -108,10 +103,6 @@ public class Slanderer extends Robot {
 		else if(foundSameDist){
 			MapLocation option1 = sameDistLocs[0]; MapLocation option2 = sameDistLocs[1];
 			if(isCCW(myLoc, option1, creatorLoc)) {
-				// If you've gone in a full circle from when you were spawned, then stop.
-//				if(){
-//
-//				}
 				nav.tryMove(myLoc.directionTo(option1).rotateRight());
 			}
 			else if(option2 != null && isCCW(myLoc, option2, creatorLoc)){

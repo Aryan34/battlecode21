@@ -26,10 +26,10 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-//		if(numSpawned < 40 && !enemySpotted){
-//			System.out.println("Spawning scouts");
-//			spawnScouts();
-//		}
+		if(numSpawned < 40 && !enemySpotted){
+			System.out.println("Spawning scouts");
+			spawnScouts();
+		}
 		if(slanderersSpawned < 10000){
 			spawnSlanderers();
 		}
