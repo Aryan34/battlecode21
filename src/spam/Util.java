@@ -91,10 +91,25 @@ public class Util {
 	}
 
 	static boolean isGridSquare(MapLocation loc, MapLocation ECLoc){
+		if(getGridSquareDist(loc, ECLoc) == 1){
+			return false;
+		}
 		int xdiff = Math.abs(loc.x - ECLoc.x);
 		int ydiff = Math.abs(loc.y - ECLoc.y);
 		return xdiff % 2 == ydiff % 2;
 	}
+
+	static boolean isCCW(MapLocation loc1, MapLocation loc2, MapLocation center){
+		// https://gamedev.stackexchange.com/questions/22133/how-to-detect-if-object-is-moving-in-clockwise-or-counterclockwise-direction
+		return ((loc1.x - center.x)*(loc2.y - center.y) - (loc1.y - center.y)*(loc2.x - center.x)) > 0;
+	}
+
+	static int getGridSquareDist(MapLocation loc, MapLocation ECLoc){
+		int diffX = loc.x - ECLoc.x;
+		int diffY = loc.y - ECLoc.y;
+		return Math.max(Math.abs(diffX), Math.abs(diffY));
+	}
+
 
 
 

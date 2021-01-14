@@ -30,26 +30,10 @@ public class Slanderer extends Robot {
 		else{
 			maintainGrid();
 		}
-
-//		if(targetCorner == null){
-//			moveRandom();
-//		}
-//		else{
-//			System.out.println("Going towards corner");
-//			nav.goTo(targetCorner.loc);
-//		}
 	}
 
 	void goToGrid() throws GameActionException {
 		if(rc.getCooldownTurns() > 1){
-			return;
-		}
-		Direction left = spawnDir.rotateLeft().rotateLeft();
-		Direction right = left.opposite();
-		if(nav.tryMove(left)){
-			return;
-		}
-		if(nav.tryMove(right)){
 			return;
 		}
 		if(nav.tryMove(spawnDir)){
@@ -61,10 +45,16 @@ public class Slanderer extends Robot {
 		if(nav.tryMove(spawnDir.rotateRight())){
 			return;
 		}
+		if(nav.tryMove(spawnDir.rotateLeft().rotateLeft())){
+			return;
+		}
+		if(nav.tryMove(spawnDir.rotateRight().rotateRight())){
+			return;
+		}
 	}
 
 	void maintainGrid() throws GameActionException {
-		int dist = getGridSquareDist(myLoc);
+		int dist = Util.getGridSquareDist(myLoc, creatorLoc);
 		MapLocation[] closerLocs = new MapLocation[2];
 		MapLocation[] sameDistLocs = new MapLocation[2];
 		boolean foundCloser = false; boolean foundSameDist = false;
@@ -77,8 +67,8 @@ public class Slanderer extends Robot {
 			if(!rc.onTheMap(newLoc) || rc.isLocationOccupied(newLoc) || !rc.canMove(myLoc.directionTo(newLoc))){
 				continue;
 			}
-			int newDist = getGridSquareDist(newLoc);
-			if(newDist == dist - 1){
+			int newDist = Util.getGridSquareDist(newLoc, creatorLoc);
+			if(newDist == dist - 1 && newDist != 1){ // Go closer to the EC if you can, but avoid going right next to it (so it still has place to spawn other troops)
 				int idx = foundCloser ? 1 : 0;
 				closerLocs[idx] = newLoc;
 				foundCloser = true;
@@ -92,36 +82,24 @@ public class Slanderer extends Robot {
 		// If you can, go to the more counterclockwise one
 		if(foundCloser){
 			MapLocation option1 = closerLocs[0]; MapLocation option2 = closerLocs[1];
-			if(isCCW(myLoc, option1, creatorLoc)) {
+			if(Util.isCCW(myLoc, option1, creatorLoc)) {
 				nav.tryMove(myLoc.directionTo(option1));
 			}
-			else if(option2 != null && isCCW(myLoc, option2, creatorLoc)){
+			else if(option2 != null && Util.isCCW(myLoc, option2, creatorLoc)){
 				nav.tryMove(myLoc.directionTo(option2));
 			}
 			return;
 		}
 		else if(foundSameDist){
 			MapLocation option1 = sameDistLocs[0]; MapLocation option2 = sameDistLocs[1];
-			if(isCCW(myLoc, option1, creatorLoc)) {
+			if(Util.isCCW(myLoc, option1, creatorLoc)) {
 				nav.tryMove(myLoc.directionTo(option1).rotateRight());
 			}
-			else if(option2 != null && isCCW(myLoc, option2, creatorLoc)){
+			else if(option2 != null && Util.isCCW(myLoc, option2, creatorLoc)){
 				nav.tryMove(myLoc.directionTo(option2).rotateRight());
 			}
 			return;
 		}
-	}
-
-	boolean isCCW(MapLocation loc1, MapLocation loc2, MapLocation center)
-	{
-		// https://gamedev.stackexchange.com/questions/22133/how-to-detect-if-object-is-moving-in-clockwise-or-counterclockwise-direction
-		return ((loc1.x - center.x)*(loc2.y - center.y) - (loc1.y - center.y)*(loc2.x - center.x)) > 0;
-	}
-
-	int getGridSquareDist(MapLocation loc) throws GameActionException {
-		int diffX = loc.x - creatorLoc.x;
-		int diffY = loc.y - creatorLoc.y;
-		return Math.max(Math.abs(diffX), Math.abs(diffY));
 	}
 
 }
