@@ -4,116 +4,78 @@ import battlecode.common.*;
 
 public class Politician extends Robot {
 
-	final int WALL_LENGTH = 6;
-	MapLocation[] wallCheckLocs;
+//	final int WALL_LENGTH = 6;
+//	MapLocation[] wallCheckLocs;
 	int wallCheckIdx;
+	boolean inGrid = false;
 
 	public Politician (RobotController rc) throws GameActionException {
 		super(rc);
-		wallCheckIdx = 0;
-		wallCheckLocs = new MapLocation[4];
+//		wallCheckIdx = 0;
+//		wallCheckLocs = new MapLocation[4];
 	}
 
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
-		runDefense();
+		RobotInfo[] nearby = rc.senseNearbyRobots();
+		runEco(nearby);
+//		runDefense();
 	}
 
-	public void moveRandom() throws GameActionException {
-		System.out.println("Moving randomly");
-		nav.tryMove(nav.randomDirection());
-	}
+	public void runEco(RobotInfo[] nearby) throws GameActionException {
 
-	public void runDefense() throws GameActionException {
-		if(targetCorner == null){
-			moveRandom();
-		}
-		else{
-			System.out.println("Target corner: " + targetCorner.toString());
-			if(myLoc.distanceSquaredTo(targetCorner.loc) > WALL_LENGTH * WALL_LENGTH * 2) {
-				// Go towards the corner if you're not alr there
-				System.out.println("Going towards corner");
-				nav.goTo(targetCorner.loc);
-			}
-			else{
-				// Make a wall (half square) around the corner
+		int minDist = 0; // Default distance
 
-				boolean standingOnWall = false;
-				// Get all the wall locs
-				MapLocation[] wallLocs = getWallLocs();
-				// Find closest empty location
-				int closestDist = Integer.MAX_VALUE;
-				MapLocation closest = null;
-				for(MapLocation loc : wallLocs){
-					int dist = myLoc.distanceSquaredTo(loc);
-					if(dist == 0){
-						standingOnWall = true;
-					}
-					if(rc.canSenseLocation(loc) && rc.isLocationOccupied(loc)){
-						continue;
-					}
-					if(dist < closestDist){
-						closestDist = dist;
-						closest = loc;
-					}
-				}
-
-				if(!standingOnWall) {
-					// Go towards the closest one
-					if (closestDist == Integer.MAX_VALUE) {
-						// Couldn't find an empty wall location, circle around to look for one
-						runAlongWall();
-					} else {
-						nav.goTo(closest);
-					}
-				}
-
-			}
-		}
-	}
-
-	public MapLocation[] getWallLocs(){
-		int xoff = targetCorner.loc.x + targetCorner.xoff * WALL_LENGTH;
-		int yoff = targetCorner.loc.y + targetCorner.yoff * WALL_LENGTH;
-
-		MapLocation[] wallLocs = new MapLocation[WALL_LENGTH * 2 + 1];
-		int idx = 0;
-		for(int x = Math.min(targetCorner.loc.x, xoff); x <= Math.max(targetCorner.loc.x, xoff); x++){
-			wallLocs[idx] = new MapLocation(x, yoff);
-			idx++;
-		}
-		for(int y = Math.min(targetCorner.loc.y, yoff); y <= Math.max(targetCorner.loc.y, yoff); y++){
-			if(y == yoff){
+		for(RobotInfo info : nearby){
+			// Filter out everything except friendly slanderers / politicians
+			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
 				continue;
 			}
-			wallLocs[idx] = new MapLocation(xoff, y);
-			idx++;
+			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
+			typeInQuestion = null;
+			Comms.checkFlag(info.getID());
+			if(typeInQuestion != RobotType.SLANDERER){
+				continue;
+			}
+			// Stay a gridDistance of atleast two away from the nearest slanderer
+//			System.out.println("Nearby slanderer at: " + info.getLocation().toString());
+			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
+			minDist = Math.max(minDist, gridDist + 2);
 		}
+		if(minDist == 0){
+			minDist = 4; // Default politician distance
+		}
+		System.out.println("My min dist: " + minDist);
 
-		System.out.println("IDX: " + idx);
-		System.out.println("WALL LOCS LENGTH: " + wallLocs.length);
-		assert(idx == wallLocs.length);
-
-		wallCheckLocs[0] = new MapLocation(xoff, yoff);
-		wallCheckLocs[1] = new MapLocation(targetCorner.loc.x, yoff);
-		wallCheckLocs[2] = new MapLocation(xoff, yoff);
-		wallCheckLocs[3] = new MapLocation(xoff, targetCorner.loc.y);
-
-		return wallLocs;
-	}
-
-	public void runAlongWall() throws GameActionException {
-		MapLocation currTarget = wallCheckLocs[wallCheckIdx];
-		if(myLoc.distanceSquaredTo(currTarget) < 4){
-			wallCheckIdx += 1;
-			wallCheckIdx %= wallCheckLocs.length;
-			runAlongWall();
+		if(Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist){
+			inGrid = true;
 		}
 		else{
-			nav.goTo(currTarget);
+			inGrid = false;
+		}
+		System.out.println("Am I on the grid? " + inGrid);
+		if(!inGrid){
+			System.out.println("Going to grid at minDist: " + minDist);
+			nav.goToGrid(minDist);
+		}
+		else{
+			System.out.println("Alr on grid at minDist: " + minDist + ", maintaining it");
+			nav.maintainGrid(minDist);
 		}
 	}
+
+//	public void runAlongWall() throws GameActionException {
+//		MapLocation currTarget = wallCheckLocs[wallCheckIdx];
+//		if(myLoc.distanceSquaredTo(currTarget) < 4){
+//			wallCheckIdx += 1;
+//			wallCheckIdx %= wallCheckLocs.length;
+//			runAlongWall();
+//		}
+//		else{
+//			nav.goTo(currTarget);
+//		}
+//	}
 
 	// Example bot attacking code
 //		Team enemy = rc.getTeam().opponent();

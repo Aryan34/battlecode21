@@ -18,11 +18,12 @@ public class Muckraker extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
+		// If you see any slanderers, kill them
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		exposeSlanderers(nearby);
 		Comms.checkFlag(creatorID);
 		relayEnemyLocations(nearby);
-		// Change this to an actual if statement (maybe when you hit some round number?)
+		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
 		if(true){
 			runScout();
 		}
@@ -132,6 +133,9 @@ public class Muckraker extends Robot {
 		if(bestDir != Direction.CENTER){
 			nav.tryMove(bestDir);
 		}
+
+		// TODO: IF YOU'RE CLOSE TO ENEMY EC, ATTACK IT
+
 	}
 
 	// Heuristic used to spread out when searching

@@ -99,6 +99,7 @@ public class Util {
 		return xdiff % 2 == ydiff % 2;
 	}
 
+	// returns true if loc2 is CCW to loc1
 	static boolean isCCW(MapLocation loc1, MapLocation loc2, MapLocation center){
 		// https://gamedev.stackexchange.com/questions/22133/how-to-detect-if-object-is-moving-in-clockwise-or-counterclockwise-direction
 		return ((loc1.x - center.x)*(loc2.y - center.y) - (loc1.y - center.y)*(loc2.x - center.x)) > 0;

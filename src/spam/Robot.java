@@ -34,23 +34,24 @@ public class Robot {
 	int turnCount = 0;
 	Team myTeam;
 	RobotType myType;
-	int myFlag;
-	DetectedInfo[] robotLocations;
+	int myFlag = 0;
+	DetectedInfo[] robotLocations = new DetectedInfo[100];
+	int robotLocationsIdx = 0;
 
 	// Moving robots variables
 	int creatorID;
 	MapLocation creatorLoc;
-	int robotLocationsIdx;
-	CornerInfo targetCorner;
+	CornerInfo targetCorner = null;
 	MapLocation[] visited = new MapLocation[50];
 	int visitedIdx = 0;
+	RobotType typeInQuestion = null;
 
 	// EC variables
 	boolean doneScouting = false;
 	int[] mapBoundaries = new int[4]; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
 	int mapWidth = 0;
 	int mapHeight = 0;
-	boolean wonPrevVote;
+	boolean wonPrevVote = false;
 	int teamVotes;
 	boolean enemySpotted = false;
 
@@ -72,11 +73,6 @@ public class Robot {
 		if(creatorLoc != null){
 			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
 		}
-		myFlag = 0;
-		robotLocations = new DetectedInfo[50];
-		robotLocationsIdx = 0;
-		targetCorner = null;
-
 	}
 
 	public void run() throws GameActionException {
@@ -113,6 +109,21 @@ public class Robot {
 		int val = Math.abs(loc.x - mapBoundaries[i]);
 		if(i == 2 || i == 3){ val = Math.abs(loc.y - mapBoundaries[i]); }
 		return val;
+	}
+
+	public void broadcastIdentity() throws GameActionException {
+		int purpose = 5;
+		int typeIdx = -1;
+		if(rc.getType() == RobotType.SLANDERER){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.POLITICIAN){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.MUCKRAKER){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.ENLIGHTENMENT_CENTER){ typeIdx = 0; }
+		assert(typeIdx != -1);
+
+		int[] flagArray = {purpose, 4, typeIdx, 2};
+		int flag = Comms.concatFlag(flagArray);
+		Comms.setFlag(flag);
+
 	}
 
 }

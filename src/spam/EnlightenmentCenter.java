@@ -26,14 +26,38 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		if(numSpawned < 40 && !enemySpotted){
+		if(numSpawned < 10 && !enemySpotted){
 			System.out.println("Spawning scouts");
 			spawnScouts();
 		}
+		else if(numSpawned < 40 && !enemySpotted){
+			System.out.println("Spawning everything");
+			// Spawn rotation: sland then pol then scout
+			if(numSpawned % 3 == 0){
+				System.out.println("Spawning sland");
+				spawnSlanderers();
+			}
+			else if(numSpawned % 3 == 1){
+				System.out.println("Spawning pol");
+				spawnPoliticians();
+			}
+			else{
+				System.out.println("Spawning scout");
+				spawnScouts();
+			}
+		}
 		if(slanderersSpawned < 10000){
-			spawnSlanderers();
+			System.out.println("Spawning ratio");
+			// 2:1 sland to pol ratio
+			if(numSpawned % 3 < 1){
+				spawnPoliticians();
+			}
+			else{
+				spawnSlanderers();
+			}
 		}
 		else{
+			System.out.println("Spawning politicians");
 			spawnPoliticians();
 		}
 
@@ -90,6 +114,7 @@ public class EnlightenmentCenter extends Robot {
 
 	public void spawnSlanderers() throws GameActionException {
 		// Figure out spawn influence
+		System.out.println("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
 		if(rc.getInfluence() < EC_MIN_INFLUENCE){
 			return;
 		}
@@ -97,16 +122,12 @@ public class EnlightenmentCenter extends Robot {
 
 		// Spawn in random direction
 		boolean spawned = false;
-		if(Util.tryBuild(RobotType.SLANDERER, Direction.NORTH, spawnInfluence)){
-			spawned = true;
-		}
-//		for(Direction dir : Navigation.directions){
-//			if(Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence)){
-//				spawned = true;
-//				break;
-//			}
+//		if(Util.tryBuild(RobotType.SLANDERER, Direction.NORTH, spawnInfluence)){
+//			spawned = true;
 //		}
-
+		for(Direction dir : Navigation.directions){
+			Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
+		}
 		if(spawned){
 			slanderersSpawned++;
 		}
