@@ -94,20 +94,12 @@ public class Navigation {
 		double[] distances = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 		MapLocation myLoc = robot.myLoc;
 		Direction targetDir = myLoc.directionTo(target);
-		MapLocation[] testLocs = {myLoc.add(targetDir),
-				myLoc.add(targetDir.rotateLeft()),
-				myLoc.add(targetDir.rotateRight()),
-				myLoc.add(targetDir.rotateLeft().rotateLeft()).add(targetDir.rotateLeft()),
-				myLoc.add(targetDir.rotateRight().rotateRight()).add(targetDir.rotateRight())};
+		MapLocation[] testLocs = {myLoc.add(targetDir), myLoc.add(targetDir.rotateLeft()), myLoc.add(targetDir.rotateRight()),
+				myLoc.add(targetDir.rotateLeft().rotateLeft()).add(targetDir.rotateLeft()), myLoc.add(targetDir.rotateRight().rotateRight()).add(targetDir.rotateRight())};
 
-		Direction[] correspondingDirections = {targetDir,
-				targetDir.rotateLeft(),
-				targetDir.rotateRight(),
-				targetDir.rotateLeft().rotateLeft(),
-				targetDir.rotateRight().rotateRight()};
+		Direction[] correspondingDirections = {targetDir, targetDir.rotateLeft(), targetDir.rotateRight(), targetDir.rotateLeft().rotateLeft(), targetDir.rotateRight().rotateRight()};
 		for (int i = 0; i < testLocs.length; i++) {
 			MapLocation testLoc = testLocs[i];
-			Direction correspondingDir = correspondingDirections[i];
 			if (!rc.canSenseLocation(testLoc) || rc.isLocationOccupied(testLoc)) {
 				continue;
 			}
@@ -129,6 +121,8 @@ public class Navigation {
 				distances[i] += 1 / rc.sensePassability(testLoc2);
 			}
 		}
+
+		// TODO: Don't revisit squares
 
 		double minVal = min(distances);
 		if (minVal == Double.MAX_VALUE) {
@@ -159,16 +153,81 @@ public class Navigation {
 		return min;
 	}
 
+	public boolean tryCCWFromStart(Direction dir) throws GameActionException {
+		Direction temp = dir;
+		for(int i = 0; i < 8; i++){
+			if(tryMove(temp)){
+				return true;
+			}
+			temp = temp.rotateRight();
+		}
+		return false;
+	}
+
 	public void goToGrid(int minDist) throws GameActionException {
+		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
+		if(rc.getCooldownTurns() > 1){
+			return;
+		}
+
+		// If you can move into a non-occupied grid location, go for it
+		for(Direction dir : cardinalDirections){
+			MapLocation target = myLoc.add(dir);
+			if(Util.isGridSquare(target, creatorLoc) && Util.getGridSquareDist(target , creatorLoc) >= minDist && rc.canMove(dir)){
+				tryMove(dir);
+				return;
+			}
+		}
+
+		// Try moving away from the center
+		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+			Direction targetDir = creatorLoc.directionTo(myLoc);
+			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
+		}
+
+		int bestDist = Integer.MAX_VALUE;
+		MapLocation bestLoc = null;
+
+		for(int dx = -4; dx <= 4; dx++){
+			for(int dy = -4; dy <= 4; dy++){
+				MapLocation loc = new MapLocation(myLoc.x + dx, myLoc.y + dy);
+				if(!Util.isGridSquare(loc, creatorLoc)){
+					continue;
+				}
+				if(!rc.canSenseLocation(loc) || rc.isLocationOccupied(loc) || !rc.onTheMap(loc)){
+					continue;
+				}
+				int dist = myLoc.distanceSquaredTo(loc);
+				if(dist < bestDist){
+					bestDist = dist;
+					bestLoc = loc;
+				}
+			}
+		}
+		if(bestLoc != null){
+			System.out.println("Going towards: " + bestLoc.toString());
+			goTo(bestLoc);
+		}
+		else{
+			// Try moving CCW
+			System.out.println("Moving CCW");
+			tryCCWFromStart(myLoc.directionTo(creatorLoc).rotateRight());
+		}
+	}
+
+
+
+
+	public void goToGrid2(int minDist) throws GameActionException {
 		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
 		if(rc.getCooldownTurns() > 1){
 			return;
 		}
 		// If you didn't move away from the EC to your proper distance, then do so
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			Direction awayDir = creatorLoc.directionTo(myLoc);
+			Direction targetDir = creatorLoc.directionTo(myLoc);
 			// Move away from the EC
-			goTo(myLoc.add(awayDir).add(awayDir).add(awayDir).add(awayDir));
+			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 			return;
 		}
 
@@ -184,14 +243,14 @@ public class Navigation {
 			}
 			if(isCardinal(dir)){
 				// Move onto a grid square if you can
-				if(newDist > minDist && newDist < bestCardDist){
+				if(newDist >= minDist && newDist < bestCardDist){
 					bestCardDist = newDist;
 					bestCard = dir;
 				}
 			}
 			else{
 				// Go CCW
-				if(newDist > minDist && Util.isCCW(myLoc.add(bestNonCard), myLoc.add(dir), creatorLoc)){
+				if(newDist >= minDist && Util.isCCW(myLoc.add(bestNonCard), myLoc.add(dir), creatorLoc)){
 					bestNonCard = dir;
 				}
 			}
@@ -203,21 +262,6 @@ public class Navigation {
 		if(bestNonCard != Direction.CENTER){
 			tryMove(bestNonCard);
 		}
-
-
-//		Direction[] tryOrder = {spawnDir, spawnDir.rotateLeft(), spawnDir.rotateRight(), spawnDir.rotateLeft().rotateLeft(), spawnDir.rotateRight().rotateRight()};
-//		for(Direction dir : tryOrder){
-//			if(Util.isGridSquare(myLoc.add(dir), creatorLoc)){
-//				if(tryMove(dir)){
-//					return;
-//				}
-//			}
-//		}
-//		for(Direction dir : tryOrder){
-//			if(tryMove(dir)){
-//				return;
-//			}
-//		}
 	}
 
 

@@ -39,7 +39,7 @@ public class EnlightenmentCenter extends Robot {
 			}
 			else if(numSpawned % 3 == 1){
 				System.out.println("Spawning pol");
-				spawnPoliticians();
+//				spawnPoliticians();
 			}
 			else{
 				System.out.println("Spawning scout");
@@ -49,7 +49,8 @@ public class EnlightenmentCenter extends Robot {
 		if(slanderersSpawned < 10000){
 			System.out.println("Spawning ratio");
 			// 2:1 sland to pol ratio
-			if(numSpawned % 3 < 1){
+			// TODO: Change this to 1
+			if(numSpawned % 3 < 0){
 				spawnPoliticians();
 			}
 			else{
@@ -58,7 +59,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else{
 			System.out.println("Spawning politicians");
-			spawnPoliticians();
+//			spawnPoliticians();
 		}
 
 	}

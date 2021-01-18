@@ -38,7 +38,7 @@ public class Slanderer extends Robot {
 		else{
 			inGrid = false;
 		}
-		System.out.println("Am I on the grid? " + inGrid);
+		System.out.println("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
 		if(!inGrid){
 			nav.goToGrid(2);
 		}
