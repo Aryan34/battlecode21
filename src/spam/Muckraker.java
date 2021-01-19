@@ -71,13 +71,13 @@ public class Muckraker extends Robot {
 				}
 				int[] flagArray = {purpose, 4, robot_type, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag: " + Comms.printFlag(flag));
+				System.out.println("Setting flag to enemy: " + Comms.printFlag(flag));
 				addFlagToQueue(flag, 2);
 			}
 			else if(info.getTeam() == Team.NEUTRAL){
 				int[] flagArray = {purpose, 4, 2, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag: " + Comms.printFlag(flag));
+				System.out.println("Setting flag to neutral: " + Comms.printFlag(flag));
 				addFlagToQueue(flag, 2);
 			}
 		}

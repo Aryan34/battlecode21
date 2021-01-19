@@ -183,11 +183,13 @@ public class Comms {
 
                 MapLocation detectedLoc = xyToMapLocation(splits[2], splits[3]);
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
-                if(robot.attackTarget == null && robot.myType == RobotType.ENLIGHTENMENT_CENTER && (detectedTeam == robot.myTeam.opponent() || detectedTeam == Team.NEUTRAL)) {
+                if(robot.attackTarget == null && detectedType == RobotType.ENLIGHTENMENT_CENTER && (detectedTeam == robot.myTeam.opponent() || detectedTeam == Team.NEUTRAL)) {
                     System.out.println("FOUND A TARGET EC!");
                     robot.attackTarget = detectedLoc;
-                    System.out.println("BROADCASTING TARGET EC LOCATION");
-                    rc.setFlag(flag);
+                    if(robot.myType == RobotType.ENLIGHTENMENT_CENTER){
+                        System.out.println("BROADCASTING TARGET EC LOCATION");
+                        rc.setFlag(flag);
+                    }
                 }
                 if(detectedTeam == robot.myTeam.opponent()){
                     robot.enemySpotted = true;

@@ -4,16 +4,13 @@ import battlecode.common.*;
 
 public class Politician extends Robot {
 
-	//	final int WALL_LENGTH = 6;
-//	MapLocation[] wallCheckLocs;
-	int wallCheckIdx;
 	boolean inGrid = false;
 	boolean ccw = true;
+	boolean isAttacking;
 
 	public Politician (RobotController rc) throws GameActionException {
 		super(rc);
-//		wallCheckIdx = 0;
-//		wallCheckLocs = new MapLocation[4];
+		isAttacking = rc.getInfluence() % 2 == 0;
 	}
 
 	public void run() throws GameActionException {
@@ -21,8 +18,8 @@ public class Politician extends Robot {
 		Comms.checkFlag(creatorID);
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 
-		if (attackTarget != null) {
-			System.out.println("Running attack!");
+		if(isAttacking && attackTarget != null){
+			System.out.println("Attacking: " + attackTarget.toString());
 			runAttack();
 		}
 		else {

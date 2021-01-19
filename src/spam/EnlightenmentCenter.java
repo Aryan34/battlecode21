@@ -12,11 +12,12 @@ public class EnlightenmentCenter extends Robot {
 	int numSpawned = 0;
 	int lastBid;
 	int slanderersSpawned = 0;
-	int EC_MIN_INFLUENCE = 50;
-	int DEF_POLI_MIN_COST = 15;
-	int ATK_POLI_MIN_COST = 50;
+	int EC_MIN_INFLUENCE = 20;
+	final int DEF_POLI_MIN_COST = 15;
+	final int ATK_POLI_MIN_COST = 50;
+	final int SLAND_MIN_COST = 40;
 
-	CornerInfo nearestCorner = null;
+	boolean attacking = false;
 
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
@@ -29,33 +30,47 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-
-		if(!enemySpotted){
-			if(numSpawned < 30){
-				spawnRatio(3, 1, 1);
-			}
-			else{
-				spawnRatio(1, 2, 1);
+		if(attackTarget != null){
+			for(int i = 0; i < robotLocationsIdx; i++){
+				DetectedInfo detected = robotLocations[i];
+				if(detected.loc.equals(attackTarget) && detected.team == myTeam){
+					attackTarget = null;
+				}
 			}
 		}
+		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
+		if(!enemySpotted){
+			if(numSpawned < 30){
+				spawnRatio(3, 1, 0, 1);
+			}
+			else{
+				spawnRatio(1, 2, 1, 1);
+			}
+		}
+		else if(attacking){
+			spawnRatio(1, 1, 2, 2);
+		}
 		else{
-			spawnRatio(1, 2, 2);
+			if(numSpawned < 300){
+				spawnRatio(1, 2, 1, 1);
+			}
+			else{
+				spawnRatio(2, 1, 2, 1);
+			}
 		}
 	}
 
-	public void spawnRatio(int slands, int pols, int mucks) throws GameActionException {
-		int total = slands + pols + mucks;
+	public void spawnRatio(int slands, int defensePols, int attackPols, int mucks) throws GameActionException {
+		int total = slands + defensePols + attackPols + mucks;
 		int mod = numSpawned % total;
 		if(mod < slands){
 			spawnSlanderers();
 		}
-		else if(mod < slands + pols){
-			if (numSpawned % 3 == 0) {
-				spawnPoliticians(false);
-			}
-			else {
-				spawnPoliticians(true);
-			}
+		else if(mod < slands + defensePols) {
+			spawnPoliticians(true);
+		}
+		else if(mod < slands + defensePols + attackPols) {
+			spawnPoliticians(false);
 		}
 		else{
 			spawnMucks();
@@ -146,7 +161,10 @@ public class EnlightenmentCenter extends Robot {
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
-		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 10);
+		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 3);
+		if(spawnInfluence < SLAND_MIN_COST){
+			return;
+		}
 
 		// Spawn in random direction
 		boolean spawned = false;
@@ -172,13 +190,19 @@ public class EnlightenmentCenter extends Robot {
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
-			spawnInfluence = Math.max(DEF_POLI_MIN_COST, Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5));
+			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 6);
+			if(spawnInfluence < DEF_POLI_MIN_COST){
+				return;
+			}
 			if (spawnInfluence % 2 == 0) {
 				spawnInfluence -= 1;
 			}
 		}
 		else {
-			spawnInfluence = Math.max(ATK_POLI_MIN_COST, Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5));
+			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 3);
+			if(spawnInfluence < ATK_POLI_MIN_COST){
+				return;
+			}
 			if (spawnInfluence % 2 == 1) {
 				spawnInfluence -= 1;
 			}
@@ -188,39 +212,6 @@ public class EnlightenmentCenter extends Robot {
 		for (Direction dir : Navigation.directions) {
 			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
 		}
-	}
-
-	public CornerInfo findNearestCorner() throws GameActionException {
-		int diffX1 = myLoc.x - mapBoundaries[0];
-		int diffX2 = mapBoundaries[1] - myLoc.x;
-		int diffY1 = myLoc.y - mapBoundaries[2];
-		int diffY2 = mapBoundaries[3] - myLoc.y;
-		int cornerX = mapBoundaries[0];
-		int xoff = 1;
-		if (diffX2 < diffX1) {
-			cornerX = mapBoundaries[1];
-			xoff = -1;
-		}
-		int cornerY = mapBoundaries[2];
-		int yoff = 1;
-		if (diffY2 < diffY1) {
-			cornerY = mapBoundaries[3];
-			yoff = -1;
-		}
-		MapLocation cornerLoc = new MapLocation(cornerX, cornerY);
-		return new CornerInfo(cornerLoc, xoff, yoff);
-	}
-
-	public void broadcastNearestCorner() throws GameActionException {
-		if (nearestCorner == null) {
-			return;
-		}
-		System.out.println("Broadcasting that nearest corner is: " + nearestCorner.toString());
-		int purpose = 3;
-		int[] xy = Comms.mapLocationToXY(nearestCorner.loc);
-		int[] flagArray = {purpose, 4, xy[0], 7, xy[1], 7, nearestCorner.getCornerDirection(), 2};
-		int flag = Comms.concatFlag(flagArray);
-		Comms.setFlag(flag);
 	}
 
 
