@@ -44,10 +44,11 @@ public class Util {
 
 	static boolean tryBuild(RobotType type, Direction dir, int influence) throws GameActionException {
 		if (rc.canBuildRobot(type, dir, influence)) {
-			System.out.println("Building robot of type: " + type.toString() + ", with influence: " + influence);
+			System.out.println("Built robot of type: " + type.toString() + ", with influence: " + influence);
 			rc.buildRobot(type, dir, influence);
 			return true;
 		}
+		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence);
 		return false;
 	}
 

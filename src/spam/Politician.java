@@ -62,7 +62,6 @@ public class Politician extends Robot {
 	}
 
 	public void runAttack() throws GameActionException {
-		killNearby();
 		if(rc.canSenseLocation(attackTarget)){
 			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
 				attackTarget = null;
@@ -72,19 +71,22 @@ public class Politician extends Robot {
 		if (rc.getLocation().distanceSquaredTo(attackTarget) > 1) {
 			nav.goTo(attackTarget);
 		}
-
-		else if (rc.canEmpower(rc.getLocation().distanceSquaredTo(attackTarget))) {
-			System.out.println("Empowering...distance to target: " + rc.getLocation().distanceSquaredTo(attackTarget));
-			System.out.println(rc.getLocation());
-			System.out.println(attackTarget);
-			rc.empower(rc.getLocation().distanceSquaredTo(attackTarget));
+		else{
+			int dist = myLoc.distanceSquaredTo(attackTarget);
+			if (rc.canEmpower(dist)) {
+				System.out.println("Empowering...distance to target: " + dist);
+				rc.empower(dist);
+			}
 		}
 	}
 
 	public void killNearby() throws GameActionException {
-		for (RobotInfo info : rc.senseNearbyRobots(5, myTeam.opponent())) {
-			if (info.type != RobotType.ENLIGHTENMENT_CENTER && myLoc.distanceSquaredTo(info.location) < 3) {
-				rc.empower(2);
+		for (RobotInfo info : nearby) {
+			// Only kill enemy mucks
+			if (info.team == myTeam.opponent() && myLoc.distanceSquaredTo(info.location) < 3 && info.type == RobotType.MUCKRAKER) {
+				if(rc.canEmpower(2)){
+					rc.empower(2);
+				}
 			}
 		}
 	}

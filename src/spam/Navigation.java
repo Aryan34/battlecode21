@@ -38,6 +38,31 @@ public class Navigation {
 		return false;
 	}
 
+	static Direction[] closeDirections(Direction dir){
+		Direction[] close = {
+				dir,
+				dir.rotateLeft(),
+				dir.rotateRight(),
+				dir.rotateLeft().rotateLeft(),
+				dir.rotateRight().rotateRight(),
+				dir.rotateLeft().rotateLeft().rotateLeft(),
+				dir.rotateRight().rotateRight().rotateRight(),
+				dir.opposite()
+		};
+		return close;
+	}
+
+	static Direction[] getCCWFromStart(Direction dir) throws GameActionException {
+		Direction[] dirs = new Direction[8];
+		Direction temp = dir;
+		for(int i = 0; i < 8; i++){
+			dirs[i] = temp;
+			temp = temp.rotateRight();
+		}
+		return dirs;
+	}
+
+
 	RobotController rc;
 	Robot robot;
 
@@ -154,12 +179,11 @@ public class Navigation {
 	}
 
 	public boolean tryCCWFromStart(Direction dir) throws GameActionException {
-		Direction temp = dir;
-		for(int i = 0; i < 8; i++){
+		Direction[] order = getCCWFromStart(dir);
+		for(Direction temp : order){
 			if(tryMove(temp)){
 				return true;
 			}
-			temp = temp.rotateRight();
 		}
 		return false;
 	}

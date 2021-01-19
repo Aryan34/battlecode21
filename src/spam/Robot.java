@@ -27,7 +27,7 @@ public class Robot {
 	DetectedInfo[] robotLocations = new DetectedInfo[1000];
 	int robotLocationsIdx = 0;
 	RobotInfo[] nearby;
-	boolean setFlagThisRound;
+	boolean setFlagThisRound = false;
 
 	// Moving robots variables
 	int creatorID;
@@ -65,10 +65,6 @@ public class Robot {
 		if(creatorLoc != null){
 			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
 		}
-		myFlag = 0;
-		robotLocations = new DetectedInfo[500];
-		robotLocationsIdx = 0;
-		setFlagThisRound = false;
 	}
 
 	public void run() throws GameActionException {

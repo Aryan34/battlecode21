@@ -2,22 +2,32 @@ package spam;
 
 import battlecode.common.*;
 
-import java.util.Arrays;
 import java.util.HashSet;
+
+class SpawnInfo {
+	RobotType type;
+	Direction spawnDir;
+	int id;
+
+	public SpawnInfo(RobotType type, Direction spawnDir, int id){
+		this.type = type;
+		this.spawnDir = spawnDir;
+		this.id = id;
+	}
+}
+
 
 public class EnlightenmentCenter extends Robot {
 
-	int[] spawnedAllies = new int[3000];
-	HashSet<Integer> spawnedAlliesSet = new HashSet<Integer>();
+	SpawnInfo[] spawnedAllies = new SpawnInfo[3000];
+	HashSet<Integer> spawnedAlliesIDs = new HashSet<Integer>();
 	int numSpawned = 0;
 	int lastBid;
 	int slanderersSpawned = 0;
-	int EC_MIN_INFLUENCE = 20;
-	final int DEF_POLI_MIN_COST = 15;
+	int EC_MIN_INFLUENCE = 15;
+	final int DEF_POLI_MIN_COST = 20;
 	final int ATK_POLI_MIN_COST = 50;
 	final int SLAND_MIN_COST = 40;
-
-	boolean attacking = false;
 
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
@@ -41,21 +51,26 @@ public class EnlightenmentCenter extends Robot {
 		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
 		if(!enemySpotted){
 			if(numSpawned < 30){
-				spawnRatio(3, 1, 0, 1);
+				System.out.println("Spawning A");
+				spawnRatio(2, 2, 0, 1);
 			}
 			else{
+				System.out.println("Spawning B");
 				spawnRatio(1, 2, 1, 1);
 			}
 		}
-		else if(attacking){
+		else if(attackTarget != null){
+			System.out.println("Spawning C");
 			spawnRatio(1, 1, 2, 2);
 		}
 		else{
 			if(numSpawned < 300){
+				System.out.println("Spawning D");
 				spawnRatio(1, 2, 1, 1);
 			}
 			else{
-				spawnRatio(2, 1, 2, 1);
+				System.out.println("Spawning E");
+				spawnRatio(1, 1, 2, 1);
 			}
 		}
 	}
@@ -79,7 +94,7 @@ public class EnlightenmentCenter extends Robot {
 
 	public void checkRobotFlags() throws GameActionException {
 		for (int i = 0; i < numSpawned; i++) {
-			int robotID = spawnedAllies[i];
+			int robotID = spawnedAllies[i].id;
 			Comms.checkFlag(robotID);
 		}
 	}
@@ -97,9 +112,9 @@ public class EnlightenmentCenter extends Robot {
 //					continue;
 //				}
 				int id = info.getID();
-				if (!spawnedAlliesSet.contains(id)) {
-					spawnedAllies[numSpawned] = id;
-					spawnedAlliesSet.add(id);
+				if (!spawnedAlliesIDs.contains(id)) {
+					spawnedAllies[numSpawned] = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id);
+					spawnedAlliesIDs.add(id);
 					numSpawned += 1;
 				}
 			}
@@ -187,29 +202,37 @@ public class EnlightenmentCenter extends Robot {
 			return;
 		}
 
+		Direction lastSpawned = spawnedAllies[numSpawned - 1].spawnDir;
+		Direction[] spawnDirs = Navigation.getCCWFromStart(lastSpawned.rotateRight());
+
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
 			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 6);
-			if(spawnInfluence < DEF_POLI_MIN_COST){
-				return;
-			}
+			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 0) {
 				spawnInfluence -= 1;
+			}
+			for(RobotInfo info : nearby){
+				if(info.type == RobotType.MUCKRAKER && info.team == myTeam.opponent()){
+					// If you sense an enemy muck nearby, spawn it in the direction of the muck
+					spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
+				}
 			}
 		}
 		else {
 			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 3);
-			if(spawnInfluence < ATK_POLI_MIN_COST){
-				return;
-			}
+			if(spawnInfluence < ATK_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 1) {
 				spawnInfluence -= 1;
+			}
+			if(attackTarget != null){
+				spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTarget));
 			}
 		}
 
 		// Figure out spawn direction
-		for (Direction dir : Navigation.directions) {
+		for (Direction dir : spawnDirs) {
 			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
 		}
 	}
