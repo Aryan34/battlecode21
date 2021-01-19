@@ -27,9 +27,8 @@ public class Politician extends Robot {
 	}
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
-
+		killNearby();
 		int minDist = 4; // Default distance
-
 		for(RobotInfo info : nearby){
 			// Filter out everything except friendly slanderers / politicians
 			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
@@ -63,6 +62,7 @@ public class Politician extends Robot {
 	}
 
 	public void runAttack() throws GameActionException {
+		killNearby();
 		if(rc.canSenseLocation(attackTarget)){
 			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
 				attackTarget = null;
@@ -78,6 +78,14 @@ public class Politician extends Robot {
 			System.out.println(rc.getLocation());
 			System.out.println(attackTarget);
 			rc.empower(rc.getLocation().distanceSquaredTo(attackTarget));
+		}
+	}
+
+	public void killNearby() throws GameActionException {
+		for (RobotInfo info : rc.senseNearbyRobots(5, myTeam.opponent())) {
+			if (info.type != RobotType.ENLIGHTENMENT_CENTER && myLoc.distanceSquaredTo(info.location) < 3) {
+				rc.empower(2);
+			}
 		}
 	}
 
