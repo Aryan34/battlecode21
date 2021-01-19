@@ -46,7 +46,6 @@ public class Politician extends Robot {
 		}
 		System.out.println("My min dist: " + minDist);
 
-//		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
 		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
 		System.out.println("Am I on the grid? " + inGrid);
 
@@ -115,26 +114,4 @@ public class Politician extends Robot {
 		}
 	}
 
-//	public void runAlongWall() throws GameActionException {
-//		MapLocation currTarget = wallCheckLocs[wallCheckIdx];
-//		if(myLoc.distanceSquaredTo(currTarget) < 4){
-//			wallCheckIdx += 1;
-//			wallCheckIdx %= wallCheckLocs.length;
-//			runAlongWall();
-//		}
-//		else{
-//			nav.goTo(currTarget);
-//		}
-//	}
-
-	// Example bot attacking code
-//		Team enemy = rc.getTeam().opponent();
-//		int actionRadius = rc.getType().actionRadiusSquared;
-//		RobotInfo[] attackable = rc.senseNearbyRobots(actionRadius, enemy);
-//		if (attackable.length != 0 && rc.canEmpower(actionRadius)) {
-//			System.out.println("empowering...");
-//			rc.empower(actionRadius);
-//			System.out.println("empowered");
-//			return;
-//		}
 }

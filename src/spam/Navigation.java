@@ -197,7 +197,8 @@ public class Navigation {
 		// If you can move into a non-occupied grid location, go for it
 		for(Direction dir : cardinalDirections){
 			MapLocation target = myLoc.add(dir);
-			if(Util.isGridSquare(target, creatorLoc) && Util.getGridSquareDist(target , creatorLoc) >= minDist && rc.canMove(dir)){
+			if(Util.isGridSquare(target, creatorLoc) && Util.getGridSquareDist(target, creatorLoc) >= minDist && rc.canMove(dir)){
+				System.out.println("Found a nearby cardinal location: " + target.toString());
 				tryMove(dir);
 				return;
 			}
@@ -207,6 +208,7 @@ public class Navigation {
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
 			System.out.println("Moving away from center");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
+			// TODO: Change this to bugnav instead of fuzzynav
 			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
 
@@ -235,9 +237,10 @@ public class Navigation {
 			goTo(bestLoc);
 		}
 		else{
-			// Try moving CCW
-			System.out.println("Moving CCW");
-			tryCCWFromStart(myLoc.directionTo(creatorLoc).rotateRight());
+			// Move outwards?
+			System.out.println("Moving outwards");
+			Direction targetDir = creatorLoc.directionTo(myLoc);
+			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
 	}
 
@@ -301,6 +304,7 @@ public class Navigation {
 	public Direction rotateCCW(Direction dir){ return dir.rotateRight().rotateRight(); }
 
 	public void runAroundGrid(int minDist, boolean ccw) throws GameActionException {
+		// TODO: Fix this. It works when there's one EC but not really when there's multiple ECs
 		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
 		int dist = Util.getGridSquareDist(myLoc, creatorLoc);
 
@@ -314,19 +318,20 @@ public class Navigation {
 		if(ccw){
 			order[0] = start;
 			order[1] = rotateCCW(start);
-			order[2] = rotateCW(start);
-			order[3] = start.opposite();
+			order[2] = start.opposite();
+			order[3] = rotateCW(start);
 		}
 		else{
 			order[0] = start;
 			order[1] = rotateCW(start);
-			order[2] = rotateCCW(start);
-			order[3] = start.opposite();
+			order[2] = start.opposite();
+			order[3] = rotateCCW(start);
 		}
 
 		System.out.println("Starting direction: " + start);
 		for(Direction dir : order){
 			MapLocation newLoc = myLoc.add(dir);
+			System.out.println("Checking: " + newLoc.toString());
 			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
 				continue;
 			}
@@ -334,27 +339,6 @@ public class Navigation {
 				return;
 			}
 		}
-
-//		Direction dir = start;
-//		for(int i = 0; i <= 4; i++){
-//			if(i != 0){
-//				if(ccw){ dir = dir.rotateRight(); }
-//				else{ dir = dir.rotateLeft(); }
-//			}
-//			MapLocation newLoc = myLoc.add(dir);
-//			System.out.println("Dir: " + dir.toString() + ", Checking: " + newLoc.toString());
-//			if(!rc.onTheMap(newLoc) || rc.isLocationOccupied(newLoc) || !rc.canMove(dir)){
-//				continue;
-//			}
-//			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
-//				continue;
-//			}
-//			if(!Util.isGridSquare(newLoc, creatorLoc)){
-//				continue;
-//			}
-//			tryMove(dir);
-//		}
-
 	}
 
 
