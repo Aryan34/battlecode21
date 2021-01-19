@@ -35,7 +35,7 @@ public class Robot {
 	Team myTeam;
 	RobotType myType;
 	int myFlag = 0;
-	DetectedInfo[] robotLocations = new DetectedInfo[100];
+	DetectedInfo[] robotLocations = new DetectedInfo[1000];
 	int robotLocationsIdx = 0;
 
 	// Moving robots variables
