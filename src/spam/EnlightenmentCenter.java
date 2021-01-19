@@ -50,7 +50,7 @@ public class EnlightenmentCenter extends Robot {
 			System.out.println("Spawning ratio");
 			// 2:1 sland to pol ratio
 			// TODO: Change this to 1
-			if(numSpawned % 3 < 0){
+			if(numSpawned % 3 < 1){
 				spawnPoliticians();
 			}
 			else{

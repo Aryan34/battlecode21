@@ -8,6 +8,7 @@ public class Politician extends Robot {
 //	MapLocation[] wallCheckLocs;
 	int wallCheckIdx;
 	boolean inGrid = false;
+	boolean ccw = true;
 
 	public Politician (RobotController rc) throws GameActionException {
 		super(rc);
@@ -25,7 +26,7 @@ public class Politician extends Robot {
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 
-		int minDist = 0; // Default distance
+		int minDist = 4; // Default distance
 
 		for(RobotInfo info : nearby){
 			// Filter out everything except friendly slanderers / politicians
@@ -38,30 +39,48 @@ public class Politician extends Robot {
 			if(typeInQuestion != RobotType.SLANDERER){
 				continue;
 			}
-			// Stay a gridDistance of atleast two away from the nearest slanderer
-//			System.out.println("Nearby slanderer at: " + info.getLocation().toString());
+			// Stay a gridDistance of atleast two farther away from the nearest slanderer
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
 			minDist = Math.max(minDist, gridDist + 2);
 		}
-		if(minDist == 0){
-			minDist = 4; // Default politician distance
-		}
 		System.out.println("My min dist: " + minDist);
 
-		if(Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist){
-			inGrid = true;
-		}
-		else{
-			inGrid = false;
-		}
+//		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
+		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
 		System.out.println("Am I on the grid? " + inGrid);
+
 		if(!inGrid){
 			System.out.println("Going to grid at minDist: " + minDist);
 			nav.goToGrid(minDist);
 		}
 		else{
-			System.out.println("Alr on grid at minDist: " + minDist + ", maintaining it");
-			nav.maintainGrid(minDist);
+			checkOnWall();
+			System.out.println("Alr on grid at minDist: " + minDist + ", going ccw? " + ccw);
+			nav.runAroundGrid(minDist, ccw);
+		}
+	}
+
+	public void checkOnWall() throws GameActionException {
+		// Move around
+		Direction start = myLoc.directionTo(creatorLoc);
+		Direction dir = start;
+		boolean occupied = true;
+		for(int i = 0; i <= 4; i++){
+			MapLocation newLoc = myLoc.add(dir);
+			// You've run into a wall! So start going the other way
+			if(!rc.onTheMap(newLoc)){
+				ccw = !ccw;
+				return;
+			}
+			if(rc.canMove(dir) || !rc.isLocationOccupied(newLoc)){
+				occupied = false;
+			}
+			if(ccw){ dir = dir.rotateRight(); }
+			else{ dir = dir.rotateLeft(); }
+		}
+		if(occupied){
+			ccw = !ccw;
+			return;
 		}
 	}
 

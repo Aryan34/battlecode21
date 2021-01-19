@@ -181,10 +181,12 @@ public class Navigation {
 
 		// Try moving away from the center
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+			System.out.println("Moving away from center");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
 
+		// Find the closest location
 		int bestDist = Integer.MAX_VALUE;
 		MapLocation bestLoc = null;
 
@@ -214,56 +216,6 @@ public class Navigation {
 			tryCCWFromStart(myLoc.directionTo(creatorLoc).rotateRight());
 		}
 	}
-
-
-
-
-	public void goToGrid2(int minDist) throws GameActionException {
-		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
-		if(rc.getCooldownTurns() > 1){
-			return;
-		}
-		// If you didn't move away from the EC to your proper distance, then do so
-		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			Direction targetDir = creatorLoc.directionTo(myLoc);
-			// Move away from the EC
-			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
-			return;
-		}
-
-		// Move to the best spot
-		Direction bestCard = Direction.CENTER;
-		Direction bestNonCard = Direction.CENTER;
-		int bestCardDist = Integer.MAX_VALUE;
-		for(Direction dir : directions){
-			MapLocation nextLoc = myLoc.add(dir);
-			int newDist = Util.getGridSquareDist(nextLoc, creatorLoc);
-			if(!rc.canMove(dir)){
-				continue;
-			}
-			if(isCardinal(dir)){
-				// Move onto a grid square if you can
-				if(newDist >= minDist && newDist < bestCardDist){
-					bestCardDist = newDist;
-					bestCard = dir;
-				}
-			}
-			else{
-				// Go CCW
-				if(newDist >= minDist && Util.isCCW(myLoc.add(bestNonCard), myLoc.add(dir), creatorLoc)){
-					bestNonCard = dir;
-				}
-			}
-		}
-		if(bestCard != Direction.CENTER){
-			tryMove(bestCard);
-			return;
-		}
-		if(bestNonCard != Direction.CENTER){
-			tryMove(bestNonCard);
-		}
-	}
-
 
 	public void maintainGrid(int minDist) throws GameActionException {
 		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
@@ -318,6 +270,67 @@ public class Navigation {
 
 		// TODO: If you've hit an edge, then try going clockwise
 		// TODO: Some kind of expansion code
+	}
+
+
+	public Direction rotateCW(Direction dir){ return dir.rotateLeft().rotateLeft(); }
+	public Direction rotateCCW(Direction dir){ return dir.rotateRight().rotateRight(); }
+
+	public void runAroundGrid(int minDist, boolean ccw) throws GameActionException {
+		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
+		int dist = Util.getGridSquareDist(myLoc, creatorLoc);
+
+		// Move around
+		Direction start = myLoc.directionTo(creatorLoc);
+		if(isCardinal(start)){
+			if(ccw){ start = start.rotateRight(); }
+			else { start = start.rotateLeft(); }
+		}
+		Direction[] order = new Direction[4];
+		if(ccw){
+			order[0] = start;
+			order[1] = rotateCCW(start);
+			order[2] = rotateCW(start);
+			order[3] = start.opposite();
+		}
+		else{
+			order[0] = start;
+			order[1] = rotateCW(start);
+			order[2] = rotateCCW(start);
+			order[3] = start.opposite();
+		}
+
+		System.out.println("Starting direction: " + start);
+		for(Direction dir : order){
+			MapLocation newLoc = myLoc.add(dir);
+			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
+				continue;
+			}
+			if(tryMove(dir)){
+				return;
+			}
+		}
+
+//		Direction dir = start;
+//		for(int i = 0; i <= 4; i++){
+//			if(i != 0){
+//				if(ccw){ dir = dir.rotateRight(); }
+//				else{ dir = dir.rotateLeft(); }
+//			}
+//			MapLocation newLoc = myLoc.add(dir);
+//			System.out.println("Dir: " + dir.toString() + ", Checking: " + newLoc.toString());
+//			if(!rc.onTheMap(newLoc) || rc.isLocationOccupied(newLoc) || !rc.canMove(dir)){
+//				continue;
+//			}
+//			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
+//				continue;
+//			}
+//			if(!Util.isGridSquare(newLoc, creatorLoc)){
+//				continue;
+//			}
+//			tryMove(dir);
+//		}
+
 	}
 
 
