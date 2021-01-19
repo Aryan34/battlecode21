@@ -17,7 +17,13 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
-		runDefense();
+		if (attackTarget != null) {
+			System.out.println("Running attack!");
+			runAttack();
+		}
+		else {
+			runDefense();
+		}
 	}
 
 	public void moveRandom() throws GameActionException {
@@ -70,6 +76,19 @@ public class Politician extends Robot {
 				}
 
 			}
+		}
+	}
+
+	public void runAttack() throws GameActionException {
+		if (rc.getLocation().distanceSquaredTo(attackTarget) > 1) {
+			nav.goTo(attackTarget);
+		}
+
+		else if (rc.canEmpower(rc.getLocation().distanceSquaredTo(attackTarget))) {
+			System.out.println("Empowering...distance to target: " + rc.getLocation().distanceSquaredTo(attackTarget));
+			System.out.println(rc.getLocation());
+			System.out.println(attackTarget);
+			rc.empower(rc.getLocation().distanceSquaredTo(attackTarget));
 		}
 	}
 

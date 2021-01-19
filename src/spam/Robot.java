@@ -40,6 +40,7 @@ public class Robot {
 	// Moving robots variables
 	int creatorID;
 	MapLocation creatorLoc;
+	MapLocation attackTarget;
 	int robotLocationsIdx;
 	CornerInfo targetCorner;
 	MapLocation[] visited = new MapLocation[50];
@@ -73,9 +74,10 @@ public class Robot {
 			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
 		}
 		myFlag = 0;
-		robotLocations = new DetectedInfo[50];
+		robotLocations = new DetectedInfo[500];
 		robotLocationsIdx = 0;
 		targetCorner = null;
+		attackTarget = null;
 
 	}
 

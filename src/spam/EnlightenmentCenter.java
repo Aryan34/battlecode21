@@ -13,6 +13,9 @@ public class EnlightenmentCenter extends Robot {
 	int lastBid;
 	int slanderersSpawned = 0;
 	int EC_MIN_INFLUENCE = 50;
+	int DEF_POLI_MIN_COST = 15;
+	int ATK_POLI_MIN_COST = 50;
+
 	CornerInfo nearestCorner = null;
 
 
@@ -26,17 +29,19 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		if(numSpawned < 40 && !enemySpotted){
+		if(numSpawned < 10 && !enemySpotted){
 			System.out.println("Spawning scouts");
 			spawnScouts();
 		}
-		if(slanderersSpawned < 10000){
+		if(slanderersSpawned < 50){
 			spawnSlanderers();
 		}
-		else{
-			spawnPoliticians();
+		else if (attackTarget == null){
+			spawnPoliticians(true);
 		}
-
+		else {
+			spawnPoliticians(false);
+		}
 	}
 
 	public void checkRobotFlags() throws GameActionException {
@@ -113,15 +118,29 @@ public class EnlightenmentCenter extends Robot {
 
 	}
 
-	public void spawnPoliticians() throws GameActionException {
+	public void spawnPoliticians(boolean defense) throws GameActionException {
 		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
 		if(rc.getInfluence() < EC_MIN_INFLUENCE){
 			return;
 		}
-		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
-		// Figure out spawn direction
 
+		// Defense politicians have odd influence, attack politicians have even influence
+		int spawnInfluence;
+		if (defense) {
+			spawnInfluence = Math.max(DEF_POLI_MIN_COST, Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5));
+			if (spawnInfluence % 2 == 0) {
+				spawnInfluence -= 1;
+			}
+		}
+		else {
+			spawnInfluence = Math.max(ATK_POLI_MIN_COST, Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5));
+			if (spawnInfluence % 2 == 1) {
+				spawnInfluence -= 1;
+			}
+		}
+
+		// Figure out spawn direction
 		for(Direction dir : Navigation.directions){
 			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
 		}
