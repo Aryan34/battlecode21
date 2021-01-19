@@ -29,18 +29,43 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		if(numSpawned < 10 && !enemySpotted){
+		if (numSpawned < 10 && !enemySpotted) {
 			System.out.println("Spawning scouts");
 			spawnScouts();
 		}
-		if(slanderersSpawned < 50){
-			spawnSlanderers();
+		else if (numSpawned < 40 && !enemySpotted) {
+			System.out.println("Spawning everything");
+			// Spawn rotation: sland then pol then scout
+			if (numSpawned % 3 == 0) {
+				System.out.println("Spawning sland");
+				spawnSlanderers();
+			}
+			else if (numSpawned % 3 == 1) {
+				System.out.println("Spawning pol");
+//				spawnPoliticians();
+			}
+			else {
+				System.out.println("Spawning scout");
+				spawnScouts();
+			}
 		}
-		else if (attackTarget == null){
-			spawnPoliticians(true);
+		if (slanderersSpawned < 10000) {
+			System.out.println("Spawning ratio");
+			// 2:1 sland to pol ratio
+			// TODO: Change this to 1
+			if (numSpawned % 6 < 1) {
+				spawnPoliticians(false);
+			}
+			else if (numSpawned % 3 < 1) {
+				spawnPoliticians(true);
+			}
+			else {
+				spawnSlanderers();
+			}
 		}
 		else {
-			spawnPoliticians(false);
+			System.out.println("Spawning politicians");
+//			spawnPoliticians();
 		}
 	}
 
@@ -52,15 +77,15 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void saveSpawnedAlliesIDs() throws GameActionException {
-		for(Direction dir : Util.directions){
+		for (Direction dir : Util.directions) {
 			MapLocation loc = myLoc.add(dir);
-			if(rc.canSenseLocation(loc)){
+			if (rc.canSenseLocation(loc)) {
 				RobotInfo info = rc.senseRobotAtLocation(loc);
-				if(info == null){
+				if (info == null) {
 					continue;
 				}
 				int id = info.getID();
-				if(!spawnedAlliesSet.contains(id)){
+				if (!spawnedAlliesSet.contains(id)) {
 					spawnedAllies[numSpawned] = id;
 					spawnedAlliesSet.add(id);
 					numSpawned += 1;
@@ -74,19 +99,43 @@ public class EnlightenmentCenter extends Robot {
 		// Find a list of directions that I could spawn the robot in (list of unsearched directions)
 		Direction[] spawnDirections = new Direction[8];
 		int tempIdx = 0;
-		if(mapBoundaries[0] == 0){ spawnDirections[tempIdx] = Direction.WEST; tempIdx++; }
-		if(mapBoundaries[1] == 0){ spawnDirections[tempIdx] = Direction.EAST; tempIdx++; }
-		if(mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTH; tempIdx++; }
-		if(mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTH; tempIdx++; }
-		if(mapBoundaries[0] == 0 && mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTHWEST; tempIdx++; }
-		if(mapBoundaries[0] == 0 && mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTHWEST; tempIdx++; }
-		if(mapBoundaries[1] == 0 && mapBoundaries[2] == 0){ spawnDirections[tempIdx] = Direction.SOUTHEAST; tempIdx++; }
-		if(mapBoundaries[1] == 0 && mapBoundaries[3] == 0){ spawnDirections[tempIdx] = Direction.NORTHEAST; tempIdx++; }
+		if (mapBoundaries[0] == 0) {
+			spawnDirections[tempIdx] = Direction.WEST;
+			tempIdx++;
+		}
+		if (mapBoundaries[1] == 0) {
+			spawnDirections[tempIdx] = Direction.EAST;
+			tempIdx++;
+		}
+		if (mapBoundaries[2] == 0) {
+			spawnDirections[tempIdx] = Direction.SOUTH;
+			tempIdx++;
+		}
+		if (mapBoundaries[3] == 0) {
+			spawnDirections[tempIdx] = Direction.NORTH;
+			tempIdx++;
+		}
+		if (mapBoundaries[0] == 0 && mapBoundaries[2] == 0) {
+			spawnDirections[tempIdx] = Direction.SOUTHWEST;
+			tempIdx++;
+		}
+		if (mapBoundaries[0] == 0 && mapBoundaries[3] == 0) {
+			spawnDirections[tempIdx] = Direction.NORTHWEST;
+			tempIdx++;
+		}
+		if (mapBoundaries[1] == 0 && mapBoundaries[2] == 0) {
+			spawnDirections[tempIdx] = Direction.SOUTHEAST;
+			tempIdx++;
+		}
+		if (mapBoundaries[1] == 0 && mapBoundaries[3] == 0) {
+			spawnDirections[tempIdx] = Direction.NORTHEAST;
+			tempIdx++;
+		}
 
 		System.out.println(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
 		for (int i = numSpawned; i < numSpawned + tempIdx; i++) {
 			Direction spawnDir = spawnDirections[numSpawned % tempIdx];
-			if(Util.tryBuild(RobotType.MUCKRAKER, spawnDir, 1)){
+			if (Util.tryBuild(RobotType.MUCKRAKER, spawnDir, 1)) {
 				break;
 			}
 		}
@@ -95,24 +144,21 @@ public class EnlightenmentCenter extends Robot {
 
 	public void spawnSlanderers() throws GameActionException {
 		// Figure out spawn influence
-		if(rc.getInfluence() < EC_MIN_INFLUENCE){
+		System.out.println("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
+		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
 		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
 
 		// Spawn in random direction
 		boolean spawned = false;
-		if(Util.tryBuild(RobotType.SLANDERER, Direction.NORTH, spawnInfluence)){
-			spawned = true;
-		}
-//		for(Direction dir : Navigation.directions){
-//			if(Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence)){
-//				spawned = true;
-//				break;
-//			}
+//		if(Util.tryBuild(RobotType.SLANDERER, Direction.NORTH, spawnInfluence)){
+//			spawned = true;
 //		}
-
-		if(spawned){
+		for (Direction dir : Navigation.directions) {
+			Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
+		}
+		if (spawned) {
 			slanderersSpawned++;
 		}
 
@@ -121,7 +167,7 @@ public class EnlightenmentCenter extends Robot {
 	public void spawnPoliticians(boolean defense) throws GameActionException {
 		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
-		if(rc.getInfluence() < EC_MIN_INFLUENCE){
+		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
 
@@ -141,7 +187,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 
 		// Figure out spawn direction
-		for(Direction dir : Navigation.directions){
+		for (Direction dir : Navigation.directions) {
 			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
 		}
 	}
@@ -153,13 +199,13 @@ public class EnlightenmentCenter extends Robot {
 		int diffY2 = mapBoundaries[3] - myLoc.y;
 		int cornerX = mapBoundaries[0];
 		int xoff = 1;
-		if(diffX2 < diffX1){
+		if (diffX2 < diffX1) {
 			cornerX = mapBoundaries[1];
 			xoff = -1;
 		}
 		int cornerY = mapBoundaries[2];
 		int yoff = 1;
-		if(diffY2 < diffY1){
+		if (diffY2 < diffY1) {
 			cornerY = mapBoundaries[3];
 			yoff = -1;
 		}
@@ -168,7 +214,7 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void broadcastNearestCorner() throws GameActionException {
-		if(nearestCorner == null){
+		if (nearestCorner == null) {
 			return;
 		}
 		System.out.println("Broadcasting that nearest corner is: " + nearestCorner.toString());

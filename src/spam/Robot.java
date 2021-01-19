@@ -34,24 +34,25 @@ public class Robot {
 	int turnCount = 0;
 	Team myTeam;
 	RobotType myType;
-	int myFlag;
-	DetectedInfo[] robotLocations;
+	int myFlag = 0;
+	DetectedInfo[] robotLocations = new DetectedInfo[100];
+	int robotLocationsIdx = 0;
 
 	// Moving robots variables
 	int creatorID;
 	MapLocation creatorLoc;
-	MapLocation attackTarget;
-	int robotLocationsIdx;
-	CornerInfo targetCorner;
+	MapLocation attackTarget = null;
+	CornerInfo targetCorner = null;
 	MapLocation[] visited = new MapLocation[50];
 	int visitedIdx = 0;
+	RobotType typeInQuestion = null;
 
 	// EC variables
 	boolean doneScouting = false;
 	int[] mapBoundaries = new int[4]; // Format for this is [minX, maxX, minY, maxY], which is also [West, East, South, North]
 	int mapWidth = 0;
 	int mapHeight = 0;
-	boolean wonPrevVote;
+	boolean wonPrevVote = false;
 	int teamVotes;
 	boolean enemySpotted = false;
 
@@ -76,9 +77,6 @@ public class Robot {
 		myFlag = 0;
 		robotLocations = new DetectedInfo[500];
 		robotLocationsIdx = 0;
-		targetCorner = null;
-		attackTarget = null;
-
 	}
 
 	public void run() throws GameActionException {
@@ -117,4 +115,17 @@ public class Robot {
 		return val;
 	}
 
+	public void broadcastIdentity() throws GameActionException {
+		int purpose = 5;
+		int typeIdx = -1;
+		if(rc.getType() == RobotType.SLANDERER){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.POLITICIAN){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.MUCKRAKER){ typeIdx = 0; }
+		else if(rc.getType() == RobotType.ENLIGHTENMENT_CENTER){ typeIdx = 0; }
+		assert(typeIdx != -1);
+
+		int[] flagArray = {purpose, 4, typeIdx, 2};
+		int flag = Comms.concatFlag(flagArray);
+		Comms.setFlag(flag);
+	}
 }

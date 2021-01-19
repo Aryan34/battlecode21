@@ -86,6 +86,12 @@ public class Comms {
             case 3:
                 int[] splits3 = {4, 7, 7, 2};
                 return splitFlag(flag, splits3);
+            case 4:
+                int[] splits4 = {4, 7, 7, 2};
+                return splitFlag(flag, splits4);
+            case 5:
+                int[] splits5 = {4, 2};
+                return splitFlag(flag, splits5);
             default:
                 System.out.println("Unknown flag purpose detected!");
         }
@@ -201,7 +207,16 @@ public class Comms {
                 System.out.println("GETTING CORNER LOC FROM EC");
                 robot.targetCorner = CornerInfo.createCornerInfo(splits[3], xyToMapLocation(splits[1], splits[2]));
                 break;
+            case 4:
+                // TODO: Fill this out
+                break;
+            case 5:
+//                System.out.println("Reading troop type");
+                int typeNum = splits[1];
+                if(typeNum == 0){ robot.typeInQuestion = RobotType.SLANDERER; }
+                else if(typeNum == 1){ robot.typeInQuestion = RobotType.POLITICIAN; }
+                else if(typeNum == 2){ robot.typeInQuestion = RobotType.MUCKRAKER; }
+                else if(typeNum == 3){ robot.typeInQuestion = RobotType.ENLIGHTENMENT_CENTER; }
         }
     }
-
 }
