@@ -43,13 +43,18 @@ public class Comms {
     static Robot robot;
 
     static boolean setFlag(int flag) throws GameActionException {
+        if(robot.setFlagThisRound){
+            return false;
+        }
         if(robot.myFlag == flag){
             // Flag is already set to that
+            robot.setFlagThisRound = true;
             return true;
         }
         if(rc.canSetFlag(flag)){
             rc.setFlag(flag);
             robot.myFlag = flag;
+            robot.setFlagThisRound = true;
             return true;
         }
         return false;
@@ -183,12 +188,17 @@ public class Comms {
 
                 MapLocation detectedLoc = xyToMapLocation(splits[2], splits[3]);
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
-                if(robot.attackTarget == null && detectedType == RobotType.ENLIGHTENMENT_CENTER && (detectedTeam == robot.myTeam.opponent() || detectedTeam == Team.NEUTRAL)) {
-                    System.out.println("FOUND A TARGET EC!");
-                    robot.attackTarget = detectedLoc;
+                if(detectedType == RobotType.ENLIGHTENMENT_CENTER && (detectedTeam == robot.myTeam.opponent() || detectedTeam == Team.NEUTRAL)) {
                     if(robot.myType == RobotType.ENLIGHTENMENT_CENTER){
-                        System.out.println("BROADCASTING TARGET EC LOCATION");
-                        rc.setFlag(flag);
+                        if(robot.attackTarget == null){
+                            System.out.println("BROADCASTING TARGET EC LOCATION");
+                            rc.setFlag(flag);
+                            robot.attackTarget = detectedLoc;
+                        }
+                    }
+                    else{
+                        System.out.println("FOUND A TARGET EC!");
+                        robot.attackTarget = detectedLoc;
                     }
                 }
                 if(detectedTeam == robot.myTeam.opponent()){

@@ -16,7 +16,6 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
-		RobotInfo[] nearby = rc.senseNearbyRobots();
 
 		if(isAttacking && attackTarget != null){
 			System.out.println("Attacking: " + attackTarget.toString());
@@ -64,6 +63,12 @@ public class Politician extends Robot {
 	}
 
 	public void runAttack() throws GameActionException {
+		if(rc.canSenseLocation(attackTarget)){
+			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
+				attackTarget = null;
+				return;
+			}
+		}
 		if (rc.getLocation().distanceSquaredTo(attackTarget) > 1) {
 			nav.goTo(attackTarget);
 		}

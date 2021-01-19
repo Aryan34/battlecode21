@@ -5,15 +5,10 @@ import battlecode.common.*;
 public class Muckraker extends Robot {
 
 	Direction createdDir = null;
-	FlagObj[] flagQueue = new FlagObj[20];
-	int flagQueueIdx = 0;
 	MapLocation targetECLoc = null;
 
 	public Muckraker (RobotController rc) throws GameActionException {
 		super(rc);
-		for(int i = 0; i < flagQueue.length; i++){
-			flagQueue[i] = new FlagObj();
-		}
 	}
 
 	public void run() throws GameActionException {
@@ -22,7 +17,7 @@ public class Muckraker extends Robot {
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		exposeSlanderers(nearby);
 		Comms.checkFlag(creatorID);
-		relayEnemyLocations(nearby);
+		relayRobotLocations(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
 		if(true){
 			runScout();
@@ -30,23 +25,7 @@ public class Muckraker extends Robot {
 		else{
 			runAttack();
 		}
-		int minIdx = 0;
-		for(int i = 0; i < flagQueue.length; i++){
-			if(flagQueue[i].priority < flagQueue[minIdx].priority && !flagQueue[i].added){
-				minIdx = i;
-			}
-		}
-		FlagObj flagobj = flagQueue[minIdx];
-		if(flagobj.priority != Integer.MAX_VALUE || flagobj.added){
-			Comms.setFlag(flagobj.flag);
-			flagobj.added = true;
-		}
-	}
-
-	public void addFlagToQueue(int flag, int priority){
-		flagQueue[flagQueueIdx].flag = flag;
-		flagQueue[flagQueueIdx].priority = priority;
-		flagQueue[flagQueueIdx].added = false;
+		Comms.setFlag(0); // Reset flag to 0 so you don't send stuff multiple times
 	}
 
 	public void exposeSlanderers(RobotInfo[] nearby) throws GameActionException {
@@ -57,31 +36,6 @@ public class Muckraker extends Robot {
 		}
 	}
 
-	public void relayEnemyLocations(RobotInfo[] nearby) throws GameActionException {
-		for(RobotInfo info : nearby){
-			int purpose = 2;
-			int[] xy = Comms.mapLocationToXY(info.getLocation());
-			int x = xy[0];
-			int y = xy[1];
-			// 0: Enemy EC, 1: Friendly EC, 2: Neutral EC, 3: Enemy robot
-			if(info.getTeam() == myTeam.opponent()){
-				int robot_type = 3; // Detected random enemy robot
-				if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
-					robot_type = 0; // Detected enemy EC
-				}
-				int[] flagArray = {purpose, 4, robot_type, 2, x, 7, y, 7};
-				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag to enemy: " + Comms.printFlag(flag));
-				addFlagToQueue(flag, 2);
-			}
-			else if(info.getTeam() == Team.NEUTRAL){
-				int[] flagArray = {purpose, 4, 2, 2, x, 7, y, 7};
-				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag to neutral: " + Comms.printFlag(flag));
-				addFlagToQueue(flag, 2);
-			}
-		}
-	}
 
 	// METHODS FOR SCOUT BOT (which find the boundary of the map)
 
@@ -111,7 +65,6 @@ public class Muckraker extends Robot {
 		if(rc.getCooldownTurns() > 1){
 			return;
 		}
-		RobotInfo[] nearby = rc.senseNearbyRobots();
 		double maxHeuristic = Integer.MIN_VALUE;
 		Direction bestDir = Direction.CENTER;
 		for(Direction dir : Navigation.directions){
@@ -183,7 +136,7 @@ public class Muckraker extends Robot {
 		return heuristic;
 	}
 
-	public int addBoundaryFlag(Direction boundaryDir, MapLocation outOfBounds) {
+	public int addBoundaryFlag(Direction boundaryDir, MapLocation outOfBounds) throws GameActionException {
 			// I've found the OB location, so set my flag to correspond with that
 			int purpose = 1;
 			int directionCode = 0;
@@ -196,7 +149,7 @@ public class Muckraker extends Robot {
 
 			int[] flagArray = {purpose, 4, directionCode, 2, borderValue, 15};
 			int flag = Comms.concatFlag(flagArray);
-			addFlagToQueue(flag, 1);
+			Comms.setFlag(flag);
 			return borderValue;
 	}
 

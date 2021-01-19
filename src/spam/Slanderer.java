@@ -9,7 +9,6 @@ public class Slanderer extends Robot {
 
 	public Slanderer (RobotController rc) throws GameActionException {
 		super(rc);
-		broadcastIdentity();
 	}
 
 	public void run() throws GameActionException {
@@ -29,6 +28,7 @@ public class Slanderer extends Robot {
 			Comms.checkFlag(creatorID);
 			runEco();
 		}
+		broadcastIdentity();
 	}
 
 	public void runEco() throws GameActionException {
