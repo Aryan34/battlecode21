@@ -29,43 +29,36 @@ public class EnlightenmentCenter extends Robot {
 //		bid();
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
-		if (numSpawned < 10 && !enemySpotted) {
-			System.out.println("Spawning scouts");
-			spawnScouts();
+
+		if(!enemySpotted){
+			if(numSpawned < 30){
+				spawnRatio(3, 1, 1);
+			}
+			else{
+				spawnRatio(1, 2, 1);
+			}
 		}
-		else if (numSpawned < 40 && !enemySpotted) {
-			System.out.println("Spawning everything");
-			// Spawn rotation: sland then pol then scout
+		else{
+			spawnRatio(1, 2, 2);
+		}
+	}
+
+	public void spawnRatio(int slands, int pols, int mucks) throws GameActionException {
+		int total = slands + pols + mucks;
+		int mod = numSpawned % total;
+		if(mod < slands){
+			spawnSlanderers();
+		}
+		else if(mod < slands + pols){
 			if (numSpawned % 3 == 0) {
-				System.out.println("Spawning sland");
-				spawnSlanderers();
-			}
-			else if (numSpawned % 3 == 1) {
-				System.out.println("Spawning pol");
-//				spawnPoliticians();
-			}
-			else {
-				System.out.println("Spawning scout");
-				spawnScouts();
-			}
-		}
-		if (slanderersSpawned < 10000) {
-			System.out.println("Spawning ratio");
-			// 2:1 sland to pol ratio
-			// TODO: Change this to 1
-			if (numSpawned % 6 < 1) {
 				spawnPoliticians(false);
 			}
-			else if (numSpawned % 3 < 1) {
+			else {
 				spawnPoliticians(true);
 			}
-			else {
-				spawnSlanderers();
-			}
 		}
-		else {
-			System.out.println("Spawning politicians");
-//			spawnPoliticians();
+		else{
+			spawnMucks();
 		}
 	}
 
@@ -84,6 +77,10 @@ public class EnlightenmentCenter extends Robot {
 				if (info == null) {
 					continue;
 				}
+				// NOTE: It only saves muck's ids rn
+//				if(info.getType() != RobotType.MUCKRAKER){
+//					continue;
+//				}
 				int id = info.getID();
 				if (!spawnedAlliesSet.contains(id)) {
 					spawnedAllies[numSpawned] = id;
@@ -95,8 +92,9 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 
-	public void spawnScouts() throws GameActionException {
+	public void spawnMucks() throws GameActionException {
 		// Find a list of directions that I could spawn the robot in (list of unsearched directions)
+		System.out.println("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
 		Direction[] spawnDirections = new Direction[8];
 		int tempIdx = 0;
 		if (mapBoundaries[0] == 0) {
@@ -148,7 +146,7 @@ public class EnlightenmentCenter extends Robot {
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
-		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 5);
+		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 10);
 
 		// Spawn in random direction
 		boolean spawned = false;
