@@ -2,41 +2,6 @@ package spam;
 
 import battlecode.common.*;
 
-class CornerInfo {
-    MapLocation loc;
-    int xoff;
-    int yoff;
-
-    public CornerInfo(MapLocation loc, int xoff, int yoff){
-        this.loc = loc;
-        this.xoff = xoff;
-        this.yoff = yoff;
-    }
-
-    public int getCornerDirection(){
-        // 0: bottomleft, 1: bottomright, 2: topleft, 3: topright
-        int tempY = (yoff + 1) / 2;
-        int tempX = (xoff + 1) / 2;
-        return tempY * 2 + tempX;
-    }
-
-    public static CornerInfo createCornerInfo(int cornerDirection, MapLocation loc){
-        // 0: bottomleft, 1: bottomright, 2: topleft, 3: topright
-        System.out.println("Incoming cornerDir: " + cornerDirection);
-        int xoff = cornerDirection & 1;
-        int yoff = (cornerDirection / 2) & 1;
-        System.out.println("Xoff: " + xoff);
-        System.out.println("Yoff: " + yoff);
-        xoff = xoff * 2 - 1;
-        yoff = yoff * 2 - 1;
-        return new CornerInfo(loc, xoff, yoff);
-    }
-
-    public String toString() {
-        return "Location: " + loc.toString() + ", xoff: " + xoff + ", yoff:" + yoff + " cornerDir: " + getCornerDirection();
-    }
-}
-
 public class Comms {
 
     static RobotController rc;
@@ -56,6 +21,9 @@ public class Comms {
             robot.myFlag = flag;
             robot.setFlagThisRound = true;
             return true;
+        }
+        else{
+            System.out.println("CAN'T SET FLAG TO: " + flag);
         }
         return false;
     }
@@ -188,21 +156,12 @@ public class Comms {
 
                 MapLocation detectedLoc = xyToMapLocation(splits[2], splits[3]);
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
-                if(detectedType == RobotType.ENLIGHTENMENT_CENTER && (detectedTeam == robot.myTeam.opponent() || detectedTeam == Team.NEUTRAL)) {
-                    if(robot.myType == RobotType.ENLIGHTENMENT_CENTER){
-                        if(robot.attackTarget == null){
-                            System.out.println("BROADCASTING TARGET EC LOCATION");
-                            rc.setFlag(flag);
-                            robot.attackTarget = detectedLoc;
-                        }
-                    }
-                    else{
-                        System.out.println("FOUND A TARGET EC!");
-                        robot.attackTarget = detectedLoc;
-                    }
-                }
                 if(detectedTeam == robot.myTeam.opponent()){
                     robot.enemySpotted = true;
+                    System.out.println("ENEMY SPOTTED !!!!!");
+                }
+                if(detectedType == RobotType.ENLIGHTENMENT_CENTER && detectedTeam != rc.getTeam()){
+                    System.out.println("DETECTED ENLIGHTENMENT CENTER!");
                 }
                 if(savedLocations.length == 0){
                     robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
@@ -217,10 +176,21 @@ public class Comms {
                 break;
             case 3: // Corner location to hide in
                 System.out.println("GETTING CORNER LOC FROM EC");
-                robot.targetCorner = CornerInfo.createCornerInfo(splits[3], xyToMapLocation(splits[1], splits[2]));
                 break;
             case 4:
-                // TODO: Fill this out
+                System.out.println("Found a message to attack!");
+                int x = splits[1];
+                int y = splits[2];
+                MapLocation attackLoc = xyToMapLocation(x, y);
+                if(robot.myType == RobotType.POLITICIAN && (splits[3] == 0 || splits[3] == 2)){
+                    robot.attackTarget = attackLoc;
+                }
+                if(robot.myType == RobotType.MUCKRAKER && (splits[3] == 1 || splits[3] == 2)){
+                    robot.attackTarget = attackLoc;
+                }
+                if(splits[3] == 3){
+                    robot.attackTarget = null;
+                }
                 break;
             case 5:
 //                System.out.println("Reading troop type");

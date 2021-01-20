@@ -2,13 +2,17 @@ package spam;
 
 import battlecode.common.*;
 
+// NOTE: Attacking muckrackers have odd influence, scout muckrackers have even influence
+
 public class Muckraker extends Robot {
 
 	Direction createdDir = null;
 	MapLocation targetECLoc = null;
+	boolean isAttacking;
 
 	public Muckraker (RobotController rc) throws GameActionException {
 		super(rc);
+		isAttacking = rc.getInfluence() % 2 == 1;
 	}
 
 	public void run() throws GameActionException {
@@ -17,13 +21,15 @@ public class Muckraker extends Robot {
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		exposeSlanderers(nearby);
 		Comms.checkFlag(creatorID);
-		relayRobotLocations(nearby);
+//		relayRobotLocations(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
-		if(true){
-			runScout();
+		if(isAttacking && attackTarget != null){
+			System.out.println("Yam attacking: " + attackTarget.toString());
+			runAttack();
 		}
 		else{
-			runAttack();
+			System.out.println("Yam scouting");
+			runScout();
 		}
 		Comms.setFlag(0); // Reset flag to 0 so you don't send stuff multiple times
 	}
@@ -93,6 +99,7 @@ public class Muckraker extends Robot {
 
 	// Heuristic used to spread out when searching
 	public double calcSpreadHeuristic(RobotInfo[] nearby, MapLocation nextLoc) throws GameActionException {
+		//TOOD: add passability to this heuristic
 		double passability = rc.sensePassability(nextLoc);
 		double heuristic = 0.0;
 		int closestEdge = Integer.MAX_VALUE;

@@ -62,6 +62,9 @@ public class Navigation {
 		return dirs;
 	}
 
+	static Direction[] randomizedDirs(){
+		return Util.shuffleArr(directions);
+	}
 
 	RobotController rc;
 	Robot robot;
@@ -87,6 +90,7 @@ public class Navigation {
 	 * @return true if a move was performed
 	 * @throws GameActionException
 	 */
+
 	public boolean tryMove(Direction dir) throws GameActionException {
 		System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
 		if (rc.canMove(dir)) {

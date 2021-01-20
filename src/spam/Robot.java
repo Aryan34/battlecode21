@@ -33,7 +33,6 @@ public class Robot {
 	int creatorID;
 	MapLocation creatorLoc;
 	MapLocation attackTarget = null;
-	CornerInfo targetCorner = null;
 	MapLocation[] visited = new MapLocation[50];
 	int visitedIdx = 0;
 	RobotType typeInQuestion = null;
@@ -83,6 +82,7 @@ public class Robot {
 			wonPrevVote = true;
 			teamVotes = rc.getTeamVotes();
 		}
+		Comms.checkFlag(rc.getID());
 		nearby = rc.senseNearbyRobots();
 		for(RobotInfo info : nearby){
 			if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
@@ -125,13 +125,15 @@ public class Robot {
 		Comms.setFlag(flag);
 	}
 
+	// If you can sense any ECs, relay that information to everyone else
 	public void relayRobotLocations(RobotInfo[] nearby) throws GameActionException {
-		if(setFlagThisRound){ // Don't waste the bytecode
-			return;
-		}
 		for(RobotInfo info : nearby){
+			if(setFlagThisRound){ // Don't waste the bytecode
+				System.out.println("Already set my flag this round ://");
+				continue;
+			}
 			DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, info.getLocation());
-			if(savedLocations.length != 0 && savedLocations[0].team == info.getTeam() && savedLocations[0].type == info.getType()){
+			if(savedLocations.length != 0 && (savedLocations[0].team == info.getTeam() && savedLocations[0].type == info.getType())){
 				continue;
 			}
 			System.out.println("Found something new! Broadcasting it");
@@ -141,10 +143,12 @@ public class Robot {
 			int y = xy[1];
 			// 0: Enemy EC, 1: Friendly EC, 2: Neutral EC, 3: Enemy robot
 			if(info.getTeam() == myTeam.opponent()){
-				int robot_type = 3; // Detected random enemy robot
-				if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
-					robot_type = 0; // Detected enemy EC
-				}
+				int robot_type = 0;
+//			if(info.getTeam() == myTeam.opponent()){
+//				int robot_type = 3; // Detected random enemy robot
+//				if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
+//					robot_type = 0; // Detected enemy EC
+//				}
 				int[] flagArray = {purpose, 4, robot_type, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
 				System.out.println("Setting flag to enemy: " + Comms.printFlag(flag));

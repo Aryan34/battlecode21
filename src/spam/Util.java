@@ -3,6 +3,7 @@ package spam;
 import battlecode.common.*;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class Util {
 
@@ -48,7 +49,7 @@ public class Util {
 			rc.buildRobot(type, dir, influence);
 			return true;
 		}
-		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence);
+//		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence);
 		return false;
 	}
 
@@ -111,6 +112,21 @@ public class Util {
 		int diffX = loc.x - ECLoc.x;
 		int diffY = loc.y - ECLoc.y;
 		return Math.max(Math.abs(diffX), Math.abs(diffY));
+	}
+
+	static Direction[] shuffleArr(Direction[] arr){
+		Random rand = new Random();
+		Direction[] copy = new Direction[arr.length];
+		for(int i = 0; i < arr.length; i++){
+			copy[i] = arr[i];
+		}
+		for (int i = 0; i < copy.length; i++) {
+			int randomIndexToSwap = rand.nextInt(copy.length);
+			Direction temp = copy[randomIndexToSwap];
+			copy[randomIndexToSwap] = copy[i];
+			copy[i] = temp;
+		}
+		return copy;
 	}
 
 

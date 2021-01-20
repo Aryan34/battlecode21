@@ -15,29 +15,32 @@ public class Slanderer extends Robot {
 		super.run();
 		// Changed to politician
 		if(rc.getType() == RobotType.POLITICIAN){
-			// Reset flag!
-			Comms.setFlag(0);
+			myType = RobotType.POLITICIAN;
+			System.out.println("Running slanderer code as politician");
 			if(pol == null){
 				pol = new Politician(rc);
 				pol.creatorLoc = creatorLoc;
 				pol.creatorID = creatorID;
+				pol.isAttacking = true;
+				// Reset flag!
+				pol.myFlag = myFlag;
+				pol.attackTarget = attackTarget;
+				// TODO: Copy over the rest of the variables?
+
+				System.out.println("Resetting flag to 0!");
+				System.out.println(Comms.setFlag(0));
 			}
 			pol.run();
 		}
 		else{
 			Comms.checkFlag(creatorID);
 			runEco();
+			broadcastIdentity();
 		}
-		broadcastIdentity();
 	}
 
 	public void runEco() throws GameActionException {
-		if(Util.isGridSquare(myLoc, creatorLoc)){
-			inGrid = true;
-		}
-		else{
-			inGrid = false;
-		}
+		inGrid = Util.isGridSquare(myLoc, creatorLoc);
 		System.out.println("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
 		if(!inGrid){
 			nav.goToGrid(2);

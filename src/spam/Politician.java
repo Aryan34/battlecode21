@@ -2,6 +2,8 @@ package spam;
 
 import battlecode.common.*;
 
+// NOTE: Defense politicians have odd influence, attack politicians have even influence
+
 public class Politician extends Robot {
 
 	boolean inGrid = false;
@@ -16,6 +18,7 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
+		System.out.println(isAttacking ? "Attacking poli" : "Defensive poli");
 
 		if(isAttacking && attackTarget != null){
 			System.out.println("Attacking: " + attackTarget.toString());
@@ -23,6 +26,10 @@ public class Politician extends Robot {
 		}
 		else {
 			runEco(nearby);
+		}
+
+		if(!setFlagThisRound){
+			Comms.setFlag(0);
 		}
 	}
 
@@ -42,7 +49,8 @@ public class Politician extends Robot {
 			}
 			// Stay a gridDistance of atleast two farther away from the nearest slanderer
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
-			minDist = Math.max(minDist, gridDist + 2);
+			System.out.println("Friendly slanderer at: " + info.getLocation());
+			minDist = Math.max(minDist, gridDist + 1);
 		}
 		System.out.println("My min dist: " + minDist);
 
@@ -67,21 +75,19 @@ public class Politician extends Robot {
 				return;
 			}
 		}
-		if (rc.getLocation().distanceSquaredTo(attackTarget) > 1) {
+		int dist = myLoc.distanceSquaredTo(attackTarget);
+		if (dist > 1) {
 			nav.goTo(attackTarget);
 		}
-		else{
-			int dist = myLoc.distanceSquaredTo(attackTarget);
-			if (rc.canEmpower(dist)) {
-				System.out.println("Empowering...distance to target: " + dist);
-				rc.empower(dist);
-			}
+		else if (rc.canEmpower(dist)) {
+			System.out.println("Empowering...distance to target: " + dist);
+			rc.empower(dist);
 		}
 	}
 
 	public void killNearby() throws GameActionException {
 		for (RobotInfo info : nearby) {
-			// Only kill enemy mucks
+			// Only kill enemy mucks, and only kill them if there's a sland nearby (otherwise follow them around)
 			if (info.team == myTeam.opponent() && myLoc.distanceSquaredTo(info.location) < 3 && info.type == RobotType.MUCKRAKER) {
 				if(rc.canEmpower(2)){
 					rc.empower(2);
