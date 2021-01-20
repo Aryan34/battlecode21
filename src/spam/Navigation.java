@@ -212,7 +212,6 @@ public class Navigation {
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
 			System.out.println("Moving away from center");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
-			// TODO: Change this to bugnav instead of fuzzynav
 			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
 

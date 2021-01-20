@@ -92,9 +92,6 @@ public class Muckraker extends Robot {
 		if(bestDir != Direction.CENTER){
 			nav.tryMove(bestDir);
 		}
-
-		// TODO: IF YOU'RE CLOSE TO ENEMY EC, ATTACK IT
-
 	}
 
 	// Heuristic used to spread out when searching
@@ -177,8 +174,5 @@ public class Muckraker extends Robot {
 			nav.fuzzyNav(targetECLoc);
 		}
 	}
-
-
-
 
 }

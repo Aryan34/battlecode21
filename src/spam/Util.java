@@ -49,7 +49,7 @@ public class Util {
 			rc.buildRobot(type, dir, influence);
 			return true;
 		}
-//		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence);
+		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence + ", in direction: " + dir.toString());
 		return false;
 	}
 

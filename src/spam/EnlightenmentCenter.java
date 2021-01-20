@@ -13,13 +13,15 @@ class SpawnInfo {
 	Direction spawnDir;
 	int id;
 	int spawnInfluence;
+	int spawnRound;
 	boolean alive;
 
-	public SpawnInfo(RobotType type, Direction spawnDir, int id, int spawnInfluence){
+	public SpawnInfo(RobotType type, Direction spawnDir, int id, int spawnInfluence, int spawnRound){
 		this.type = type;
 		this.spawnDir = spawnDir;
 		this.id = id;
 		this.spawnInfluence = spawnInfluence;
+		this.spawnRound = spawnRound;
 		this.alive = true;
 	}
 }
@@ -31,10 +33,12 @@ public class EnlightenmentCenter extends Robot {
 	HashSet<Integer> spawnedAlliesIDs = new HashSet<Integer>();
 	int numSpawned = 0;
 	int lastBid;
-	int EC_MIN_INFLUENCE = 15;
+	int EC_MIN_INFLUENCE = 10;
 	final int DEF_POLI_MIN_COST = 20;
 	final int ATK_POLI_MIN_COST = 50;
-	final int SLAND_MIN_COST = 40;
+	final int SLAND_MIN_COST = 21;
+	final int ATTACK_MIN_INFLUENCE = 1200;
+	final int STOP_ATTACK_MIN_INFLUENCE = 300;
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
 		super(rc);
@@ -44,9 +48,9 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Uncomment this, only here to make games shorter
-		if(rc.getRoundNum() > 800){
-			rc.resign();
-		}
+//		if(rc.getRoundNum() > 100){
+//			rc.resign();
+//		}
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 		setAttackTarget();
@@ -55,47 +59,37 @@ public class EnlightenmentCenter extends Robot {
 			System.out.println("ATTACKING: " + attackTarget.toString());
 		}
 		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
+		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = muckraker
 		if(!enemySpotted){
-			if(numSpawned < 30){
-				System.out.println("Spawning A");
-				spawnRatio(1, 1, 0, 2);
-			}
-			else{
-				System.out.println("Spawning B");
-				spawnRatio(2, 2, 1, 1);
-			}
+			System.out.println("Spawning A");
+			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
+			spawnOrder(order);
 		}
 		else if(attackTarget != null){
 			System.out.println("Spawning C");
-			spawnRatio(1, 1, 2, 2);
+			int[] order = {2, 3, 2, 3, 1, 0, 3};
+			spawnOrder(order);
 		}
 		else{
 			if(numSpawned < 300){
 				System.out.println("Spawning D");
-				spawnRatio(1, 2, 1, 1);
+				int[] order = {1, 2, 1, 3, 3, 0};
+				spawnOrder(order);
 			}
 			else{
 				System.out.println("Spawning E");
-				spawnRatio(1, 1, 2, 1);
+				int[] order = {1, 2, 1, 3, 0, 0};
+				spawnOrder(order);
 			}
 		}
 	}
 
-	public void spawnRatio(int slands, int defensePols, int attackPols, int mucks) throws GameActionException {
-		int total = slands + defensePols + attackPols + mucks;
-		int mod = numSpawned % total;
-		if(mod < slands){
-			spawnSlanderers();
-		}
-		else if(mod < slands + defensePols) {
-			spawnPoliticians(true);
-		}
-		else if(mod < slands + defensePols + attackPols) {
-			spawnPoliticians(false);
-		}
-		else{
-			spawnMucks();
-		}
+	public void spawnOrder(int[] order) throws GameActionException {
+		int type = order[numSpawned % order.length];
+		if(type == 0){ spawnSlanderers(); }
+		if(type == 1){ spawnPoliticians(true); }
+		if(type == 2){ spawnPoliticians(false); }
+		if(type == 3){ spawnMucks(); }
 	}
 
 	public void checkRobotFlags() throws GameActionException {
@@ -115,7 +109,7 @@ public class EnlightenmentCenter extends Robot {
 				}
 				int id = info.getID();
 				if (!spawnedAlliesIDs.contains(id)) {
-					spawnedAllies[numSpawned] = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id, info.getInfluence());
+					spawnedAllies[numSpawned] = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id, info.getInfluence(), rc.getRoundNum());
 					spawnedAlliesIDs.add(id);
 					numSpawned += 1;
 				}
@@ -131,16 +125,9 @@ public class EnlightenmentCenter extends Robot {
 				}
 				info.alive = false;
 			}
-			else if(info.type == RobotType.SLANDERER || info.type == RobotType.POLITICIAN){
+			else if(info.type == RobotType.SLANDERER && rc.getRoundNum() >= info.spawnRound + GameConstants.CAMOUFLAGE_NUM_ROUNDS){
 				// Check if the slanderer converted to a politician, and if it did, it must've converted to an attack politician
-				typeInQuestion = null;
-				Comms.checkFlag(info.id);
-				if(typeInQuestion == RobotType.SLANDERER) {
-					info.type = RobotType.SLANDERER;
-				}
-				else {
-					info.type = RobotType.POLITICIAN;
-				}
+				info.type = RobotType.POLITICIAN;
 			}
 		}
 		System.out.println("Troop count:" + filterSpawnedRobots(null, null, -1).length);
@@ -198,10 +185,15 @@ public class EnlightenmentCenter extends Robot {
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
-		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 3);
+		// Spawn super high inf slanderers early on. Could make this a linear scale or smth
+		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.5));
+		if(rc.getRoundNum() < 100){
+			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.15));
+		}
 		if(spawnInfluence < SLAND_MIN_COST){
 			return;
 		}
+		// Setup so that it becomes an attack poli instead of a defense poli
 		if(spawnInfluence % 2 == 1){
 			spawnInfluence -= 1;
 		}
@@ -216,16 +208,18 @@ public class EnlightenmentCenter extends Robot {
 	public void spawnPoliticians(boolean defense) throws GameActionException {
 		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
+		System.out.println(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
+		System.out.println("My influence is greater than EC Min influence!");
 
 		Direction[] spawnDirs = Navigation.randomizedDirs();
-
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
-			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 6);
+			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 6));
+			System.out.println(spawnInfluence + " " + DEF_POLI_MIN_COST);
 			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 0) {
 				spawnInfluence -= 1;
@@ -234,11 +228,12 @@ public class EnlightenmentCenter extends Robot {
 				if(info.type == RobotType.MUCKRAKER && info.team == myTeam.opponent()){
 					// If you sense an enemy muck nearby, spawn it in the direction of the muck
 					spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
+					break;
 				}
 			}
 		}
 		else {
-			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, rc.getInfluence() / 3);
+			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 2.5));
 			if(spawnInfluence < ATK_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 1) {
 				spawnInfluence -= 1;
@@ -250,7 +245,9 @@ public class EnlightenmentCenter extends Robot {
 
 		// Figure out spawn direction
 		for (Direction dir : spawnDirs) {
-			Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence);
+			if(Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence)){
+				break;
+			}
 		}
 	}
 
@@ -270,7 +267,7 @@ public class EnlightenmentCenter extends Robot {
 				attackTarget = null;
 			}
 			else{
-				if(attackInf < 100){
+				if(attackInf < STOP_ATTACK_MIN_INFLUENCE){
 					attackTarget = null;
 				}
 				return;
@@ -292,7 +289,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		if(closestTarget != null){
 			// Guess how much it costs to capture? Send waves of 200 maybe?
-			if(attackInf > 400){
+			if(attackInf > ATTACK_MIN_INFLUENCE){
 				attackTarget = closestTarget;
 			}
 		}
