@@ -26,8 +26,10 @@ public class Politician extends Robot {
 		}
 		else {
 			if (rc.getInfluence() > 700){
-				//do suicide
-				System.out.println("Sacrificial politician activated");
+				// System.out.println("Sacrificial politician activated");
+				if (rc.detectNearbyRobots(1).length == 0){
+					rc.empower(1);
+				}
 			}
 			else {
 				runEco(nearby);
