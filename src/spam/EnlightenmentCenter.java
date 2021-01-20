@@ -87,8 +87,8 @@ public class EnlightenmentCenter extends Robot {
 	public void spawnOrder(int[] order) throws GameActionException {
 		int type = order[numSpawned % order.length];
 		if(type == 0){ spawnSlanderers(); }
-		if(type == 1){ spawnPoliticians(true); }
-		if(type == 2){ spawnPoliticians(false); }
+		if(type == 1){ spawnPoliticians(true, false); }
+		if(type == 2){ spawnPoliticians(false, false); }
 		if(type == 3){ spawnMucks(); }
 	}
 
@@ -205,7 +205,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public void spawnPoliticians(boolean defense) throws GameActionException {
+	public void spawnPoliticians(boolean defense, boolean sacrifice) throws GameActionException {
 		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
 		System.out.println(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
@@ -217,7 +217,19 @@ public class EnlightenmentCenter extends Robot {
 		Direction[] spawnDirs = Navigation.randomizedDirs();
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
-		if (defense) {
+		if (sacrifice){
+			spawnInfluence = rc.getInfluence();
+			if (spawnInfluence % 2 == 0) {
+				spawnInfluence -= 1;
+			}
+			boolean spawned = false;
+			int i = 0;
+			while(!spawned && i < Util.directions.length){
+				spawned = Util.tryBuild(RobotType.POLITICIAN, Util.directions[i], spawnInfluence);
+				i++;
+			}
+		}
+		else if (defense) {
 			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 6));
 			System.out.println(spawnInfluence + " " + DEF_POLI_MIN_COST);
 			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
