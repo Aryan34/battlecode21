@@ -178,7 +178,6 @@ public class Comms {
                 System.out.println("GETTING CORNER LOC FROM EC");
                 break;
             case 4:
-                System.out.println("Found a message to attack!");
                 int x = splits[1];
                 int y = splits[2];
                 MapLocation attackLoc = xyToMapLocation(x, y);
@@ -191,6 +190,7 @@ public class Comms {
                 if(splits[3] == 3){
                     robot.attackTarget = null;
                 }
+                System.out.println("Found a message to attack: " + robot.attackTarget != null ? robot.attackTarget.toString() : null);
                 break;
             case 5:
 //                System.out.println("Reading troop type");

@@ -70,6 +70,11 @@ public class EnlightenmentCenter extends Robot {
 		if(attackTarget != null){ System.out.println("ATTACKING: " + attackTarget.toString()); }
 		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
 
+		int numSlanderers = filterSpawnedRobots(RobotType.SLANDERER, null, -1).length;
+		int numAttackPolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length;
+		int numDefensePolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 1).length;
+		int numMucks = filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length;
+
 		if(savingForSuicide){
 			System.out.println("Saving for suicide!");
 			if(rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 10) >= 1.1){
@@ -82,22 +87,25 @@ public class EnlightenmentCenter extends Robot {
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			spawnOrder(order);
 		}
+		else if(numDefensePolis < numSlanderers / 1.5){
+			System.out.println("Spawning B");
+			spawnPoliticians(true, false);
+		}
 		else if(attackTarget != null){
 			System.out.println("Spawning C");
+			spawnPoliticians(false, true);
 			int[] order = {2, 3, 2, 3, 1, 0, 3};
 			spawnOrder(order);
 		}
+		else if(numSpawned < 300){
+			System.out.println("Spawning D");
+			int[] order = {1, 0, 1, 2, 0, 3, 3, 1};
+			spawnOrder(order);
+		}
 		else{
-			if(numSpawned < 300){
-				System.out.println("Spawning D");
-				int[] order = {1, 0, 1, 2, 0, 3, 3, 1};
-				spawnOrder(order);
-			}
-			else{
-				System.out.println("Spawning E");
-				int[] order = {1, 0, 3, 2, 3, 0, 1};
-				spawnOrder(order);
-			}
+			System.out.println("Spawning E");
+			int[] order = {1, 0, 3, 2, 3, 0, 1};
+			spawnOrder(order);
 		}
 	}
 
@@ -147,6 +155,7 @@ public class EnlightenmentCenter extends Robot {
 				info.type = RobotType.POLITICIAN;
 			}
 		}
+
 		System.out.println("Troop count:" + filterSpawnedRobots(null, null, -1).length);
 		System.out.println("Slanderers: " + filterSpawnedRobots(RobotType.SLANDERER, null, -1).length);
 		System.out.println("Attack polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length);
@@ -326,6 +335,7 @@ public class EnlightenmentCenter extends Robot {
 				closestTarget = info.loc;
 			}
 		}
+		System.out.println("Closest target: " + closestTarget.toString());
 		if(closestTarget != null){
 			// Guess how much it costs to capture? Send waves of 200 maybe?
 			if(attackInf > ATTACK_MIN_INFLUENCE){
