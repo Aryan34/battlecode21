@@ -46,7 +46,7 @@ public class Politician extends Robot {
 	}
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
-		killNearby();
+		killNearbyMucks();
 		int minDist = 4; // Default distance
 		boolean spotted = false;
 		for(RobotInfo info : nearby){
@@ -113,7 +113,7 @@ public class Politician extends Robot {
 		}
 	}
 
-	public void killNearby() throws GameActionException {
+	public void killNearbyMucks() throws GameActionException {
 		MapLocation[] enemyMucks = new MapLocation[nearby.length]; int idx1 = 0;
 		MapLocation[] friendlySlands = new MapLocation[nearby.length]; int idx2 = 0;
 		for (RobotInfo info : nearby) {
@@ -132,6 +132,9 @@ public class Politician extends Robot {
 			for(int j = 0; j < idx2; j++){
 				// Check if any of the enemy mucks can kill friendly slands
 				int dist = enemyMucks[i].distanceSquaredTo(friendlySlands[j]);
+				System.out.println("Enemy muck: " + enemyMucks[i].toString());
+				System.out.println("Friendly sland: " + friendlySlands[i].toString());
+				System.out.println("Dist: " + dist);
 				if(dist < closestDist){
 					closestDist = dist;
 					biggestThreat = enemyMucks[i];
@@ -143,10 +146,13 @@ public class Politician extends Robot {
 			return;
 		}
 		// If the muck can kill our sland
+		System.out.println("Biggest threat: " + biggestThreat.toString());
+		System.out.println("It's distance to our closest sland is: " + closestDist);
 		if(closestDist < RobotType.MUCKRAKER.actionRadiusSquared){
 			// If we can kill the muck, go for it
 			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
-			if(attackDist < RobotType.POLITICIAN.actionRadiusSquared){
+			System.out.println("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
+			if(attackDist <= RobotType.POLITICIAN.actionRadiusSquared){
 				if(rc.canEmpower(attackDist)){
 					rc.empower(attackDist);
 				}
