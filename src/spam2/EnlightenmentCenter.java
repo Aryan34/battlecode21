@@ -1,4 +1,4 @@
-package spam;
+package spam2;
 
 import battlecode.common.*;
 

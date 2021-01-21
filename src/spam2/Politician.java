@@ -1,4 +1,4 @@
-package spam;
+package spam2;
 
 import battlecode.common.*;
 
@@ -91,8 +91,9 @@ public class Politician extends Robot {
 //			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
 		}
 		else{
+			chooseSide();
 			nav.circle(circlingCCW, minDist);
-			System.out.println("Circling!");
+			System.out.println("Circling: " + circlingCCW);
 		}
 
 	}
@@ -128,6 +129,34 @@ public class Politician extends Robot {
 	public void checkOnWall() throws GameActionException {
 		// North wall blocks CCW, East wall blocks ccw, West wall blocks cw, South wall blocks cw
 
+	}
+
+	public void chooseSide() throws GameActionException {
+		int ccwCount = 0; int cwCount = 0;
+		for(RobotInfo info : nearby){
+			// Filter out everything except friendly slanderers / politicians
+			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
+				continue;
+			}
+			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
+			typeInQuestion = null;
+			Comms.checkFlag(info.getID());
+			if(typeInQuestion == RobotType.SLANDERER){
+				continue;
+			}
+			// Check if there's more slanderers to ur ccw than ur cw
+			double angleDiff = Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation());
+			if(angleDiff > 45){
+				continue;
+			}
+			if(Util.isCCW(myLoc, info.getLocation(), creatorLoc)){
+				ccwCount++;
+			}
+			else{
+				cwCount++;
+			}
+		}
+		circlingCCW = cwCount > ccwCount;
 	}
 
 }
