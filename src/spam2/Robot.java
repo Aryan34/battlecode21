@@ -46,6 +46,7 @@ public class Robot {
 	boolean wonPrevVote = false;
 	int teamVotes;
 	boolean enemySpotted = false;
+	MapLocation closestEnemyEC = null;
 
 
 	public Robot (RobotController rc) throws GameActionException {

@@ -135,7 +135,7 @@ public class Politician extends Robot {
 				// Check if any of the enemy mucks can kill friendly slands
 				int dist = enemyMucks[i].distanceSquaredTo(friendlySlands[j]);
 				System.out.println("Enemy muck: " + enemyMucks[i].toString());
-				System.out.println("Friendly sland: " + friendlySlands[i].toString());
+				System.out.println("Friendly sland: " + friendlySlands[j].toString());
 				System.out.println("Dist: " + dist);
 				if(dist < closestDist){
 					closestDist = dist;

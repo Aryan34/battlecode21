@@ -35,15 +35,6 @@ public class Util {
 		return (int)Math.floor(((1/50) + 0.03 * Math.exp(-0.001 * spawnInfluence)) * spawnInfluence);
 	}
 
-
-	static int getExpectedECBenefit(int round1, int round2){
-		int total = 0;
-		for(int t = round1; t <= round2; t++){
-			total += Math.ceil(0.2 * t);
-		}
-		return total;
-	}
-
 	static MapLocation copyLoc(MapLocation loc){ return loc.add(Direction.CENTER); }
 
 	// Finds the EC that spawned you

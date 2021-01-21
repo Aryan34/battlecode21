@@ -151,6 +151,7 @@ public class Comms {
             // Found object
             case 2:
                 int idx = splits[1];
+                // TODO: Only save EC info (all other info is useless and is prolly wasting bytecode)
                 // 0: Enemy EC, 1: Friendly EC, 2: Neutral EC, 3: Enemy robot
                 RobotType[] robotTypes = {RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, RobotType.ENLIGHTENMENT_CENTER, null}; // "null" means the robot can be of any type (unknown)
                 Team[] robotTeams = {robot.myTeam.opponent(), robot.myTeam, Team.NEUTRAL, robot.myTeam.opponent()};
@@ -166,6 +167,7 @@ public class Comms {
                 if(detectedType == RobotType.ENLIGHTENMENT_CENTER && detectedTeam != rc.getTeam()){
                     System.out.println("DETECTED ENLIGHTENMENT CENTER!");
                 }
+                // Don't save it if its not an enlightenment center
                 if(savedLocations.length == 0){
                     robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
                     robot.robotLocationsIdx++;

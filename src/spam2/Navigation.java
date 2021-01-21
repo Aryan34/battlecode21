@@ -325,44 +325,6 @@ public class Navigation {
 	public Direction rotateCW(Direction dir){ return dir.rotateLeft().rotateLeft(); }
 	public Direction rotateCCW(Direction dir){ return dir.rotateRight().rotateRight(); }
 
-	public void runAroundGrid(int minDist, boolean ccw) throws GameActionException {
-		// TODO: Fix this. It works when there's one EC but not really when there's multiple ECs
-		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
-		int dist = Util.getGridSquareDist(myLoc, creatorLoc);
-
-		// Move around
-		Direction start = myLoc.directionTo(creatorLoc);
-		if(isCardinal(start)){
-			if(ccw){ start = start.rotateRight(); }
-			else { start = start.rotateLeft(); }
-		}
-		Direction[] order = new Direction[4];
-		if(ccw){
-			order[0] = start;
-			order[1] = rotateCCW(start);
-			order[2] = start.opposite();
-			order[3] = rotateCW(start);
-		}
-		else{
-			order[0] = start;
-			order[1] = rotateCW(start);
-			order[2] = start.opposite();
-			order[3] = rotateCCW(start);
-		}
-
-		System.out.println("Starting direction: " + start);
-		for(Direction dir : order){
-			MapLocation newLoc = myLoc.add(dir);
-			System.out.println("Checking: " + newLoc.toString());
-			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
-				continue;
-			}
-			if(tryMove(dir)){
-				return;
-			}
-		}
-	}
-
 	public void circle(boolean ccw, int minDist) throws GameActionException {
 		MapLocation myLoc = robot.myLoc; MapLocation center = robot.creatorLoc;
 		int dx = myLoc.x - center.x;

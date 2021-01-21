@@ -53,6 +53,7 @@ public class EnlightenmentCenter extends Robot {
 	int defendersAlive = 0;
 	int mucksAlive = 0;
 
+
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
 		super(rc);
 	}
@@ -60,9 +61,9 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-		if(currRound > 100){
-			rc.resign();
-		}
+//		if(currRound > 600){
+//			rc.resign();
+//		}
 //		System.out.println("Starting bytecode: " + Clock.getBytecodesLeft());
 		saveSpawnedAlliesIDs();
 //		System.out.println("Leftover bytecode A: " + Clock.getBytecodesLeft()); // 5.7k
@@ -287,8 +288,18 @@ public class EnlightenmentCenter extends Robot {
 			spawnInfluence -= 1;
 		}
 
-		// Spawn in random direction
-		Direction[] spawnDirs = Navigation.randomizedDirs();
+		// Try spawning in the direction opposite of the nearest enemy EC
+		Direction[] spawnDirs = null;
+		if(spawnDirs == null){
+			DetectedInfo enemyECInfo = Util.getClosestEnemyEC();
+			if(enemyECInfo != null){
+				spawnDirs = Navigation.closeDirections(myLoc.directionTo(enemyECInfo.loc).opposite());
+			}
+		}
+		// Just spawn in a random direction
+		if(spawnDirs == null){
+			spawnDirs = Navigation.randomizedDirs();
+		}
 		for (Direction dir : spawnDirs) {
 			Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
 		}
