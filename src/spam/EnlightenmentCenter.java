@@ -32,7 +32,8 @@ public class EnlightenmentCenter extends Robot {
 	SpawnInfo[] spawnedAllies = new SpawnInfo[3000];
 	HashSet<Integer> spawnedAlliesIDs = new HashSet<Integer>();
 	int numSpawned = 0;
-	int lastBid;
+	int lastBid = 5;
+	boolean savingForSuicide = false;
 	int EC_MIN_INFLUENCE = 10;
 	final int DEF_POLI_MIN_COST = 20;
 	final int ATK_POLI_MIN_COST = 50;
@@ -42,25 +43,41 @@ public class EnlightenmentCenter extends Robot {
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
 		super(rc);
-		lastBid = 5;
 	}
 
 	public void run() throws GameActionException {
 		super.run();
-		// TODO: Uncomment this, only here to make games shorter
-//		if(rc.getRoundNum() > 100){
-//			rc.resign();
-//		}
+		// TODO: Comment this out, only here to make games shorter
+		if(rc.getRoundNum() > 300){
+			rc.resign();
+		}
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 		setAttackTarget();
 		updateFlag();
-		if(attackTarget != null){
-			System.out.println("ATTACKING: " + attackTarget.toString());
+
+		// TODO: Also somehow check that you're safe for the time being (you have more defense polis than slanderers, and more than 5 defense polis? idk)
+		// Check if, in the next 20 rounds, you'll be able to pull off a hot suicide
+		for(int i = 0; i <= 20; i++){
+			if(getExpectedInfluence(rc.getRoundNum() + i) > 700 && rc.getEmpowerFactor(myTeam, i + 10) > 1.1){
+				savingForSuicide = true;
+			}
+			else{
+				savingForSuicide = false;
+			}
 		}
+
+		if(attackTarget != null){ System.out.println("ATTACKING: " + attackTarget.toString()); }
 		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
+
+		if(savingForSuicide){
+			System.out.println("Saving for suicide!");
+			if(rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 10) >= 1.1){
+				spawnPoliticians(true, true);
+			}
+		}
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = muckraker
-		if(!enemySpotted){
+		else if(!enemySpotted){
 			System.out.println("Spawning A");
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			spawnOrder(order);
@@ -73,12 +90,12 @@ public class EnlightenmentCenter extends Robot {
 		else{
 			if(numSpawned < 300){
 				System.out.println("Spawning D");
-				int[] order = {1, 2, 1, 3, 3, 0};
+				int[] order = {1, 0, 1, 2, 0, 3, 3, 1};
 				spawnOrder(order);
 			}
 			else{
 				System.out.println("Spawning E");
-				int[] order = {1, 2, 1, 3, 0, 0};
+				int[] order = {1, 0, 3, 2, 3, 0, 1};
 				spawnOrder(order);
 			}
 		}
@@ -163,6 +180,12 @@ public class EnlightenmentCenter extends Robot {
 					return;
 				}
 			}
+			// Just try spawning in a random direction
+			for( Direction spawnDir : Navigation.directions){
+				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDir, 2)) {
+					return;
+				}
+			}
 		}
 		else{
 			Direction[] spawnDirs = Navigation.randomizedDirs();
@@ -224,13 +247,17 @@ public class EnlightenmentCenter extends Robot {
 			}
 			boolean spawned = false;
 			int i = 0;
-			while(!spawned && i < Util.directions.length){
-				spawned = Util.tryBuild(RobotType.POLITICIAN, Util.directions[i], spawnInfluence);
+			while(!spawned && i < Navigation.cardinalDirections.length){
+				spawned = Util.tryBuild(RobotType.POLITICIAN, Navigation.cardinalDirections[i], spawnInfluence);
 				i++;
 			}
+			if(spawned){
+				savingForSuicide = false;
+			}
+			return;
 		}
 		else if (defense) {
-			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 6));
+			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 20));
 			System.out.println(spawnInfluence + " " + DEF_POLI_MIN_COST);
 			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 0) {
@@ -344,4 +371,15 @@ public class EnlightenmentCenter extends Robot {
 		SpawnInfo[] copy2 = Arrays.copyOfRange(copy, 0, count);
 		return copy2;
 	}
+
+	public int getExpectedInfluence(int roundNum) throws GameActionException {
+		int ECBenefit = Util.getExpectedECBenefit(rc.getRoundNum(), roundNum);
+		int slandBenefit = 0;
+		SpawnInfo[] slanderers = filterSpawnedRobots(RobotType.SLANDERER, null, -1);
+		for(SpawnInfo info : slanderers){
+			slandBenefit += Util.getExpectedSlandererBenefit(info.spawnInfluence, info.spawnRound, rc.getRoundNum(), roundNum);
+		}
+		return rc.getInfluence() + ECBenefit + slandBenefit;
+	}
+
 }

@@ -66,6 +66,20 @@ public class Navigation {
 		return Util.shuffleArr(directions);
 	}
 
+	static double getAngleDiff(MapLocation center, MapLocation loc1, MapLocation loc2){
+		double angle1 = Math.atan2(loc1.y - center.y, loc1.x - center.x);
+		double angle2 = Math.atan2(loc2.y - center.y, loc2.x - center.x);
+		double diff = angle1 - angle2;
+		diff = diff * 180 / Math.PI;
+		if(diff < 0){
+			diff += 360;
+		}
+		if(diff > 180){
+			diff = 360 - diff;
+		}
+		return diff;
+	}
+
 	RobotController rc;
 	Robot robot;
 
@@ -97,6 +111,15 @@ public class Navigation {
 			rc.move(dir);
 			return true;
 		} else return false;
+	}
+
+	public boolean tryMove(Direction[] dirs) throws GameActionException {
+		for(Direction dir : dirs){
+			if(tryMove(dir)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean goTo(MapLocation target) throws GameActionException {
@@ -343,6 +366,23 @@ public class Navigation {
 			}
 		}
 	}
+
+	public void circle(boolean ccw, int minDist) throws GameActionException {
+		MapLocation myLoc = robot.myLoc; MapLocation center = robot.creatorLoc;
+		int dx = myLoc.x - center.x;
+		int dy = myLoc.y - center.y;
+		double cs = Math.cos(ccw ? 0.5 : -0.5);
+		double sn = Math.sin(ccw ? 0.5 : -0.5);
+		int x = (int) (dx * cs - dy * sn);
+		int y = (int) (dx * sn + dy * cs);
+		MapLocation target = center.translate(x, y);
+//		goTo(target);
+		Direction targetDir = myLoc.directionTo(target);
+		Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+		tryMove(options);
+	}
+
+
 
 
 }

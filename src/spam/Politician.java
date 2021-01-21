@@ -25,10 +25,14 @@ public class Politician extends Robot {
 			runAttack();
 		}
 		else {
-			if (rc.getInfluence() > 700){
-				// System.out.println("Sacrificial politician activated");
-				if (rc.detectNearbyRobots(1).length == 0){
-					rc.empower(1);
+			if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1){
+				System.out.println("Sacrificial politician activated");
+				int dist = myLoc.distanceSquaredTo(creatorLoc);
+				if (rc.detectNearbyRobots(dist).length == 1){
+					rc.empower(dist);
+				}
+				else{
+					nav.circle(true, 1);
 				}
 			}
 			else {
@@ -44,6 +48,7 @@ public class Politician extends Robot {
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearby();
 		int minDist = 4; // Default distance
+		boolean spotted = false;
 		for(RobotInfo info : nearby){
 			// Filter out everything except friendly slanderers / politicians
 			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
@@ -55,25 +60,54 @@ public class Politician extends Robot {
 			if(typeInQuestion != RobotType.SLANDERER){
 				continue;
 			}
-			// Stay a gridDistance of atleast two farther away from the nearest slanderer
+			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
+			if(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()) > 30){
+				System.out.println("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
+				System.out.println(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
+				continue;
+			}
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
 			System.out.println("Friendly slanderer at: " + info.getLocation());
 			minDist = Math.max(minDist, gridDist + 1);
+			spotted = true;
 		}
 		System.out.println("My min dist: " + minDist);
+		System.out.println("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
-		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
-		System.out.println("Am I on the grid? " + inGrid);
+//		inGrid = Util.isGridSquare(myLoc, creatorLoc) && Util.getGridSquareDist(myLoc, creatorLoc) >= minDist;
+//		System.out.println("Am I on the grid? " + inGrid);
+//
+//		if(!inGrid){
+//			System.out.println("Going to grid at minDist: " + minDist);
+//			nav.goToGrid(minDist);
+//		}
+//		else{
+//			checkOnWall();
+//			System.out.println("Alr on grid at minDist: " + minDist + ", going ccw? " + ccw);
+//			nav.runAroundGrid(minDist, ccw);
+//		}
 
-		if(!inGrid){
-			System.out.println("Going to grid at minDist: " + minDist);
-			nav.goToGrid(minDist);
+		// If you're too close, move farther away
+		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+			System.out.println("Going farther!");
+			Direction targetDir = creatorLoc.directionTo(myLoc);
+			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+			nav.tryMove(options);
+//			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
+		}
+		// Always make sure theres a friendly slanderer in site
+		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
+			System.out.println("Going closer!");
+			Direction targetDir = myLoc.directionTo(creatorLoc);
+			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+			nav.tryMove(options);
+//			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
 		}
 		else{
-			checkOnWall();
-			System.out.println("Alr on grid at minDist: " + minDist + ", going ccw? " + ccw);
-			nav.runAroundGrid(minDist, ccw);
+			nav.circle(true, minDist);
+			System.out.println("Circling!");
 		}
+
 	}
 
 	public void runAttack() throws GameActionException {
