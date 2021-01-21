@@ -21,6 +21,7 @@ public class Robot {
 	Navigation nav;
 	MapLocation myLoc = null;
 	int turnCount = 0;
+	int currRound;
 	Team myTeam;
 	RobotType myType;
 	int myFlag = 0;
@@ -64,11 +65,13 @@ public class Robot {
 		if(creatorLoc != null){
 			creatorID = rc.senseRobotAtLocation(creatorLoc).getID();
 		}
+		currRound = rc.getRoundNum();
 	}
 
 	public void run() throws GameActionException {
 		System.out.println("---------------------------------");
 		turnCount += 1;
+		currRound = rc.getRoundNum();
 		setFlagThisRound = false;
 		if(myLoc != null && rc.getLocation().equals(myLoc)){
 			visited[visitedIdx] = rc.getLocation();

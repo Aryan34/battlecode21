@@ -120,6 +120,9 @@ public class Comms {
             return;
         }
         int flag = rc.getFlag(ID);
+        if(flag == 0){
+            return;
+        }
         int[] splits = parseFlag(flag);
         if(splits.length == 0){
             return;

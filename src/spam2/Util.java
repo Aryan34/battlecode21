@@ -22,7 +22,7 @@ public class Util {
 	static Robot robot;
 
 	static int getExpectedSlandererBenefit(int spawnInfluence, int spawnRound, int round1, int round2){
-		int perRound = (int)Math.floor(((1/50) + 0.03 * Math.exp(-0.001 * spawnInfluence)) * spawnInfluence);
+		int perRound = slandBenefitPerRound(spawnInfluence);
 		int diff1 = round1 - spawnRound; int diff2 = round2 - spawnRound;
 		if(diff1 > 50){
 			return 0;
@@ -30,6 +30,11 @@ public class Util {
 		diff2 = Math.min(diff2, 50);
 		return (diff2 - diff1) * perRound;
 	}
+
+	static int slandBenefitPerRound(int spawnInfluence){
+		return (int)Math.floor(((1/50) + 0.03 * Math.exp(-0.001 * spawnInfluence)) * spawnInfluence);
+	}
+
 
 	static int getExpectedECBenefit(int round1, int round2){
 		int total = 0;

@@ -66,7 +66,7 @@ public class Politician extends Robot {
 			}
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
 			System.out.println("Friendly slanderer at: " + info.getLocation());
-			minDist = Math.max(minDist, gridDist + 1);
+			minDist = Math.max(minDist, gridDist + 2);
 			spotted = true;
 		}
 		System.out.println("My min dist: " + minDist);
@@ -99,6 +99,8 @@ public class Politician extends Robot {
 	public void runAttack() throws GameActionException {
 		if(rc.canSenseLocation(attackTarget)){
 			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
+				creatorLoc = attackTarget;
+				creatorID = rc.senseRobotAtLocation(attackTarget).getID();
 				attackTarget = null;
 				return;
 			}

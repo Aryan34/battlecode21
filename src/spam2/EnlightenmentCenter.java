@@ -29,9 +29,6 @@ class SpawnInfo {
 
 public class EnlightenmentCenter extends Robot {
 
-	SpawnInfo[] spawnedAllies = new SpawnInfo[3000];
-	HashSet<Integer> spawnedAlliesIDs = new HashSet<Integer>();
-	int numSpawned = 0;
 	int lastBid = 5;
 	boolean savingForSuicide = false;
 	int EC_MIN_INFLUENCE = 10;
@@ -40,6 +37,21 @@ public class EnlightenmentCenter extends Robot {
 	final int SLAND_MIN_COST = 21;
 	final int ATTACK_MIN_INFLUENCE = 1200;
 	final int STOP_ATTACK_MIN_INFLUENCE = 300;
+	int[] slandBenefitDP = new int[10];
+
+	// Troop spawning variables
+	SpawnInfo[] spawnedAllies = new SpawnInfo[1500];
+	HashSet<Integer> spawnedAlliesIDs = new HashSet<Integer>();
+	int numSpawned = 0;
+	SpawnInfo[] slandererInfo = new SpawnInfo[1500]; int slanderersSpawned = 0;
+	SpawnInfo[] attackPoliInfo = new SpawnInfo[1500]; int attackPolisSpawned = 0;
+	SpawnInfo[] defensePoliInfo = new SpawnInfo[1500]; int defensePolisSpawned = 0;
+	SpawnInfo[] muckInfo = new SpawnInfo[1500]; int mucksSpawned = 0;
+
+	int slandsAlive = 0;
+	int attackersAlive = 0;
+	int defendersAlive = 0;
+	int mucksAlive = 0;
 
 	public EnlightenmentCenter(RobotController rc) throws GameActionException {
 		super(rc);
@@ -48,32 +60,30 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-		if(rc.getRoundNum() > 600){
+		if(currRound > 100){
 			rc.resign();
 		}
+//		System.out.println("Starting bytecode: " + Clock.getBytecodesLeft());
 		saveSpawnedAlliesIDs();
+//		System.out.println("Leftover bytecode A: " + Clock.getBytecodesLeft()); // 5.7k
 		checkRobotFlags();
-		setAttackTarget();
+//		System.out.println("Leftover bytecode 1: " + Clock.getBytecodesLeft()); // 6k
+
+		System.out.println("Troop count:" + (slandsAlive + attackersAlive + defendersAlive + mucksAlive));
+		System.out.println("Slanderers: " + slandsAlive);
+		System.out.println("Attack polis: " + attackersAlive);
+		System.out.println("Defense polis: " + defendersAlive);
+		System.out.println("Mucks: " + mucksAlive);
+
+		setAttackTarget(attackPoliInfo);
 		updateFlag();
 
-		// TODO: Also somehow check that you're safe for the time being (you have more defense polis than slanderers, and more than 5 defense polis? idk)
-		// Check if, in the next 20 rounds, you'll be able to pull off a hot suicide
-		for(int i = 0; i <= 20; i++){
-			if(getExpectedInfluence(rc.getRoundNum() + i) > 700 && rc.getEmpowerFactor(myTeam, i + 10) > 1.1){
-				savingForSuicide = true;
-			}
-			else{
-				savingForSuicide = false;
-			}
-		}
+//		System.out.println("Leftover bytecode 3: " + Clock.getBytecodesLeft()); // 0.5k
+
+		checkSuicideViable(slandererInfo);
 
 		if(attackTarget != null){ System.out.println("ATTACKING: " + attackTarget.toString()); }
-		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
-
-		int numSlanderers = filterSpawnedRobots(RobotType.SLANDERER, null, -1).length;
-		int numAttackPolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length;
-		int numDefensePolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 1).length;
-		int numMucks = filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length;
+//		System.out.println("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
 		if(savingForSuicide){
 			System.out.println("Saving for suicide!");
@@ -88,7 +98,7 @@ public class EnlightenmentCenter extends Robot {
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
 			spawnOrder(order);
 		}
-		else if(numDefensePolis < numSlanderers / 1.5){
+		else if(defendersAlive < slandsAlive / 1.5){
 			System.out.println("Spawning B");
 			spawnPoliticians(true, false);
 		}
@@ -98,16 +108,19 @@ public class EnlightenmentCenter extends Robot {
 			int[] order = {2, 3, 2, 3, 1, 0, 3};
 			spawnOrder(order);
 		}
-		else if(numSpawned < 300){
+		else if(turnCount < 300){
 			System.out.println("Spawning D");
-			int[] order = {1, 0, 1, 2, 0, 3, 3, 1};
+			int[] order = {1, 0, 1, 3, 2, 0, 1, 3, 0};
 			spawnOrder(order);
 		}
 		else{
 			System.out.println("Spawning E");
-			int[] order = {1, 0, 3, 2, 3, 0, 1};
+			int[] order = {1, 0, 3, 2, 0, 3, 0, 0, 1};
 			spawnOrder(order);
 		}
+
+//		System.out.println("Leftover bytecode 5: " + Clock.getBytecodesLeft());
+
 	}
 
 	public void spawnOrder(int[] order) throws GameActionException {
@@ -119,12 +132,28 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void checkRobotFlags() throws GameActionException {
-		for (int i = 0; i < numSpawned; i++) {
-			int robotID = spawnedAllies[i].id;
+		// Check the flags of our mucks and attacker polis
+		if(attackTarget != null) {
+			for (int i = 0; i < attackPolisSpawned; i++) {
+				// Ignore slanderer comms to save bytecode
+				if (!attackPoliInfo[i].alive) {
+					continue;
+				}
+				int robotID = attackPoliInfo[i].id;
+				Comms.checkFlag(robotID);
+			}
+		}
+		for (int i = 0; i < mucksSpawned; i++) {
+			// Ignore slanderer comms to save bytecode
+			if(!muckInfo[i].alive){
+				continue;
+			}
+			int robotID = muckInfo[i].id;
 			Comms.checkFlag(robotID);
 		}
 	}
 
+	// If you see a newly spawned troop, keep track of it and save its ID
 	public void saveSpawnedAlliesIDs() throws GameActionException {
 		for (Direction dir : Util.directions) {
 			MapLocation loc = myLoc.add(dir);
@@ -134,35 +163,62 @@ public class EnlightenmentCenter extends Robot {
 					continue;
 				}
 				int id = info.getID();
-				if (!spawnedAlliesIDs.contains(id)) {
-					spawnedAllies[numSpawned] = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id, info.getInfluence(), rc.getRoundNum());
+				if (info.getTeam() == myTeam && !spawnedAlliesIDs.contains(id)) {
+					System.out.println("Found new troop of type: " + info.getType());
+					SpawnInfo spawnInfo = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id, info.getInfluence(), currRound);
+					spawnedAllies[numSpawned] = spawnInfo;
 					spawnedAlliesIDs.add(id);
-					numSpawned += 1;
+					numSpawned++;
+					if(info.getType() == RobotType.SLANDERER){
+						slandererInfo[slanderersSpawned] = spawnInfo;
+						slanderersSpawned++;
+						slandsAlive++;
+					}
+					else if(info.getType() == RobotType.POLITICIAN && info.getInfluence() % 2 == 0){
+						attackPoliInfo[attackPolisSpawned] = spawnInfo;
+						attackPolisSpawned++;
+						attackersAlive++;
+					}
+					else if(info.getType() == RobotType.POLITICIAN && info.getInfluence() % 2 == 1){
+						defensePoliInfo[defensePolisSpawned] = spawnInfo;
+						defensePolisSpawned++;
+						defendersAlive++;
+					}
+					else if(info.getType() == RobotType.MUCKRAKER){
+						muckInfo[mucksSpawned] = spawnInfo;
+						mucksSpawned++;
+						mucksAlive++;
+					}
 				}
 			}
 		}
+
 		// Filter out dead troops
 		for(int i = 0; i < numSpawned; i++){
 			SpawnInfo info = spawnedAllies[i];
+			if(!info.alive){ continue; }
 			if(!rc.canGetFlag(info.id)){
-				// Check if the robot is still alive
+				// Check if the robot is still considered alive
 				if(info.alive){
 					spawnedAlliesIDs.remove(info.id);
+					info.alive = false;
+					if(info.type == RobotType.SLANDERER){ slandsAlive--; }
+					else if(info.type == RobotType.POLITICIAN && info.spawnInfluence % 2 == 0){ attackersAlive--; }
+					else if(info.type == RobotType.SLANDERER && info.spawnInfluence % 2 == 0){ defendersAlive--; }
+					else if(info.type == RobotType.MUCKRAKER){ mucksAlive--; }
 				}
-				info.alive = false;
 			}
-			else if(info.type == RobotType.SLANDERER && rc.getRoundNum() >= info.spawnRound + GameConstants.CAMOUFLAGE_NUM_ROUNDS){
+			else if(info.type == RobotType.SLANDERER && turnCount >= info.spawnRound + GameConstants.CAMOUFLAGE_NUM_ROUNDS){
 				// Check if the slanderer converted to a politician, and if it did, it must've converted to an attack politician
-				info.type = RobotType.POLITICIAN;
+				info.alive = false;
+				SpawnInfo newInfo = new SpawnInfo(RobotType.POLITICIAN, info.spawnDir, info.id, info.spawnInfluence, info.spawnRound);
+				attackPoliInfo[attackPolisSpawned] = newInfo;
+				attackPolisSpawned++;
+				attackersAlive++;
+				slandsAlive--;
+				spawnedAllies[i] = newInfo;
 			}
 		}
-
-		System.out.println("Troop count:" + filterSpawnedRobots(null, null, -1).length);
-		System.out.println("Slanderers: " + filterSpawnedRobots(RobotType.SLANDERER, null, -1).length);
-		System.out.println("Attack polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length);
-		System.out.println("Defense polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 1).length);
-		System.out.println("Muckrackers: " + filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length);
-
 	}
 
 
@@ -220,7 +276,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		// Spawn super high inf slanderers early on. Could make this a linear scale or smth
 		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.5));
-		if(rc.getRoundNum() < 100){
+		if(currRound < 100){
 			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.15));
 		}
 		if(spawnInfluence < SLAND_MIN_COST){
@@ -300,17 +356,18 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public void setAttackTarget() throws GameActionException {
+	public void setAttackTarget(SpawnInfo[] attackPolis) throws GameActionException {
 		// Check if ready to attack
-		SpawnInfo[] attackPolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 0);
 		int attackInf = 0;
-		for(int i = 0; i < attackPolis.length; i++){
+		for(int i = 0; i < attackPolisSpawned; i++){
+			if(!attackPolis[i].alive){ continue; }
 			attackInf += attackPolis[i].spawnInfluence - 10;
 		}
 		System.out.println("Attack influence: " + attackInf);
 		if(attackTarget != null){
 			DetectedInfo[] targetInfo = Util.getCorrespondingRobots(null, null, attackTarget);
 			assert(targetInfo.length > 0);
+			System.out.println(targetInfo[0].team);
 			if(targetInfo[0].team == myTeam){
 				// Captured the target, lets go attack a diff target
 				attackTarget = null;
@@ -387,14 +444,45 @@ public class EnlightenmentCenter extends Robot {
 		return copy2;
 	}
 
-	public int getExpectedInfluence(int roundNum) throws GameActionException {
-		int ECBenefit = Util.getExpectedECBenefit(rc.getRoundNum(), roundNum);
-		int slandBenefit = 0;
-		SpawnInfo[] slanderers = filterSpawnedRobots(RobotType.SLANDERER, null, -1);
-		for(SpawnInfo info : slanderers){
-			slandBenefit += Util.getExpectedSlandererBenefit(info.spawnInfluence, info.spawnRound, rc.getRoundNum(), roundNum);
-		}
-		return rc.getInfluence() + ECBenefit + slandBenefit;
+	public void checkSuicideViable(SpawnInfo[] slandererInfo){
+		// TODO: Also somehow check that you're safe for the time being (you have more defense polis than slanderers, and more than 5 defense polis? idk)
+//		if(savingForSuicide){ return; }
+
+		// TODO: Uncomment this (testing purposes)
+//		savingForSuicide = false;
+//		if(rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, currRound + 10) > 1.1){
+//			savingForSuicide = true;
+//		}
+		savingForSuicide = false;
+
+		// Calculate the slanderer benefit 10 rounds into the future
+//		int slandSum = 0;
+//		int projectionRound = currRound + 10;
+//		for(int i = 0; i < slanderersSpawned; i++){
+//			SpawnInfo info = slandererInfo[i];
+//			if(!info.alive){ continue; }
+//			if(info.spawnRound + 50 > projectionRound){
+//				continue;
+//			}
+//			slandSum += Util.slandBenefitPerRound(info.spawnInfluence);
+//		}
+//		slandBenefitDP[currRound % 10] = slandSum;
+//
+//		// Check if, in the next 10 rounds, you'll be able to pull off a hot suicide
+//		savingForSuicide = false;
+//		int EC_benefit = 0;
+//		int slandBenefit = 0;
+//		for(int i = 1; i <= 10; i++){
+//			double empowerFactor = rc.getEmpowerFactor(myTeam, i + 10);
+//			if(empowerFactor < 1.1){
+//				continue;
+//			}
+//			EC_benefit += Math.ceil(0.2 * (currRound + i));
+//			slandBenefit += slandBenefitDP[(currRound + i) % 10];
+//			if(rc.getInfluence() + EC_benefit + slandBenefit > 700 && empowerFactor > 1.1){
+//				savingForSuicide = true;
+//			}
+//		}
 	}
 
 }
