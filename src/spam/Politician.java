@@ -28,7 +28,7 @@ public class Politician extends Robot {
 			if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1){
 				System.out.println("Sacrificial politician activated");
 				int dist = myLoc.distanceSquaredTo(creatorLoc);
-				if (rc.detectNearbyRobots(dist).length == 1){
+				if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1){
 					rc.empower(dist);
 				}
 				else{
