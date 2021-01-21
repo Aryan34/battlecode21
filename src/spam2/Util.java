@@ -147,7 +147,11 @@ public class Util {
 		return copy;
 	}
 
-
+	static boolean isSlanderer(int id) throws GameActionException {
+		robot.typeInQuestion = null;
+		Comms.checkFlag(id);
+		return robot.typeInQuestion == RobotType.SLANDERER;
+	}
 
 
 

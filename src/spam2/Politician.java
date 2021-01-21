@@ -55,9 +55,7 @@ public class Politician extends Robot {
 				continue;
 			}
 			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
-			typeInQuestion = null;
-			Comms.checkFlag(info.getID());
-			if(typeInQuestion != RobotType.SLANDERER){
+			if(!Util.isSlanderer(info.getID())){
 				continue;
 			}
 			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
@@ -116,14 +114,67 @@ public class Politician extends Robot {
 	}
 
 	public void killNearby() throws GameActionException {
+		MapLocation[] enemyMucks = new MapLocation[nearby.length]; int idx1 = 0;
+		MapLocation[] friendlySlands = new MapLocation[nearby.length]; int idx2 = 0;
 		for (RobotInfo info : nearby) {
 			// Only kill enemy mucks, and only kill them if there's a sland nearby (otherwise follow them around)
-			if (info.team == myTeam.opponent() && myLoc.distanceSquaredTo(info.location) < 3 && info.type == RobotType.MUCKRAKER) {
-				if(rc.canEmpower(2)){
-					rc.empower(2);
+			if (info.team == myTeam.opponent() && info.type == RobotType.MUCKRAKER) {
+				enemyMucks[idx1] = info.getLocation(); idx1++;
+			}
+			else if (info.team == myTeam && info.type == RobotType.POLITICIAN && Util.isSlanderer(info.getID())) {
+				friendlySlands[idx2] = info.getLocation(); idx2++;
+			}
+		}
+		// Find the biggest threat (the muckracker thats closest to a friendly sland)
+		MapLocation biggestThreat = null;
+		int closestDist = Integer.MAX_VALUE;
+		for(int i = 0; i < idx1; i++){
+			for(int j = 0; j < idx2; j++){
+				// Check if any of the enemy mucks can kill friendly slands
+				int dist = enemyMucks[i].distanceSquaredTo(friendlySlands[j]);
+				if(dist < closestDist){
+					closestDist = dist;
+					biggestThreat = enemyMucks[i];
 				}
 			}
 		}
+		// If there's no mucks, we gucci
+		if(biggestThreat == null){
+			return;
+		}
+		// If the muck can kill our sland
+		if(closestDist < RobotType.MUCKRAKER.actionRadiusSquared){
+			// If we can kill the muck, go for it
+			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
+			if(attackDist < RobotType.POLITICIAN.actionRadiusSquared){
+				if(rc.canEmpower(attackDist)){
+					rc.empower(attackDist);
+				}
+			}
+			// Otherwise, go closer to it so we can kill it
+			else{
+				nav.goTo(biggestThreat);
+			}
+		}
+		else if(biggestThreat != null){
+			// TODO: Go to the area from which I'll be able to kill the most mucks biggest threat
+			nav.goTo(biggestThreat);
+		}
+		else{
+			for(int radius = 1; radius <= myType.actionRadiusSquared; radius++){
+				int canKill = 0;
+				RobotInfo[] robotsInKillRange = rc.senseNearbyRobots(radius);
+				for(RobotInfo info : robotsInKillRange){
+					if(info.getType() == RobotType.MUCKRAKER && info.getTeam() == myTeam.opponent() && info.getInfluence() < (rc.getInfluence() - 10) / robotsInKillRange.length){
+						canKill++;
+					}
+				}
+				if(canKill >= 2 && rc.canEmpower(radius)){
+					rc.empower(radius);
+				}
+			}
+		}
+
 	}
 
 	public void checkOnWall() throws GameActionException {

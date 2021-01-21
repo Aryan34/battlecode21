@@ -84,7 +84,8 @@ public class EnlightenmentCenter extends Robot {
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = muckraker
 		else if(!enemySpotted){
 			System.out.println("Spawning A");
-			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
+//			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
+			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
 			spawnOrder(order);
 		}
 		else if(numDefensePolis < numSlanderers / 1.5){
