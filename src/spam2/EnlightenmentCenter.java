@@ -99,12 +99,7 @@ public class EnlightenmentCenter extends Robot {
 				spawnPoliticians(true, true);
 			}
 		}
-		else if(rc.getRoundNum() - turnCount > 3 && turnCount < 25) {
-			Log.log("Spawning newly created EC order");
-			int[] order = {0, 3, 0, 3, 1, 1, 3, 3, 0, 1, 3, 1, 0, 3, 1, 1, 1, 3, 3, 0, 3, 1, 1, 0, 1};
-			spawnOrder(order);
-		}
-		else if(!enemySpotted){
+		else if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
