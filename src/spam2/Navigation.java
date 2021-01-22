@@ -102,7 +102,7 @@ public class Navigation {
 	 */
 
 	public boolean tryMove(Direction dir) throws GameActionException {
-		Log.log("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
+		Log.debug("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
 		if (rc.canMove(dir)) {
 			rc.move(dir);
 			return true;

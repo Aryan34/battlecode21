@@ -21,7 +21,7 @@ public class Muckraker extends Robot {
 		RobotInfo[] nearby = rc.senseNearbyRobots();
 		exposeSlanderers(nearby);
 		Comms.checkFlag(creatorID);
-//		relayRobotLocations(nearby);
+		checkEnemiesNearby(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
 		if(isAttacking && attackTarget != null){
 			Log.log("Yam attacking: " + attackTarget.toString());
@@ -38,6 +38,28 @@ public class Muckraker extends Robot {
 		for(RobotInfo info : nearby){
 			if(rc.canExpose(info.getLocation())){
 				rc.expose(info.getLocation());
+			}
+		}
+	}
+
+	public void checkEnemiesNearby(RobotInfo[] nearby) throws GameActionException {
+		if(enemySpotted){
+			return;
+		}
+		if(setFlagThisRound){
+			return;
+		}
+		for(RobotInfo info : nearby){
+			if(info.getTeam() != myTeam){
+				enemySpotted = true;
+				int purpose = 2;
+				int robotType = 3; // The type corresponding to an unknown enemy robot
+				int[] xy = Comms.mapLocationToXY(info.getLocation());
+				int[] flagArray = {purpose, 4, 1, 2, xy[0], 7, xy[1], 7};
+				int flag = Comms.concatFlag(flagArray);
+				Log.log("Setting flag to friendly EC: " + Comms.printFlag(flag));
+				Comms.setFlag(flag);
+				return;
 			}
 		}
 	}

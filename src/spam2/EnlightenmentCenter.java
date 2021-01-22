@@ -35,8 +35,8 @@ public class EnlightenmentCenter extends Robot {
 	final int DEF_POLI_MIN_COST = 20;
 	final int ATK_POLI_MIN_COST = 50;
 	final int SLAND_MIN_COST = 21;
-	final int ATTACK_MIN_INFLUENCE = 1200;
-	final int STOP_ATTACK_MIN_INFLUENCE = 300;
+	final int ATTACK_MIN_INFLUENCE = 300;
+	final int STOP_ATTACK_MIN_INFLUENCE = 100;
 	int[] slandBenefits = new int[1500];
 	int numVotes = 0;
 
@@ -62,7 +62,7 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-		if(currRound > 100){
+		if(currRound > 600){
 			rc.resign();
 		}
 
@@ -416,6 +416,9 @@ public class EnlightenmentCenter extends Robot {
 		}
 		DetectedInfo[] allECInfo = Util.getCorrespondingRobots(null, RobotType.ENLIGHTENMENT_CENTER, null);
 		Log.log("Num of ECs known: " + allECInfo.length);
+		for(DetectedInfo info : allECInfo){
+			Log.log("EC known at: " + info.loc.toString() + ", on team: " + info.team.toString());
+		}
 		// Attack the closest EC
 		MapLocation closestTarget = null; int closestDist = Integer.MAX_VALUE;
 		for(DetectedInfo info : allECInfo){

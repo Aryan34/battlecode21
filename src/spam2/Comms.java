@@ -160,12 +160,12 @@ public class Comms {
 
                 MapLocation detectedLoc = xyToMapLocation(splits[2], splits[3]);
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
-                if(detectedTeam == robot.myTeam.opponent()){
+                if(detectedTeam != robot.myTeam && !robot.enemySpotted){
                     robot.enemySpotted = true;
                     Log.log("ENEMY SPOTTED !!!!!");
                 }
                 if(detectedType == RobotType.ENLIGHTENMENT_CENTER && detectedTeam != rc.getTeam()){
-                    Log.log("DETECTED ENLIGHTENMENT CENTER!");
+                    Log.log("DETECTED ENEMY / NEUTRAL ENLIGHTENMENT CENTER!");
                 }
                 // Don't save it if its not an enlightenment center
                 if(savedLocations.length == 0){
