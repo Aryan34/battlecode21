@@ -56,6 +56,7 @@ public class Robot {
 		Util.robot = this;
 		Comms.rc = rc;
 		Comms.robot = this;
+//		Log.rc = rc;
 		nav = new Navigation(rc, this);
 		myTeam = rc.getTeam();
 		myType = rc.getType();

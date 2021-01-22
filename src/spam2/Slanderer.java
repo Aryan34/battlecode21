@@ -29,6 +29,10 @@ public class Slanderer extends Robot {
 				// TODO: Copy over the rest of the variables?
 
 				Log.log("Resetting flag to 0!");
+				Comms.robot = pol;
+				Util.robot = pol;
+
+				Comms.setFlag(0);
 			}
 			pol.run();
 		}

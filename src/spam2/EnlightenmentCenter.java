@@ -29,7 +29,7 @@ class SpawnInfo {
 
 public class EnlightenmentCenter extends Robot {
 
-	int lastBid = 5;
+	int lastBid = -1;
 	boolean savingForSuicide = false;
 	int EC_MIN_INFLUENCE = 10;
 	final int DEF_POLI_MIN_COST = 20;
@@ -38,6 +38,7 @@ public class EnlightenmentCenter extends Robot {
 	final int ATTACK_MIN_INFLUENCE = 1200;
 	final int STOP_ATTACK_MIN_INFLUENCE = 300;
 	int[] slandBenefitDP = new int[10];
+	int numVotes = 0;
 
 	// Troop spawning variables
 	SpawnInfo[] spawnedAllies = new SpawnInfo[1500];
@@ -61,9 +62,14 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-//		if(currRound > 600){
+//		if(currRound > 100){
 //			rc.resign();
 //		}
+//
+		if(currRound > 300){
+			bid();
+		}
+
 //		Log.log("Starting bytecode: " + Clock.getBytecodesLeft());
 		saveSpawnedAlliesIDs();
 //		Log.log("Leftover bytecode A: " + Clock.getBytecodesLeft()); // 5.7k
@@ -86,7 +92,6 @@ public class EnlightenmentCenter extends Robot {
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 //		Log.log("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
-
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
 		if(savingForSuicide){
 			Log.log("Saving for suicide!");
@@ -95,11 +100,10 @@ public class EnlightenmentCenter extends Robot {
 			}
 		}
 		else if(rc.getRoundNum() - turnCount > 3 && turnCount < 25) {
-			Log.log("Spawning neutral EC order");
+			Log.log("Spawning newly created EC order");
 			int[] order = {0, 3, 0, 3, 1, 1, 3, 3, 0, 1, 3, 1, 0, 3, 1, 1, 1, 3, 3, 0, 3, 1, 1, 0, 1};
 			spawnOrder(order);
 		}
-
 		else if(!enemySpotted){
 			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
@@ -108,6 +112,10 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(defendersAlive < slandsAlive / 1.5){
 			Log.log("Spawning B");
+			spawnPoliticians(true, false);
+		}
+		else if(enemyMuckNearby()){
+			Log.log("Enemy muck nearby so spawning pol");
 			spawnPoliticians(true, false);
 		}
 		else if(attackTarget != null){
@@ -502,6 +510,45 @@ public class EnlightenmentCenter extends Robot {
 //				savingForSuicide = true;
 //			}
 //		}
+	}
+
+	public boolean enemyMuckNearby() throws GameActionException {
+		for(RobotInfo info : nearby){
+			if(info.getType() == RobotType.MUCKRAKER && info.getTeam() == myTeam.opponent()){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void bid() throws GameActionException {
+		if(rc.getTeamVotes() > 750){
+			return;
+		}
+		int bid = 0;
+
+		if(lastBid == -1){
+			bid = rc.getInfluence() / 20;
+		}
+		else{
+			if(rc.getTeamVotes() > numVotes){
+				// We won the vote, so stick with that bid
+				bid = (int)(lastBid/ 1.2);
+			}
+			else{
+				// Double our vote
+				bid = lastBid * 2;
+			}
+
+		}
+		if(bid > rc.getInfluence()){
+			bid = rc.getInfluence() - EC_MIN_INFLUENCE;
+		}
+		if(rc.canBid(bid)){
+			rc.bid(bid);
+			lastBid = bid;
+		}
+		numVotes = rc.getTeamVotes();
 	}
 
 }
