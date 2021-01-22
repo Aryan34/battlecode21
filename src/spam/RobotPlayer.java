@@ -14,7 +14,7 @@ public strictfp class RobotPlayer {
 		// This is the RobotController object. You use it to perform actions from this robot,
 		// and to get information on its current status.
 
-		System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+		// System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
 		Robot myRobot;
 		switch (rc.getType()) {
 			case ENLIGHTENMENT_CENTER:
@@ -34,7 +34,7 @@ public strictfp class RobotPlayer {
 				break;
 		}
 
-		System.out.println("I'm a " + rc.getType() + " and I just got created!");
+		// System.out.println("I'm a " + rc.getType() + " and I just got created!");
 		while (true) {
 			// Try/catch blocks stop unhandled exceptions, which cause your robot to freeze
 			try {
@@ -42,7 +42,7 @@ public strictfp class RobotPlayer {
 				// Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
 				Clock.yield();
 			} catch (Exception e) {
-				System.out.println(rc.getType() + " Exception");
+				// System.out.println(rc.getType() + " Exception");
 				e.printStackTrace();
 			}
 		}

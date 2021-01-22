@@ -18,15 +18,15 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
-		System.out.println(isAttacking ? "Attacking poli" : "Defensive poli");
+		// System.out.println(isAttacking ? "Attacking poli" : "Defensive poli");
 
 		if(isAttacking && attackTarget != null){
-			System.out.println("Attacking: " + attackTarget.toString());
+			// System.out.println("Attacking: " + attackTarget.toString());
 			runAttack();
 		}
 		else {
 			if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1){
-				System.out.println("Sacrificial politician activated");
+				// System.out.println("Sacrificial politician activated");
 				int dist = myLoc.distanceSquaredTo(creatorLoc);
 				if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1){
 					rc.empower(dist);
@@ -62,21 +62,21 @@ public class Politician extends Robot {
 			}
 			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
 			if(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()) > 30){
-				System.out.println("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
-				System.out.println(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
+				// System.out.println("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
+				// System.out.println(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
 				continue;
 			}
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
-			System.out.println("Friendly slanderer at: " + info.getLocation());
+			// System.out.println("Friendly slanderer at: " + info.getLocation());
 			minDist = Math.max(minDist, gridDist + 1);
 			spotted = true;
 		}
-		System.out.println("My min dist: " + minDist);
-		System.out.println("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
+		// System.out.println("My min dist: " + minDist);
+		// System.out.println("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
 		// If you're too close, move farther away
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			System.out.println("Going farther!");
+			// System.out.println("Going farther!");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 			nav.tryMove(options);
@@ -84,7 +84,7 @@ public class Politician extends Robot {
 		}
 		// Always make sure theres a friendly slanderer in site
 		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
-			System.out.println("Going closer!");
+			// System.out.println("Going closer!");
 			Direction targetDir = myLoc.directionTo(creatorLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 			nav.tryMove(options);
@@ -92,7 +92,7 @@ public class Politician extends Robot {
 		}
 		else{
 			nav.circle(circlingCCW, minDist);
-			System.out.println("Circling!");
+			// System.out.println("Circling!");
 		}
 
 	}
@@ -109,7 +109,7 @@ public class Politician extends Robot {
 			nav.goTo(attackTarget);
 		}
 		else if (rc.canEmpower(dist)) {
-			System.out.println("Empowering...distance to target: " + dist);
+			// System.out.println("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}
 	}

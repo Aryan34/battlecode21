@@ -67,8 +67,10 @@ public class EnlightenmentCenter extends Robot {
 			}
 		}
 
-		if(attackTarget != null){ System.out.println("ATTACKING: " + attackTarget.toString()); }
-		System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
+		if(attackTarget != null){
+			// System.out.println("ATTACKING: " + attackTarget.toString());
+		}
+		// System.out.println("Leftover bytecode: " + Clock.getBytecodesLeft());
 
 		int numSlanderers = filterSpawnedRobots(RobotType.SLANDERER, null, -1).length;
 		int numAttackPolis = filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length;
@@ -76,34 +78,34 @@ public class EnlightenmentCenter extends Robot {
 		int numMucks = filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length;
 
 		if(savingForSuicide){
-			System.out.println("Saving for suicide!");
+			// System.out.println("Saving for suicide!");
 			if(rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 10) >= 1.1){
 				spawnPoliticians(true, true);
 			}
 		}
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = muckraker
 		else if(!enemySpotted){
-			System.out.println("Spawning A");
+			// System.out.println("Spawning A");
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			spawnOrder(order);
 		}
 		else if(numDefensePolis < numSlanderers / 1.5){
-			System.out.println("Spawning B");
+			// System.out.println("Spawning B");
 			spawnPoliticians(true, false);
 		}
 		else if(attackTarget != null){
-			System.out.println("Spawning C");
+			// System.out.println("Spawning C");
 			spawnPoliticians(false, true);
 			int[] order = {2, 3, 2, 3, 1, 0, 3};
 			spawnOrder(order);
 		}
 		else if(numSpawned < 300){
-			System.out.println("Spawning D");
+			// System.out.println("Spawning D");
 			int[] order = {1, 0, 1, 2, 0, 3, 3, 1};
 			spawnOrder(order);
 		}
 		else{
-			System.out.println("Spawning E");
+			// System.out.println("Spawning E");
 			int[] order = {1, 0, 3, 2, 3, 0, 1};
 			spawnOrder(order);
 		}
@@ -156,20 +158,20 @@ public class EnlightenmentCenter extends Robot {
 			}
 		}
 
-		System.out.println("Troop count:" + filterSpawnedRobots(null, null, -1).length);
-		System.out.println("Slanderers: " + filterSpawnedRobots(RobotType.SLANDERER, null, -1).length);
-		System.out.println("Attack polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length);
-		System.out.println("Defense polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 1).length);
-		System.out.println("Muckrackers: " + filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length);
+		// System.out.println("Troop count:" + filterSpawnedRobots(null, null, -1).length);
+		// System.out.println("Slanderers: " + filterSpawnedRobots(RobotType.SLANDERER, null, -1).length);
+		// System.out.println("Attack polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 0).length);
+		// System.out.println("Defense polis: " + filterSpawnedRobots(RobotType.POLITICIAN, null, 1).length);
+		// System.out.println("Muckrackers: " + filterSpawnedRobots(RobotType.MUCKRAKER, null, -1).length);
 
 	}
 
 
 	public void spawnMucks() throws GameActionException {
-		System.out.println("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
+		// System.out.println("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
 		if(!doneScouting){
 			// Find a list of unsearched directions to spawn the scout in
-			System.out.println(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
+			// System.out.println(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
 			Direction[] spawnDirections = new Direction[8];
 			int tempIdx = 0;
 			if (mapBoundaries[0] == 0) { spawnDirections[tempIdx] = Direction.WEST; tempIdx++; }
@@ -213,7 +215,7 @@ public class EnlightenmentCenter extends Robot {
 
 	public void spawnSlanderers() throws GameActionException {
 		// Figure out spawn influence
-		System.out.println("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
+		// System.out.println("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
@@ -238,13 +240,13 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void spawnPoliticians(boolean defense, boolean sacrifice) throws GameActionException {
-		System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
+		// System.out.println("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
-		System.out.println(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
+		// System.out.println(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
-		System.out.println("My influence is greater than EC Min influence!");
+		// System.out.println("My influence is greater than EC Min influence!");
 
 		Direction[] spawnDirs = Navigation.randomizedDirs();
 		// Defense politicians have odd influence, attack politicians have even influence
@@ -267,7 +269,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if (defense) {
 			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 20));
-			System.out.println(spawnInfluence + " " + DEF_POLI_MIN_COST);
+			// System.out.println(spawnInfluence + " " + DEF_POLI_MIN_COST);
 			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 0) {
 				spawnInfluence -= 1;
@@ -306,7 +308,7 @@ public class EnlightenmentCenter extends Robot {
 		for(int i = 0; i < attackPolis.length; i++){
 			attackInf += attackPolis[i].spawnInfluence - 10;
 		}
-		System.out.println("Attack influence: " + attackInf);
+		// System.out.println("Attack influence: " + attackInf);
 		if(attackTarget != null){
 			DetectedInfo[] targetInfo = Util.getCorrespondingRobots(null, null, attackTarget);
 			assert(targetInfo.length > 0);
@@ -322,7 +324,7 @@ public class EnlightenmentCenter extends Robot {
 			}
 		}
 		DetectedInfo[] allECInfo = Util.getCorrespondingRobots(null, RobotType.ENLIGHTENMENT_CENTER, null);
-		System.out.println("Num of ECs known: " + allECInfo.length);
+		// System.out.println("Num of ECs known: " + allECInfo.length);
 		// Attack the closest EC
 		MapLocation closestTarget = null; int closestDist = Integer.MAX_VALUE;
 		for(DetectedInfo info : allECInfo){
@@ -335,16 +337,16 @@ public class EnlightenmentCenter extends Robot {
 				closestTarget = info.loc;
 			}
 		}
-//		System.out.println("Closest target: " + closestTarget == null ? "null" : closestTarget.toString());
+//		// System.out.println("Closest target: " + closestTarget == null ? "null" : closestTarget.toString());
 		if(closestTarget != null){
-			System.out.println("Closest target: " + closestTarget.toString());
+			// System.out.println("Closest target: " + closestTarget.toString());
 			// Guess how much it costs to capture? Send waves of 200 maybe?
 			if(attackInf > ATTACK_MIN_INFLUENCE){
 				attackTarget = closestTarget;
 			}
 		}
 		else{
-			System.out.println("No closest target found");
+			// System.out.println("No closest target found");
 		}
 	}
 

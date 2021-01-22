@@ -67,7 +67,7 @@ public class Robot {
 	}
 
 	public void run() throws GameActionException {
-		System.out.println("---------------------------------");
+		// System.out.println("---------------------------------");
 		turnCount += 1;
 		setFlagThisRound = false;
 		if(myLoc != null && rc.getLocation().equals(myLoc)){
@@ -129,14 +129,14 @@ public class Robot {
 	public void relayRobotLocations(RobotInfo[] nearby) throws GameActionException {
 		for(RobotInfo info : nearby){
 			if(setFlagThisRound){ // Don't waste the bytecode
-				System.out.println("Already set my flag this round ://");
+				// System.out.println("Already set my flag this round ://");
 				continue;
 			}
 			DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, info.getLocation());
 			if(savedLocations.length != 0 && (savedLocations[0].team == info.getTeam() && savedLocations[0].type == info.getType())){
 				continue;
 			}
-			System.out.println("Found something new! Broadcasting it");
+			// System.out.println("Found something new! Broadcasting it");
 			int purpose = 2;
 			int[] xy = Comms.mapLocationToXY(info.getLocation());
 			int x = xy[0];
@@ -151,19 +151,19 @@ public class Robot {
 //				}
 				int[] flagArray = {purpose, 4, robot_type, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag to enemy: " + Comms.printFlag(flag));
+				// System.out.println("Setting flag to enemy: " + Comms.printFlag(flag));
 				Comms.setFlag(flag);
 			}
 			else if(info.getTeam() == myTeam && info.getType() == RobotType.ENLIGHTENMENT_CENTER){
 				int[] flagArray = {purpose, 4, 1, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag to friendly EC: " + Comms.printFlag(flag));
+				// System.out.println("Setting flag to friendly EC: " + Comms.printFlag(flag));
 				Comms.setFlag(flag);
 			}
 			else if(info.getTeam() == Team.NEUTRAL){
 				int[] flagArray = {purpose, 4, 2, 2, x, 7, y, 7};
 				int flag = Comms.concatFlag(flagArray);
-				System.out.println("Setting flag to neutral: " + Comms.printFlag(flag));
+				// System.out.println("Setting flag to neutral: " + Comms.printFlag(flag));
 				Comms.setFlag(flag);
 			}
 		}

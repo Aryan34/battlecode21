@@ -24,11 +24,11 @@ public class Muckraker extends Robot {
 //		relayRobotLocations(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
 		if(isAttacking && attackTarget != null){
-			System.out.println("Yam attacking: " + attackTarget.toString());
+			// System.out.println("Yam attacking: " + attackTarget.toString());
 			runAttack();
 		}
 		else{
-			System.out.println("Yam scouting");
+			// System.out.println("Yam scouting");
 			runScout();
 		}
 		Comms.setFlag(0); // Reset flag to 0 so you don't send stuff multiple times
@@ -58,7 +58,7 @@ public class Muckraker extends Robot {
 			while (curr.distanceSquaredTo(myLoc) <= myType.sensorRadiusSquared) {
 				if (!rc.onTheMap(curr)) {
 					// Save the out of bounds location
-					System.out.println("Found the out of bounds location!");
+					// System.out.println("Found the out of bounds location!");
 					// Set flag
 					int borderValue = addBoundaryFlag(dir, curr);
 					mapBoundaries[i] = borderValue;
@@ -87,7 +87,7 @@ public class Muckraker extends Robot {
 				maxHeuristic = heuristic;
 				bestDir = dir;
 			}
-			System.out.println("Direction: " + dir.toString() + "; heuristic: " + heuristic);
+			// System.out.println("Direction: " + dir.toString() + "; heuristic: " + heuristic);
 		}
 		if(bestDir != Direction.CENTER){
 			nav.tryMove(bestDir);
@@ -107,7 +107,7 @@ public class Muckraker extends Robot {
 			if(mapBoundaries[i] != 0){
 				int dist1 = distanceToEdge(i, myLoc);
 				int dist2 = distanceToEdge(i, nextLoc);
-				System.out.println("Edge case: " + sensorDist + ", " + dist1 + ", " + dist2);
+				// System.out.println("Edge case: " + sensorDist + ", " + dist1 + ", " + dist2);
 				if(dist1 < sensorDist && dist2 < dist1){
 					return Integer.MIN_VALUE + 1;
 				}

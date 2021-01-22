@@ -106,7 +106,7 @@ public class Navigation {
 	 */
 
 	public boolean tryMove(Direction dir) throws GameActionException {
-		System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
+		// System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
 		if (rc.canMove(dir)) {
 			rc.move(dir);
 			return true;
@@ -178,7 +178,7 @@ public class Navigation {
 
 		double minVal = min(distances);
 		if (minVal == Double.MAX_VALUE) {
-			System.out.println(" Ran into a massive obstacle, need to turn around!! ");
+			// System.out.println(" Ran into a massive obstacle, need to turn around!! ");
 			return null;
 		}
 
@@ -225,7 +225,7 @@ public class Navigation {
 		for(Direction dir : cardinalDirections){
 			MapLocation target = myLoc.add(dir);
 			if(Util.isGridSquare(target, creatorLoc) && Util.getGridSquareDist(target, creatorLoc) >= minDist && rc.canMove(dir)){
-				System.out.println("Found a nearby cardinal location: " + target.toString());
+				// System.out.println("Found a nearby cardinal location: " + target.toString());
 				tryMove(dir);
 				return;
 			}
@@ -233,7 +233,7 @@ public class Navigation {
 
 		// Try moving away from the center
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			System.out.println("Moving away from center");
+			// System.out.println("Moving away from center");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
@@ -259,12 +259,12 @@ public class Navigation {
 			}
 		}
 		if(bestLoc != null){
-			System.out.println("Going towards: " + bestLoc.toString());
+			// System.out.println("Going towards: " + bestLoc.toString());
 			goTo(bestLoc);
 		}
 		else{
 			// Move outwards?
-			System.out.println("Moving outwards");
+			// System.out.println("Moving outwards");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
 		}
@@ -354,10 +354,10 @@ public class Navigation {
 			order[3] = rotateCCW(start);
 		}
 
-		System.out.println("Starting direction: " + start);
+		// System.out.println("Starting direction: " + start);
 		for(Direction dir : order){
 			MapLocation newLoc = myLoc.add(dir);
-			System.out.println("Checking: " + newLoc.toString());
+			// System.out.println("Checking: " + newLoc.toString());
 			if(Util.getGridSquareDist(newLoc, creatorLoc) < minDist){
 				continue;
 			}

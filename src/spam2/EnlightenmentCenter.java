@@ -37,7 +37,7 @@ public class EnlightenmentCenter extends Robot {
 	final int SLAND_MIN_COST = 21;
 	final int ATTACK_MIN_INFLUENCE = 1200;
 	final int STOP_ATTACK_MIN_INFLUENCE = 300;
-	int[] slandBenefitDP = new int[10];
+	int[] slandBenefits = new int[1500];
 	int numVotes = 0;
 
 	// Troop spawning variables
@@ -190,6 +190,9 @@ public class EnlightenmentCenter extends Robot {
 						slandererInfo[slanderersSpawned] = spawnInfo;
 						slanderersSpawned++;
 						slandsAlive++;
+						for(int i = 0; i < 50; i++){
+							slandBenefits[currRound + i] += Util.slandBenefitPerRound(spawnInfo.spawnInfluence);
+						}
 					}
 					else if(info.getType() == RobotType.POLITICIAN && info.getInfluence() % 2 == 0){
 						attackPoliInfo[attackPolisSpawned] = spawnInfo;
@@ -219,9 +222,14 @@ public class EnlightenmentCenter extends Robot {
 				if(info.alive){
 					spawnedAlliesIDs.remove(info.id);
 					info.alive = false;
-					if(info.type == RobotType.SLANDERER){ slandsAlive--; }
+					if(info.type == RobotType.SLANDERER){
+						slandsAlive--;
+						for(int j = currRound; j < info.spawnRound + 50; j++){
+							slandBenefits[currRound + j] -= Util.slandBenefitPerRound(info.spawnInfluence);
+						}
+					}
 					else if(info.type == RobotType.POLITICIAN && info.spawnInfluence % 2 == 0){ attackersAlive--; }
-					else if(info.type == RobotType.SLANDERER && info.spawnInfluence % 2 == 0){ defendersAlive--; }
+					else if(info.type == RobotType.POLITICIAN && info.spawnInfluence % 2 == 0){ defendersAlive--; }
 					else if(info.type == RobotType.MUCKRAKER){ mucksAlive--; }
 				}
 			}
@@ -446,31 +454,6 @@ public class EnlightenmentCenter extends Robot {
 		Comms.setFlag(flag);
 	}
 
-	public SpawnInfo[] filterSpawnedRobots(RobotType type, Direction spawnDir, int infMod){
-		SpawnInfo[] copy = new SpawnInfo[numSpawned];
-		int count = 0;
-
-		for(int i = 0; i < numSpawned; i++){
-			SpawnInfo info = spawnedAllies[i];
-			if(!info.alive){
-				continue;
-			}
-			if(type != null && info.type != type){
-				continue;
-			}
-			if(spawnDir != null && info.spawnDir != spawnDir){
-				continue;
-			}
-			if(infMod != -1 && info.spawnInfluence % 2 != infMod) {
-				continue;
-			}
-			copy[count] = info;
-			count++;
-		}
-		SpawnInfo[] copy2 = Arrays.copyOfRange(copy, 0, count);
-		return copy2;
-	}
-
 	public void checkSuicideViable(SpawnInfo[] slandererInfo){
 		// TODO: Also somehow check that you're safe for the time being (you have more defense polis than slanderers, and more than 5 defense polis? idk)
 //		if(savingForSuicide){ return; }
@@ -482,19 +465,6 @@ public class EnlightenmentCenter extends Robot {
 //		}
 		savingForSuicide = false;
 
-		// Calculate the slanderer benefit 10 rounds into the future
-//		int slandSum = 0;
-//		int projectionRound = currRound + 10;
-//		for(int i = 0; i < slanderersSpawned; i++){
-//			SpawnInfo info = slandererInfo[i];
-//			if(!info.alive){ continue; }
-//			if(info.spawnRound + 50 > projectionRound){
-//				continue;
-//			}
-//			slandSum += Util.slandBenefitPerRound(info.spawnInfluence);
-//		}
-//		slandBenefitDP[currRound % 10] = slandSum;
-//
 //		// Check if, in the next 10 rounds, you'll be able to pull off a hot suicide
 //		savingForSuicide = false;
 //		int EC_benefit = 0;
@@ -505,14 +475,14 @@ public class EnlightenmentCenter extends Robot {
 //				continue;
 //			}
 //			EC_benefit += Math.ceil(0.2 * (currRound + i));
-//			slandBenefit += slandBenefitDP[(currRound + i) % 10];
+//			int slandBenefit = slandBenefit[currRound];
 //			if(rc.getInfluence() + EC_benefit + slandBenefit > 700 && empowerFactor > 1.1){
 //				savingForSuicide = true;
 //			}
 //		}
 	}
 
-	public boolean enemyMuckNearby() throws GameActionException {
+	public boolean enemyMuckNearby() {
 		for(RobotInfo info : nearby){
 			if(info.getType() == RobotType.MUCKRAKER && info.getTeam() == myTeam.opponent()){
 				return true;

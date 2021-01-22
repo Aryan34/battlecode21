@@ -13,7 +13,7 @@ public class Log {
         if (toggle_on) {
             System.out.println(str);
         }
-        else if(rc.getType() == RobotType.POLITICIAN){
+        else if(rc.getType() == RobotType.ENLIGHTENMENT_CENTER){
             System.out.println(str);
         }
     }

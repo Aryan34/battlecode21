@@ -16,7 +16,7 @@ public class Slanderer extends Robot {
 		// Changed to politician
 		if(rc.getType() == RobotType.POLITICIAN){
 			myType = RobotType.POLITICIAN;
-			System.out.println("Running slanderer code as politician");
+			// System.out.println("Running slanderer code as politician");
 			if(pol == null){
 				pol = new Politician(rc);
 				pol.creatorLoc = creatorLoc;
@@ -27,8 +27,8 @@ public class Slanderer extends Robot {
 				pol.attackTarget = attackTarget;
 				// TODO: Copy over the rest of the variables?
 
-				System.out.println("Resetting flag to 0!");
-				System.out.println(Comms.setFlag(0));
+				// System.out.println("Resetting flag to 0!");
+				// System.out.println(Comms.setFlag(0));
 			}
 			pol.run();
 		}
@@ -41,7 +41,7 @@ public class Slanderer extends Robot {
 
 	public void runEco() throws GameActionException {
 		inGrid = Util.isGridSquare(myLoc, creatorLoc);
-		System.out.println("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
+		// System.out.println("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
 		checkSuicide();
 		if(!inGrid){
 			nav.goToGrid(2);
@@ -58,17 +58,17 @@ public class Slanderer extends Robot {
 		RobotInfo info = rc.senseRobotAtLocation(checkLocation);
 		if(info == null){ return; }
 		// If the robot is tryna sewercide, move away
-		System.out.println("Checking for suiciding poli");
+		// System.out.println("Checking for suiciding poli");
 		if(myLoc.distanceSquaredTo(creatorLoc) != 4){ return; }
-		System.out.println("A");
+		// System.out.println("A");
 		if(info.getType() != RobotType.POLITICIAN){ return; }
-		System.out.println("B");
+		// System.out.println("B");
 		if(info.getInfluence() % 2 != 1){ return; }
-		System.out.println("C");
+		// System.out.println("C");
 		if(info.getInfluence() < 700){ return; }
-		System.out.println("D");
+		// System.out.println("D");
 		if(rc.getEmpowerFactor(myTeam, 0) < 1.1){ return; }
-		System.out.println("Found suiciding poli!");
+		// System.out.println("Found suiciding poli!");
 		Direction targetDir = creatorLoc.directionTo(myLoc);
 		nav.tryMove(Navigation.closeDirections(targetDir));
 	}
