@@ -62,10 +62,10 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-//		if(currRound > 100){
-//			rc.resign();
-//		}
-//
+		if(currRound > 100){
+			rc.resign();
+		}
+
 		if(currRound > 300){
 			bid();
 		}
