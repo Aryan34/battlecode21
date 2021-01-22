@@ -86,13 +86,20 @@ public class EnlightenmentCenter extends Robot {
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 //		Log.log("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
+
+		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
 		if(savingForSuicide){
 			Log.log("Saving for suicide!");
 			if(rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 10) >= 1.1){
 				spawnPoliticians(true, true);
 			}
 		}
-		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = muckraker
+		else if(rc.getRoundNum() - turnCount > 3 && turnCount < 25) {
+			Log.log("Spawning neutral EC order");
+			int[] order = {0, 3, 0, 3, 1, 1, 3, 3, 0, 1, 3, 1, 0, 3, 1, 1, 1, 3, 3, 0, 3, 1, 1, 0, 1};
+			spawnOrder(order);
+		}
+
 		else if(!enemySpotted){
 			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
@@ -129,7 +136,8 @@ public class EnlightenmentCenter extends Robot {
 		if(type == 0){ spawnSlanderers(); }
 		if(type == 1){ spawnPoliticians(true, false); }
 		if(type == 2){ spawnPoliticians(false, false); }
-		if(type == 3){ spawnMucks(); }
+		if(type == 3){ spawnMucks(true); }
+		if(type == 4){ spawnMucks(false); }
 	}
 
 	public void checkRobotFlags() throws GameActionException {
@@ -223,9 +231,9 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 
-	public void spawnMucks() throws GameActionException {
+	public void spawnMucks(boolean scout) throws GameActionException {
 		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
-		if(!doneScouting){
+		if(scout){
 			// Find a list of unsearched directions to spawn the scout in
 			Log.log(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
 			Direction[] spawnDirections = new Direction[8];
