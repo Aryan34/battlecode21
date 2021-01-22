@@ -23,7 +23,7 @@ public class Comms {
             return true;
         }
         else{
-            System.out.println("CAN'T SET FLAG TO: " + flag);
+            Log.log("CAN'T SET FLAG TO: " + flag);
         }
         return false;
     }
@@ -66,7 +66,7 @@ public class Comms {
                 int[] splits5 = {4, 2};
                 return splitFlag(flag, splits5);
             default:
-                System.out.println("Unknown flag purpose detected!");
+                Log.log("Unknown flag purpose detected!");
         }
         int[] empty = new int[0];
         return empty;
@@ -138,11 +138,11 @@ public class Comms {
                 }
                 if(robot.mapBoundaries[0] != 0 && robot.mapBoundaries[1] != 0){
                     robot.mapWidth = robot.mapBoundaries[1] - robot.mapBoundaries[0] + 1;
-                    System.out.println("Map width: " + robot.mapWidth);
+                    Log.log("Map width: " + robot.mapWidth);
                 }
                 if(robot.mapBoundaries[2] != 0 && robot.mapBoundaries[3] != 0){
                     robot.mapHeight = robot.mapBoundaries[3] - robot.mapBoundaries[2] + 1;
-                    System.out.println("Map height: " + robot.mapHeight);
+                    Log.log("Map height: " + robot.mapHeight);
                 }
                 if(robot.mapWidth != 0 && robot.mapHeight != 0){
                     robot.doneScouting = true;
@@ -162,16 +162,16 @@ public class Comms {
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
                 if(detectedTeam == robot.myTeam.opponent()){
                     robot.enemySpotted = true;
-                    System.out.println("ENEMY SPOTTED !!!!!");
+                    Log.log("ENEMY SPOTTED !!!!!");
                 }
                 if(detectedType == RobotType.ENLIGHTENMENT_CENTER && detectedTeam != rc.getTeam()){
-                    System.out.println("DETECTED ENLIGHTENMENT CENTER!");
+                    Log.log("DETECTED ENLIGHTENMENT CENTER!");
                 }
                 // Don't save it if its not an enlightenment center
                 if(savedLocations.length == 0){
                     robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc);
                     robot.robotLocationsIdx++;
-                    System.out.println("Detected new robot of type: " + (detectedType == null ? "Unknown" : detectedType.toString()) + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
+                    Log.log("Detected new robot of type: " + (detectedType == null ? "Unknown" : detectedType.toString()) + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
                 }
                 else{
                     // Update previously saved robot
@@ -180,7 +180,7 @@ public class Comms {
                 }
                 break;
             case 3: // Corner location to hide in
-                System.out.println("GETTING CORNER LOC FROM EC");
+                Log.log("GETTING CORNER LOC FROM EC");
                 break;
             case 4:
                 int x = splits[1];
@@ -195,11 +195,11 @@ public class Comms {
                 if(splits[3] == 3){
                     robot.attackTarget = null;
                 }
-                if(robot.attackTarget != null){ System.out.println("Found an attack target!: " + robot.attackTarget.toString()); }
-                else{ System.out.println("Not attacking anything :(("); }
+                if(robot.attackTarget != null){ Log.log("Found an attack target!: " + robot.attackTarget.toString()); }
+                else{ Log.log("Not attacking anything :(("); }
                 break;
             case 5:
-//                System.out.println("Reading troop type");
+//                Log.log("Reading troop type");
                 int typeNum = splits[1];
                 if(typeNum == 0){ robot.typeInQuestion = RobotType.SLANDERER; }
                 else if(typeNum == 1){ robot.typeInQuestion = RobotType.POLITICIAN; }

@@ -53,17 +53,17 @@ public class Util {
 				return info.location;
 			}
 		}
-		System.out.println("Could not find adjacent EC!");
+		Log.log("Could not find adjacent EC!");
 		return null;
 	}
 
 	static boolean tryBuild(RobotType type, Direction dir, int influence) throws GameActionException {
 		if (rc.canBuildRobot(type, dir, influence)) {
-			System.out.println("Built robot of type: " + type.toString() + ", with influence: " + influence);
+			Log.log("Built robot of type: " + type.toString() + ", with influence: " + influence);
 			rc.buildRobot(type, dir, influence);
 			return true;
 		}
-		System.out.println("Failed to build robot of type: " + type.toString() + ", with influence: " + influence + ", in direction: " + dir.toString());
+		Log.log("Failed to build robot of type: " + type.toString() + ", with influence: " + influence + ", in direction: " + dir.toString());
 		return false;
 	}
 

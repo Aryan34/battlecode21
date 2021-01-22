@@ -18,15 +18,15 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		Comms.checkFlag(creatorID);
-		System.out.println(isAttacking ? "Attacking poli" : "Defensive poli");
+		Log.log(isAttacking ? "Attacking poli" : "Defensive poli");
 
 		if(isAttacking && attackTarget != null){
-			System.out.println("Attacking: " + attackTarget.toString());
+			Log.log("Attacking: " + attackTarget.toString());
 			runAttack();
 		}
 		else {
 			if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1){
-				System.out.println("Sacrificial politician activated");
+				Log.log("Sacrificial politician activated");
 				int dist = myLoc.distanceSquaredTo(creatorLoc);
 				if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1){
 					rc.empower(dist);
@@ -60,21 +60,21 @@ public class Politician extends Robot {
 			}
 			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
 			if(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()) > 30){
-				System.out.println("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
-				System.out.println(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
+				Log.log("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
+				Log.log("" + Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
 				continue;
 			}
 			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
-			System.out.println("Friendly slanderer at: " + info.getLocation());
+			Log.log("Friendly slanderer at: " + info.getLocation());
 			minDist = Math.max(minDist, gridDist + 2);
 			spotted = true;
 		}
-		System.out.println("My min dist: " + minDist);
-		System.out.println("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
+		Log.log("My min dist: " + minDist);
+		Log.log("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
 		// If you're too close, move farther away
 		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			System.out.println("Going farther!");
+			Log.log("Going farther!");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 			nav.tryMove(options);
@@ -82,7 +82,7 @@ public class Politician extends Robot {
 		}
 		// Always make sure theres a friendly slanderer in site
 		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
-			System.out.println("Going closer!");
+			Log.log("Going closer!");
 			Direction targetDir = myLoc.directionTo(creatorLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 			nav.tryMove(options);
@@ -91,7 +91,7 @@ public class Politician extends Robot {
 		else{
 			chooseSide();
 			nav.circle(circlingCCW, minDist);
-			System.out.println("Circling: " + circlingCCW);
+			Log.log("Circling: " + circlingCCW);
 		}
 
 	}
@@ -110,7 +110,7 @@ public class Politician extends Robot {
 			nav.goTo(attackTarget);
 		}
 		else if (rc.canEmpower(dist)) {
-			System.out.println("Empowering...distance to target: " + dist);
+			Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}
 	}
@@ -134,9 +134,9 @@ public class Politician extends Robot {
 			for(int j = 0; j < idx2; j++){
 				// Check if any of the enemy mucks can kill friendly slands
 				int dist = enemyMucks[i].distanceSquaredTo(friendlySlands[j]);
-				System.out.println("Enemy muck: " + enemyMucks[i].toString());
-				System.out.println("Friendly sland: " + friendlySlands[j].toString());
-				System.out.println("Dist: " + dist);
+				Log.log("Enemy muck: " + enemyMucks[i].toString());
+				Log.log("Friendly sland: " + friendlySlands[j].toString());
+				Log.log("Dist: " + dist);
 				if(dist < closestDist){
 					closestDist = dist;
 					biggestThreat = enemyMucks[i];
@@ -148,12 +148,12 @@ public class Politician extends Robot {
 			return;
 		}
 		// If the muck can kill our sland
-		System.out.println("Biggest threat: " + biggestThreat.toString());
-		System.out.println("It's distance to our closest sland is: " + closestDist);
+		Log.log("Biggest threat: " + biggestThreat.toString());
+		Log.log("It's distance to our closest sland is: " + closestDist);
 		if(closestDist < RobotType.MUCKRAKER.actionRadiusSquared){
 			// If we can kill the muck, go for it
 			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
-			System.out.println("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
+			Log.log("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
 			if(attackDist <= RobotType.POLITICIAN.actionRadiusSquared){
 				if(rc.canEmpower(attackDist)){
 					rc.empower(attackDist);

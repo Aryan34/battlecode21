@@ -17,7 +17,7 @@ public class Slanderer extends Robot {
 		// Changed to politician
 		if(rc.getType() == RobotType.POLITICIAN){
 			myType = RobotType.POLITICIAN;
-			System.out.println("Running slanderer code as politician");
+			Log.log("Running slanderer code as politician");
 			if(pol == null){
 				pol = new Politician(rc);
 				pol.creatorLoc = creatorLoc;
@@ -28,8 +28,7 @@ public class Slanderer extends Robot {
 				pol.attackTarget = attackTarget;
 				// TODO: Copy over the rest of the variables?
 
-				System.out.println("Resetting flag to 0!");
-				System.out.println(Comms.setFlag(0));
+				Log.log("Resetting flag to 0!");
 			}
 			pol.run();
 		}
@@ -42,7 +41,7 @@ public class Slanderer extends Robot {
 
 	public void runEco() throws GameActionException {
 		inGrid = Util.isGridSquare(myLoc, creatorLoc);
-		System.out.println("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
+		Log.log("Grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc) + ", On lattice: " + inGrid);
 		checkSafety();
 		if(!muckNearby){
 			checkSuicide();
@@ -63,7 +62,7 @@ public class Slanderer extends Robot {
 		if(info == null){ return; }
 
 		// If the robot is tryna sewercide, move away
-		System.out.println("Checking for suiciding poli");
+		Log.log("Checking for suiciding poli");
 		if(myLoc.distanceSquaredTo(creatorLoc) != 4){ return; }
 		if(info.getType() != RobotType.POLITICIAN){ return; }
 		if(info.getInfluence() % 2 != 1){ return; }
@@ -87,7 +86,7 @@ public class Slanderer extends Robot {
 			muckNearby = true;
 			// Find the closest one
 			int dist = myLoc.distanceSquaredTo(info.getLocation());
-			System.out.println("Found a muck at: " + info.getLocation() + ", which is a distance of: " + dist);
+			Log.log("Found a muck at: " + info.getLocation() + ", which is a distance of: " + dist);
 			if(dist < closestDist){
 				closestDist = dist;
 				closestLoc = info.getLocation();
@@ -99,7 +98,7 @@ public class Slanderer extends Robot {
 		}
 		for(Direction dir : Navigation.closeDirections(myLoc.directionTo(closestLoc).opposite())){
 			if(isSafer(myLoc, myLoc.add(dir))){
-				System.out.println("It is safe to move: " + dir.toString());
+				Log.log("It is safe to move: " + dir.toString());
 				nav.tryMove(dir);
 			}
 		}
