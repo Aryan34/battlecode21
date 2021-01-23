@@ -17,32 +17,40 @@ public class Politician extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
-		Comms.checkFlag(creatorID);
-		Log.log(isAttacking ? "Attacking poli" : "Defensive poli");
 
-		if(isAttacking && attackTarget != null){
-			Log.log("Attacking: " + attackTarget.toString());
-			runAttack();
+		if(creatorLoc == null){
+			runConverted();
+			isAttacking = true;
 		}
 		else {
-			if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1){
-				Log.log("Sacrificial politician activated");
-				int dist = myLoc.distanceSquaredTo(creatorLoc);
-				if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1){
-					rc.empower(dist);
-				}
-				else{
-					nav.circle(true, 1);
-				}
-			}
-			else {
-				runEco(nearby);
-			}
-		}
+			Comms.checkFlag(creatorID);
+			Log.log(isAttacking ? "Attacking poli" : "Defensive poli");
 
-		if(!setFlagThisRound){
-			Comms.setFlag(0);
+			if (isAttacking && attackTarget != null) {
+				Log.log("Attacking: " + attackTarget.toString());
+				runAttack();
+			} else {
+				if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1) {
+					Log.log("Sacrificial politician activated");
+					int dist = myLoc.distanceSquaredTo(creatorLoc);
+					if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1) {
+						rc.empower(dist);
+					} else {
+						nav.circle(true, 1);
+					}
+				} else {
+					runEco(nearby);
+				}
+			}
+
+			if (!setFlagThisRound) {
+				Comms.setFlag(0);
+			}
 		}
+	}
+
+	public void runConverted() throws GameActionException {
+		// TODO: Write code for this
 	}
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {

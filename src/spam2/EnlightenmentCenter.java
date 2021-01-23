@@ -62,9 +62,9 @@ public class EnlightenmentCenter extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// TODO: Comment this out, only here to make games shorter
-		if(currRound > 600){
-			rc.resign();
-		}
+//		if(currRound > 600){
+//			rc.resign();
+//		}
 
 		if(currRound > 300){
 			bid();
@@ -121,12 +121,12 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(turnCount < 300){
 			Log.log("Spawning D");
-			int[] order = {1, 0, 1, 3, 2, 0, 1, 3, 0};
+			int[] order = {1, 0, 1, 3, 2, 3, 1, 3, 3};
 			spawnOrder(order);
 		}
 		else{
 			Log.log("Spawning E");
-			int[] order = {1, 0, 3, 2, 0, 3, 0, 0, 1};
+			int[] order = {1, 3, 2, 3, 0, 3, 0, 3, 1};
 			spawnOrder(order);
 		}
 
