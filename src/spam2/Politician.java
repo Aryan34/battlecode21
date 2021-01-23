@@ -185,6 +185,30 @@ public class Politician extends Robot {
 
 	}
 
+	public void killEnemyPols(int minKills) throws GameActionException {
+		int maxKilledPols = 0;
+		int bestAttackRadius = 0;
+		int[] attackRadii = {1, 2, 4, 5, 8, 9};
+		for (int radius : attackRadii) {
+			int killedPols = 0;
+			RobotInfo[] nearby = rc.senseNearbyRobots(radius);
+			int damage = (int)((rc.getConviction() - 10) * rc.getEmpowerFactor(myTeam, 0) / nearby.length);
+			for (RobotInfo info : rc.senseNearbyRobots(radius, myTeam.opponent())) {
+				if (info.getType() == RobotType.POLITICIAN && info.getConviction() <= damage) {
+					killedPols++;
+				}
+			}
+			if (killedPols > maxKilledPols) {
+				maxKilledPols = killedPols;
+				bestAttackRadius = radius;
+			}
+		}
+
+		if (maxKilledPols >= minKills) {
+			rc.empower(bestAttackRadius);
+		}
+	}
+
 	public void checkOnWall() throws GameActionException {
 		// North wall blocks CCW, East wall blocks ccw, West wall blocks cw, South wall blocks cw
 
@@ -217,5 +241,4 @@ public class Politician extends Robot {
 		}
 		circlingCCW = cwCount > ccwCount;
 	}
-
 }
