@@ -99,9 +99,12 @@ public class EnlightenmentCenter extends Robot {
 //			Log.log("Enemy muck nearby so spawning pol");
 //			spawnPoliticians(true);
 //		}
+		// Save up for big boi attacking poli
 		else if(attackTargetInfo != null){
-			if(attackTarget == null){
-				int infNeeded = attackTargetInfo.influence + 10;
+			int infNeeded = (int)(attackTargetInfo.influence * 1.5);
+			int infExpected = getExpectedInfluence(currRound + 10);
+			System.out.println("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
+			if(attackTarget == null && infExpected > infNeeded){
 				Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
 				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
 				if(rc.getInfluence() > infNeeded){
@@ -117,9 +120,8 @@ public class EnlightenmentCenter extends Robot {
 				}
 			}
 			else{
-				Log.log("Spawning attacking?");
-				spawnPoliticians(false);
-				int[] order = {2, 3, 2, 3, 1, 0, 3};
+				Log.log("Spawning save");
+				int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
 				spawnOrder(order);
 			}
 		}
@@ -436,6 +438,16 @@ public class EnlightenmentCenter extends Robot {
 			}
 		}
 		return false;
+	}
+
+	// Returns the amount of influence you would have on roundNum if you saved till then
+	public int getExpectedInfluence(int roundNum){
+		int expectedInf = rc.getInfluence();
+		for(int i = currRound; i <= roundNum; i++){
+			expectedInf += slandBenefits[i]; // How much influence you expect to gain from slanderers
+			expectedInf += 0.2 * Math.sqrt(i); // How much passive influence you expect to gain
+		}
+		return expectedInf;
 	}
 
 	public void bid() throws GameActionException {
