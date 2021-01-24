@@ -105,40 +105,40 @@ public class Politician extends Robot {
 	}
 
 	public void brownianMotion() throws GameActionException {
-		int[] directions = new int[8];
+		double[] directions = new double[8];
 		for (RobotInfo info : rc.senseNearbyRobots(RobotType.POLITICIAN.sensorRadiusSquared, myTeam)) {
 			if (info.getType() == RobotType.POLITICIAN) {
 				switch(myLoc.directionTo(info.getLocation())) {
 					case EAST:
-						directions[0]++;
+						directions[0] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case NORTHEAST:
-						directions[1]++;
+						directions[1] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case NORTH:
-						directions[2]++;
+						directions[2] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case NORTHWEST:
-						directions[3]++;
+						directions[3] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case WEST:
-						directions[4]++;
+						directions[4] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case SOUTHWEST:
-						directions[5]++;
+						directions[5] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case SOUTH:
-						directions[6]++;
+						directions[6] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 					case SOUTHEAST:
-						directions[7]++;
+						directions[7] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
 				}
 			}
 		}
 
 		int minIndex = -1;
-		int minCount = 10000;
+		double minCount = 10000.0;
 		for (int i = 0; i < directions.length; i++) {
 			if (directions[i] < minCount) {
 				minCount = directions[i];
