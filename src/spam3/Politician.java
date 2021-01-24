@@ -107,7 +107,7 @@ public class Politician extends Robot {
 		if(dist > myType.actionRadiusSquared){
 			nav.goTo(attackTarget);
 		}
-		if (dist > 1) {
+		else if (dist > 1) {
 			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
 			boolean moved = nav.goTo(attackTarget);
 			if(rc.getCooldownTurns() < 1 && !moved){
