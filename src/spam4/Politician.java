@@ -111,12 +111,103 @@ public class Politician extends Robot {
 				nav.goTo(latticeTile);
 			}
 			else {
-				Direction mainDir = creatorLoc.directionTo(myLoc);
-				Direction[] dirs = {mainDir, mainDir.rotateLeft(), mainDir.rotateRight()};
-				if (!nav.tryMove(dirs)) {
-					nav.tryMove(nav.randomDirection());
+				Log.log("BROWNIAN MOTION POG?");
+				brownianMotion();
+			}
+		}
+	}
+
+	public void brownianMotion() throws GameActionException {
+		int[] directions = new int[8];
+		for (RobotInfo info : rc.senseNearbyRobots(RobotType.POLITICIAN.sensorRadiusSquared, myTeam)) {
+			if (info.getType() == RobotType.POLITICIAN) {
+				switch(myLoc.directionTo(info.getLocation())) {
+					case EAST:
+						directions[0]++;
+						break;
+					case NORTHEAST:
+						directions[1]++;
+						break;
+					case NORTH:
+						directions[2]++;
+						break;
+					case NORTHWEST:
+						directions[3]++;
+						break;
+					case WEST:
+						directions[4]++;
+						break;
+					case SOUTHWEST:
+						directions[5]++;
+						break;
+					case SOUTH:
+						directions[6]++;
+						break;
+					case SOUTHEAST:
+						directions[7]++;
+						break;
 				}
 			}
+		}
+
+		int minIndex = -1;
+		int minCount = 10000;
+		for (int i = 0; i < directions.length; i++) {
+			if (directions[i] < minCount) {
+				minCount = directions[i];
+				minIndex = i;
+			}
+		}
+
+		switch(minIndex) {
+			case 0:
+				if (!nav.tryMove(Direction.EAST)) {
+					Direction[] dirs = {Direction.EAST.rotateLeft(), Direction.EAST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 1:
+				if (!nav.tryMove(Direction.NORTHEAST)) {
+					Direction[] dirs = {Direction.NORTHEAST.rotateLeft(), Direction.NORTHEAST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 2:
+				if (!nav.tryMove(Direction.NORTH)) {
+					Direction[] dirs = {Direction.NORTH.rotateLeft(), Direction.NORTH.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 3:
+				if (!nav.tryMove(Direction.NORTHWEST)) {
+					Direction[] dirs = {Direction.NORTHWEST.rotateLeft(), Direction.NORTHWEST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 4:
+				if (!nav.tryMove(Direction.WEST)) {
+					Direction[] dirs = {Direction.WEST.rotateLeft(), Direction.WEST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 5:
+				if (!nav.tryMove(Direction.SOUTHWEST)) {
+					Direction[] dirs = {Direction.SOUTHWEST.rotateLeft(), Direction.SOUTHWEST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 6:
+				if (!nav.tryMove(Direction.SOUTH)) {
+					Direction[] dirs = {Direction.SOUTH.rotateLeft(), Direction.SOUTH.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
+			case 7:
+				if (!nav.tryMove(Direction.SOUTHEAST)) {
+					Direction[] dirs = {Direction.SOUTHEAST.rotateLeft(), Direction.SOUTHEAST.rotateRight()};
+					nav.tryMove(dirs);
+				}
+				break;
 		}
 	}
 
