@@ -91,14 +91,14 @@ public class EnlightenmentCenter extends Robot {
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
 			spawnOrder(order);
 		}
-		else if(defendersAlive < slandsAlive / 1.5){
+		else if(defendersAlive <= Math.ceil(slandsAlive / 1.5)){
 			Log.log("Spawning B");
 			spawnPoliticians(true);
 		}
-//		else if(enemyMuckNearby()){
-//			Log.log("Enemy muck nearby so spawning pol");
-//			spawnPoliticians(true);
-//		}
+		else if(enemyMuckNearby()){
+			Log.log("Enemy muck nearby so spawning pol");
+			spawnPoliticians(true);
+		}
 		// Save up for big boi attacking poli
 		else if(attackTargetInfo != null){
 			int infNeeded = (int)(attackTargetInfo.influence * 1.5);

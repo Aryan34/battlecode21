@@ -13,11 +13,12 @@ public class Log {
         if (toggle_on) {
             System.out.println(str);
         }
-        else if(rc.getType() == RobotType.POLITICIAN){
-            System.out.println(str);
-        }
-        else if(rc.getType() == RobotType.ENLIGHTENMENT_CENTER){
-            System.out.println(str);
+//        RobotType[] showLogs = {RobotType.POLITICIAN, RobotType.ENLIGHTENMENT_CENTER};
+        RobotType[] showLogs = {};
+        for(RobotType type : showLogs){
+            if(rc.getType() == type){
+                System.out.println(str);
+            }
         }
     }
 

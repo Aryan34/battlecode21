@@ -35,20 +35,7 @@ public class Politician extends Robot {
 				runAttack();
 			}
 			else {
-				if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1) {
-					Log.log("Sacrificial politician activated");
-					int dist = myLoc.distanceSquaredTo(creatorLoc);
-					if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1) {
-						Log.log("Empowering for suicide");
-						rc.empower(dist);
-					}
-					else {
-						nav.circle(true, 1);
-					}
-				}
-				else {
-					runEco();
-				}
+				runEco();
 			}
 
 			if (!setFlagThisRound) {
@@ -86,7 +73,7 @@ public class Politician extends Robot {
 			int index = 0;
 			for (int dx = -4; dx <= 4; dx++) {
 				for (int dy = -4; dy <= 4; dy++) {
-					MapLocation loc = new MapLocation(myLoc.x + dx, myLoc.y + dy);
+					MapLocation loc = myLoc.translate(dx, dy);
 					if (loc.x % LATTICE_MOD == 0 && loc.y % LATTICE_MOD == 0 && rc.canSenseLocation(loc) && !rc.isLocationOccupied(loc)) {
 						emptyLatticeTiles[index] = loc;
 						index++;
@@ -212,8 +199,8 @@ public class Politician extends Robot {
 	}
 
 	public void runAttack() throws GameActionException {
-		if (rc.canSenseLocation(attackTarget)) {
-			if (rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam) {
+		if(rc.canSenseLocation(attackTarget)){
+			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
 				creatorLoc = attackTarget;
 				creatorID = rc.senseRobotAtLocation(attackTarget).getID();
 				attackTarget = null;
@@ -221,11 +208,22 @@ public class Politician extends Robot {
 			}
 		}
 		int dist = myLoc.distanceSquaredTo(attackTarget);
-		if (dist > 1) {
+		if(dist > myType.actionRadiusSquared){
 			nav.goTo(attackTarget);
 		}
-		else if (rc.canEmpower(dist)) {
-			Log.log("Empowering...distance to target: " + dist);
+		if (dist > 1) {
+			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
+			boolean moved = nav.goTo(attackTarget);
+			if(rc.getCooldownTurns() < 1 && !moved){
+				rc.empower(dist);
+			}
+		}
+		else if (senseFromLoc(myLoc, 1).length > 1) {
+			spam3.Log.log("Moving in a circle to avoid annoying enemies");
+			nav.circle(true, 1);
+		}
+		else{
+			spam3.Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}
 	}
