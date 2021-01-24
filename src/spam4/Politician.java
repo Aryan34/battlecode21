@@ -51,16 +51,16 @@ public class Politician extends Robot {
 	public void runEco() throws GameActionException {
 		killNearbyMucks();
 		// move away from HQ
-		if (myLoc.distanceSquaredTo(creatorLoc) <= 8) {
+		if (myLoc.distanceSquaredTo(creatorLoc) <= 13) {
 			Direction awayFromHQ = creatorLoc.directionTo(myLoc);
 			Direction[] dirs = {awayFromHQ.rotateRight(), awayFromHQ, awayFromHQ.rotateLeft()};
 			nav.tryMove(dirs);
 		}
-		else if (myLoc.x % LATTICE_MOD == 0 && myLoc.y % LATTICE_MOD == 0) {
-			Log.log("On the lattice!");
-		}
+//		else if (myLoc.x % LATTICE_MOD == 0 && myLoc.y % LATTICE_MOD == 0) {
+//			Log.log("On the lattice!");
+//		}
 		else {
-			findEmptyLatticeTiles();
+			brownianMotion();
 		}
 	}
 
@@ -133,6 +133,43 @@ public class Politician extends Robot {
 					case SOUTHEAST:
 						directions[7] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
+				}
+			}
+		}
+
+		for (int dx = -4; dx <= 4; dx++) {
+			for (int dy = -4; dy <= 4; dy++) {
+				if (Math.abs(dx) == 4 && Math.abs(dy) == 4) {
+					continue;
+				}
+				MapLocation loc = myLoc.translate(dx, dy);
+				if (!rc.onTheMap(loc)) {
+					switch(myLoc.directionTo(loc)) {
+						case EAST:
+							directions[0] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case NORTHEAST:
+							directions[1] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case NORTH:
+							directions[2] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case NORTHWEST:
+							directions[3] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case WEST:
+							directions[4] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case SOUTHWEST:
+							directions[5] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case SOUTH:
+							directions[6] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+						case SOUTHEAST:
+							directions[7] += 3.0 / myLoc.distanceSquaredTo(loc);
+							break;
+					}
 				}
 			}
 		}
