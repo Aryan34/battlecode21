@@ -178,6 +178,8 @@ public class Navigation {
 			return null;
 		}
 
+		// TODO: Change this to return an array of directions
+
 		int minIdx = indexOf(distances, minVal);
 		return correspondingDirections[minIdx];
 	}

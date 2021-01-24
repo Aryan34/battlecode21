@@ -61,9 +61,12 @@ public class EnlightenmentCenter extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
-//		if(turnCount > 200){
-//			bid();
-//		}
+		if(turnCount > 200){
+			bid();
+		}
+		else if (rc.canBid(2)){
+			rc.bid(2);
+		}
 
 //		Log.log("Starting bytecode: " + Clock.getBytecodesLeft());
 		saveSpawnedAlliesIDs();
