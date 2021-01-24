@@ -50,6 +50,7 @@ public class Politician extends Robot {
 
 	public void runEco() throws GameActionException {
 		killNearbyMucks();
+		efficientKill();
 		// move away from HQ
 		if (myLoc.distanceSquaredTo(creatorLoc) <= 13) {
 			Direction awayFromHQ = creatorLoc.directionTo(myLoc);
@@ -61,6 +62,45 @@ public class Politician extends Robot {
 //		}
 		else {
 			brownianMotion();
+		}
+	}
+
+	public void efficientKill() throws GameActionException {
+		if (rc.senseNearbyRobots(RobotType.POLITICIAN.actionRadiusSquared, myTeam.opponent()).length == 0) {
+			return;
+		}
+		int maxKills = -1;
+		int bestRadius = 0;
+		// TODO: better formula for conviction -> kill ratio
+		int maxConvictionPerKill = 5 + rc.getRoundNum() / 300;
+		int[] radii = {1, 2, 3, 4, 8, 9};
+
+		for (int radius : radii) {
+			int killCount = 0;
+			RobotInfo[] nearby = rc.senseNearbyRobots(radius);
+			RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(radius, myTeam.opponent());
+			if (nearby.length == 0) {
+				continue;
+			}
+
+			double netConvictionLost = rc.getConviction();
+			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearby.length) * rc.getEmpowerFactor(myTeam, 0);
+			for (RobotInfo info : nearbyEnemies) {
+				if (info.getConviction() - empowerStrength < -1.0) {
+					killCount++;
+				}
+				netConvictionLost -= Math.min(empowerStrength, info.getConviction());
+			}
+
+			if (killCount > 0 && Math.floorDiv((int)netConvictionLost, killCount) <= maxConvictionPerKill && killCount > maxKills) {
+				maxKills = killCount;
+				bestRadius = radius;
+			}
+		}
+
+		if (maxKills > 0) {
+			Log.log("Found efficient kill(s)!");
+			rc.empower(bestRadius);
 		}
 	}
 
@@ -108,7 +148,7 @@ public class Politician extends Robot {
 		double[] directions = new double[8];
 		for (RobotInfo info : rc.senseNearbyRobots(RobotType.POLITICIAN.sensorRadiusSquared, myTeam)) {
 			if (info.getType() == RobotType.POLITICIAN) {
-				switch(myLoc.directionTo(info.getLocation())) {
+				switch(info.getLocation().directionTo(myLoc)) {
 					case EAST:
 						directions[0] += 1.0 / myLoc.distanceSquaredTo(info.getLocation());
 						break;
@@ -137,14 +177,11 @@ public class Politician extends Robot {
 			}
 		}
 
-		for (int dx = -4; dx <= 4; dx++) {
-			for (int dy = -4; dy <= 4; dy++) {
-				if (Math.abs(dx) == 4 && Math.abs(dy) == 4) {
-					continue;
-				}
+		for (int dx = -5; dx <= 5; dx++) {
+			for (int dy = -5; dy <= 5; dy++) {
 				MapLocation loc = myLoc.translate(dx, dy);
-				if (!rc.onTheMap(loc)) {
-					switch(myLoc.directionTo(loc)) {
+				if (rc.canSenseLocation(loc) && !rc.onTheMap(loc)) {
+					switch(loc.directionTo(myLoc)) {
 						case EAST:
 							directions[0] += 3.0 / myLoc.distanceSquaredTo(loc);
 							break;
@@ -174,16 +211,16 @@ public class Politician extends Robot {
 			}
 		}
 
-		int minIndex = -1;
-		double minCount = 10000.0;
+		int maxIndex = -1;
+		double maxCount = -1.0;
 		for (int i = 0; i < directions.length; i++) {
-			if (directions[i] < minCount) {
-				minCount = directions[i];
-				minIndex = i;
+			if (directions[i] > maxCount) {
+				maxCount = directions[i];
+				maxIndex = i;
 			}
 		}
 
-		switch(minIndex) {
+		switch(maxIndex) {
 			case 0:
 				if (!nav.tryMove(Direction.EAST)) {
 					Direction[] dirs = {Direction.EAST.rotateLeft(), Direction.EAST.rotateRight()};
@@ -248,7 +285,7 @@ public class Politician extends Robot {
 		if(dist > myType.actionRadiusSquared){
 			nav.goTo(attackTarget);
 		}
-		if (dist > 1) {
+		else if (dist > 1) {
 			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
 			boolean moved = nav.goTo(attackTarget);
 			if(rc.getCooldownTurns() < 1 && !moved){
