@@ -28,19 +28,9 @@ public class Politician extends Robot {
 			if (isAttacking && attackTarget != null) {
 				Log.log("Attacking: " + attackTarget.toString());
 				runAttack();
-			} else {
-				if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1) {
-					Log.log("Sacrificial politician activated");
-					int dist = myLoc.distanceSquaredTo(creatorLoc);
-					if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1) {
-						Log.log("Empowering for suicide");
-						rc.empower(dist);
-					} else {
-						nav.circle(true, 1);
-					}
-				} else {
-					runEco(nearby);
-				}
+			}
+			else {
+				runEco(nearby);
 			}
 
 			if (!setFlagThisRound) {
@@ -114,10 +104,21 @@ public class Politician extends Robot {
 			}
 		}
 		int dist = myLoc.distanceSquaredTo(attackTarget);
-		if (dist > 1) {
+		if(dist > myType.actionRadiusSquared){
 			nav.goTo(attackTarget);
 		}
-		else if (rc.canEmpower(dist)) {
+		if (dist > 1) {
+			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
+			boolean moved = nav.goTo(attackTarget);
+			if(rc.getCooldownTurns() < 1 && !moved){
+				rc.empower(dist);
+			}
+		}
+		else if (senseFromLoc(myLoc, 1).length > 1) {
+			Log.log("Moving in a circle to avoid annoying enemies");
+			nav.circle(true, 1);
+		}
+		else{
 			Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}
