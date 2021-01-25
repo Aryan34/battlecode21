@@ -2,6 +2,7 @@ package spam3;
 
 import battlecode.common.*;
 
+
 // NOTE: Attacking muckrackers have odd influence, scout muckrackers have even influence
 
 public class Muckraker extends Robot {

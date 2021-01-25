@@ -71,28 +71,28 @@ public class EnlightenmentCenter extends Robot {
 		checkRobotFlags();
 //		Log.log("Leftover bytecode 1: " + Clock.getBytecodesLeft()); // 6k
 
-		oldbest.Log.log("Troop count:" + (slandsAlive + attackersAlive + defendersAlive + mucksAlive));
-		oldbest.Log.log("Slanderers: " + slandsAlive);
-		oldbest.Log.log("Attack polis: " + attackersAlive);
-		oldbest.Log.log("Defense polis: " + defendersAlive);
-		oldbest.Log.log("Mucks: " + mucksAlive);
+		Log.log("Troop count:" + (slandsAlive + attackersAlive + defendersAlive + mucksAlive));
+		Log.log("Slanderers: " + slandsAlive);
+		Log.log("Attack polis: " + attackersAlive);
+		Log.log("Defense polis: " + defendersAlive);
+		Log.log("Mucks: " + mucksAlive);
 
 		setAttackTarget(attackPoliInfo);
 		updateFlag();
 
-		if(attackTargetInfo != null){ oldbest.Log.log("Saving up for: " + attackTargetInfo.loc.toString()); }
-		if(attackTarget != null){ oldbest.Log.log("ATTACKING: " + attackTarget.toString()); }
+		if(attackTargetInfo != null){ Log.log("Saving up for: " + attackTargetInfo.loc.toString()); }
+		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 //		Log.log("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
 		if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
-			oldbest.Log.log("Spawning A");
+			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
 			spawnOrder(order);
 		}
 		else if(defendersAlive < slandsAlive / 1.5){
-			oldbest.Log.log("Spawning B");
+			Log.log("Spawning B");
 			spawnPoliticians(true);
 		}
 //		else if(enemyMuckNearby()){
@@ -105,33 +105,33 @@ public class EnlightenmentCenter extends Robot {
 			int infExpected = getExpectedInfluence(currRound + 10);
 			System.out.println("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
 			if(attackTarget == null && infExpected > infNeeded){
-				oldbest.Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
-				Direction[] spawnDirs = oldbest.Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
+				Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
+				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
 				if(rc.getInfluence() > infNeeded){
 					// Figure out spawn direction
-					if(oldbest.Util.tryBuild(RobotType.POLITICIAN, spawnDirs, infNeeded)){
+					if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, infNeeded)){
 						System.out.println("Successfully spawned a poli!");
 						attackTarget = attackTargetInfo.loc;
 						System.out.println(attackTarget.toString());
 					}
 				}
 				else{
-					oldbest.Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
+					Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 				}
 			}
 			else{
-				oldbest.Log.log("Spawning save");
+				Log.log("Spawning save");
 				int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
 				spawnOrder(order);
 			}
 		}
 		else if(turnCount < 300){
-			oldbest.Log.log("Spawning D");
+			Log.log("Spawning D");
 			int[] order = {1, 3, 0, 3, 1, 3, 2, 3, 3, 1, 3, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
-			oldbest.Log.log("Spawning E");
+			Log.log("Spawning E");
 			int[] order = {1, 3, 3, 0, 3, 1, 3, 2, 3, 3, 2, 3, 1, 0, 3, 1};
 			spawnOrder(order);
 		}
@@ -173,7 +173,7 @@ public class EnlightenmentCenter extends Robot {
 
 	// If you see a newly spawned troop, keep track of it and save its ID
 	public void saveSpawnedAlliesIDs() throws GameActionException {
-		for (Direction dir : oldbest.Util.directions) {
+		for (Direction dir : Util.directions) {
 			MapLocation loc = myLoc.add(dir);
 			if (rc.canSenseLocation(loc)) {
 				RobotInfo info = rc.senseRobotAtLocation(loc);
@@ -182,7 +182,7 @@ public class EnlightenmentCenter extends Robot {
 				}
 				int id = info.getID();
 				if (info.getTeam() == myTeam && !spawnedAlliesIDs.contains(id)) {
-					oldbest.Log.log("Found new troop of type: " + info.getType());
+					Log.log("Found new troop of type: " + info.getType());
 					SpawnInfo spawnInfo = new SpawnInfo(info.getType(), myLoc.directionTo(info.getLocation()), id, info.getInfluence(), currRound);
 					spawnedAllies[numSpawned] = spawnInfo;
 					spawnedAlliesIDs.add(id);
@@ -192,7 +192,7 @@ public class EnlightenmentCenter extends Robot {
 						slanderersSpawned++;
 						slandsAlive++;
 						for(int i = 0; i < 50; i++){
-							slandBenefits[currRound + i] += oldbest.Util.slandBenefitPerRound(spawnInfo.spawnInfluence);
+							slandBenefits[currRound + i] += Util.slandBenefitPerRound(spawnInfo.spawnInfluence);
 						}
 					}
 					else if(info.getType() == RobotType.POLITICIAN && info.getInfluence() % 2 == 0){
@@ -226,7 +226,7 @@ public class EnlightenmentCenter extends Robot {
 					if(info.type == RobotType.SLANDERER){
 						slandsAlive--;
 						for(int j = currRound; j < info.spawnRound + 50; j++){
-							slandBenefits[currRound + j] -= oldbest.Util.slandBenefitPerRound(info.spawnInfluence);
+							slandBenefits[currRound + j] -= Util.slandBenefitPerRound(info.spawnInfluence);
 						}
 					}
 					else if(info.type == RobotType.POLITICIAN && info.spawnInfluence % 2 == 0){ attackersAlive--; }
@@ -249,10 +249,10 @@ public class EnlightenmentCenter extends Robot {
 
 
 	public void spawnMucks(boolean scout) throws GameActionException {
-		oldbest.Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
+		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
 		if(scout){
 			// Find a list of unsearched directions to spawn the scout in
-			oldbest.Log.log(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
+			Log.log(mapBoundaries[0] + " " + mapBoundaries[1] + " " + mapBoundaries[2] + " " + mapBoundaries[3]);
 			Direction[] spawnDirections = new Direction[8];
 			int tempIdx = 0;
 			if (mapBoundaries[0] == 0) { spawnDirections[tempIdx] = Direction.WEST; tempIdx++; }
@@ -266,21 +266,21 @@ public class EnlightenmentCenter extends Robot {
 
 			// Build scouting muck - influence of 2
 			spawnDirections = Arrays.copyOfRange(spawnDirections, 0, tempIdx);
-			Direction[] shuffledSpawnDirs = oldbest.Util.shuffleArr(spawnDirections);
-			if(oldbest.Util.tryBuild(RobotType.MUCKRAKER, shuffledSpawnDirs, 2)){
+			Direction[] shuffledSpawnDirs = Util.shuffleArr(spawnDirections);
+			if(Util.tryBuild(RobotType.MUCKRAKER, shuffledSpawnDirs, 2)){
 				return;
 			}
-			if(oldbest.Util.tryBuild(RobotType.MUCKRAKER, oldbest.Navigation.directions, 2)){
+			if(Util.tryBuild(RobotType.MUCKRAKER, Navigation.directions, 2)){
 				return;
 			}
 		}
 		else{
-			Direction[] spawnDirs = oldbest.Navigation.randomizedDirs();
+			Direction[] spawnDirs = Navigation.randomizedDirs();
 			if(attackTarget != null){
-				spawnDirs = oldbest.Navigation.closeDirections(myLoc.directionTo(attackTarget));
+				spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTarget));
 			}
 			// Build attacking muck - influence of 1
-			if(oldbest.Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)){
+			if(Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)){
 				return;
 			}
 		}
@@ -289,7 +289,7 @@ public class EnlightenmentCenter extends Robot {
 
 	public void spawnSlanderers() throws GameActionException {
 		// Figure out spawn influence
-		oldbest.Log.log("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
+		Log.log("spawnSlands -- Cooldown left: " + rc.getCooldownTurns());
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
@@ -309,35 +309,35 @@ public class EnlightenmentCenter extends Robot {
 		// Try spawning in the direction opposite of the nearest enemy EC
 		Direction[] spawnDirs = null;
 		if(spawnDirs == null){
-			DetectedInfo enemyECInfo = oldbest.Util.getClosestEnemyEC();
+			DetectedInfo enemyECInfo = Util.getClosestEnemyEC();
 			if(enemyECInfo != null){
-				spawnDirs = oldbest.Navigation.closeDirections(myLoc.directionTo(enemyECInfo.loc).opposite());
+				spawnDirs = Navigation.closeDirections(myLoc.directionTo(enemyECInfo.loc).opposite());
 			}
 		}
 		// Just spawn in a random direction
 		if(spawnDirs == null){
-			spawnDirs = oldbest.Navigation.randomizedDirs();
+			spawnDirs = Navigation.randomizedDirs();
 		}
 		for (Direction dir : spawnDirs) {
-			oldbest.Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
+			Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
 		}
 	}
 
 	public void spawnPoliticians(boolean defense) throws GameActionException {
-		oldbest.Log.log("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
+		Log.log("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
-		oldbest.Log.log(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
+		Log.log(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
 		if (rc.getInfluence() < EC_MIN_INFLUENCE) {
 			return;
 		}
-		oldbest.Log.log("My influence is greater than EC Min influence!");
+		Log.log("My influence is greater than EC Min influence!");
 
-		Direction[] spawnDirs = oldbest.Navigation.randomizedDirs();
+		Direction[] spawnDirs = Navigation.randomizedDirs();
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
 			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 20));
-			oldbest.Log.log(spawnInfluence + " " + DEF_POLI_MIN_COST);
+			Log.log(spawnInfluence + " " + DEF_POLI_MIN_COST);
 			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
 			if (spawnInfluence % 2 == 0) {
 				spawnInfluence -= 1;
@@ -345,7 +345,7 @@ public class EnlightenmentCenter extends Robot {
 			for(RobotInfo info : nearby){
 				if(info.type == RobotType.MUCKRAKER && info.team == myTeam.opponent()){
 					// If you sense an enemy muck nearby, spawn it in the direction of the muck
-					spawnDirs = oldbest.Navigation.closeDirections(myLoc.directionTo(info.location));
+					spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
 					break;
 				}
 			}
@@ -363,7 +363,7 @@ public class EnlightenmentCenter extends Robot {
 
 		// Figure out spawn direction
 		for (Direction dir : spawnDirs) {
-			if(oldbest.Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence)){
+			if(Util.tryBuild(RobotType.POLITICIAN, dir, spawnInfluence)){
 				break;
 			}
 		}
@@ -376,14 +376,14 @@ public class EnlightenmentCenter extends Robot {
 			if(!attackPolis[i].alive){ continue; }
 			attackInf += attackPolis[i].spawnInfluence - 10;
 		}
-		oldbest.Log.log("Attack influence: " + attackInf);
+		Log.log("Attack influence: " + attackInf);
 		if(attackTargetInfo != null){
-			DetectedInfo[] targetInfo = oldbest.Util.getCorrespondingRobots(null, null, attackTargetInfo.loc);
+			DetectedInfo[] targetInfo = Util.getCorrespondingRobots(null, null, attackTargetInfo.loc);
 			assert(targetInfo.length > 0);
-			oldbest.Log.log(targetInfo[0].team.toString());
+			Log.log(targetInfo[0].team.toString());
 			if(targetInfo[0].team == myTeam){
 				// Captured the target, lets go attack a diff target
-				oldbest.Log.log("We captured the target bois!");
+				Log.log("We captured the target bois!");
 				attackTarget = null;
 				attackTargetInfo = null;
 			}
@@ -391,7 +391,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 
 		DetectedInfo[] allECInfo = Util.getCorrespondingRobots(null, RobotType.ENLIGHTENMENT_CENTER, null);
-		oldbest.Log.log("Num of ECs known: " + allECInfo.length);
+		Log.log("Num of ECs known: " + allECInfo.length);
 		// Attack the closest EC
 		DetectedInfo closestTarget = null;
 		int closestDist = Integer.MAX_VALUE;
@@ -408,7 +408,7 @@ public class EnlightenmentCenter extends Robot {
 
 //		Log.log("Closest target: " + closestTarget == null ? "null" : closestTarget.toString());
 		if(closestTarget != null){
-			oldbest.Log.log("Closest target: " + closestTarget.loc.toString());
+			Log.log("Closest target: " + closestTarget.loc.toString());
 			// Guess how much it costs to capture? Send waves of 200 maybe?
 			attackTargetInfo = closestTarget;
 		}

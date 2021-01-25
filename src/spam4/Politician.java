@@ -293,11 +293,11 @@ public class Politician extends Robot {
 			}
 		}
 		else if (senseFromLoc(myLoc, 1).length > 1) {
-			spam3.Log.log("Moving in a circle to avoid annoying enemies");
+			oldbest.Log.log("Moving in a circle to avoid annoying enemies");
 			nav.circle(true, 1);
 		}
 		else{
-			spam3.Log.log("Empowering...distance to target: " + dist);
+			oldbest.Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}
 	}

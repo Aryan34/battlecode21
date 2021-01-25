@@ -75,9 +75,9 @@ public class Robot {
 
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
-//		if(currRound > 500){
-//			rc.resign();
-//		}
+		if(currRound > 250){
+			rc.resign();
+		}
 		turnCount += 1;
 		currRound = rc.getRoundNum();
 		setFlagThisRound = false;

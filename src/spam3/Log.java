@@ -17,10 +17,10 @@ public class Log {
         if (toggle_on) {
             System.out.println(str);
         }
-        RobotType[] showLogs = {RobotType.POLITICIAN, RobotType.ENLIGHTENMENT_CENTER, RobotType.MUCKRAKER};
+        RobotType[] showLogs = {RobotType.POLITICIAN, RobotType.ENLIGHTENMENT_CENTER};
 //        RobotType[] showLogs = {RobotType.POLITICIAN};
 //        RobotType[] showLogs = {RobotType.SLANDERER, RobotType.POLITICIAN};
-//        RobotType[] showLogs = {}; // round 140ish
+//        RobotType[] showLogs = {};
         for(RobotType type : showLogs){
             if(rc.getType() == type){
                 System.out.println(str);

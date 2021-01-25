@@ -74,9 +74,9 @@ public class Robot {
 	}
 
 	public void run() throws GameActionException {
-//		if(currRound > 100){
-//			rc.resign();
-//		}
+		if(currRound > 450){
+			rc.resign();
+		}
 		Log.log("---------------------------------");
 		System.out.println("Cooldown: " + rc.getCooldownTurns());
 		turnCount += 1;

@@ -99,8 +99,14 @@ public class Comms {
     static MapLocation xyToMapLocation(int x, int y){
         int myX = robot.myLoc.x % 128;
         int myY = robot.myLoc.y % 128;
-        int diffX = (x - myX) % 128;
-        int diffY = (y - myY) % 128;
+        int diffX = (x - myX);
+        if(diffX < 0){
+            diffX += 128;
+        }
+        int diffY = (y - myY);
+        if(diffY < 0){
+            diffY += 128;
+        }
         if(diffX > 64){
             diffX = diffX - 128;
         }
