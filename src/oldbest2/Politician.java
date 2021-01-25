@@ -41,7 +41,7 @@ public class Politician extends Robot {
 	public void runConverted() throws GameActionException {
 		nearby = rc.senseNearbyRobots();
 		for(RobotInfo info : nearby){
-			int dist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
+			int dist = myLoc.distanceSquaredTo(info.getLocation());
 			if((info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.SLANDERER || info.getType() == RobotType.ENLIGHTENMENT_CENTER) && info.getTeam() != myTeam && info.getInfluence() > 50){
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
@@ -49,6 +49,12 @@ public class Politician extends Robot {
 			else if(info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam && rc.getInfluence() < 50){
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
+			}
+			if (info.getTeam() == myTeam && (info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.MUCKRAKER)){
+				nav.tryMove(myLoc.directionTo(info.getLocation()));
+			}
+			else{
+				nav.tryMove(nav.randomDirection());
 			}
 		}
 	}
