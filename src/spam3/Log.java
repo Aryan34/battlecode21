@@ -2,6 +2,7 @@ package spam3;
 
 import battlecode.common.RobotController;
 import battlecode.common.RobotType;
+import battlecode.common.Team;
 
 public class Log {
 
@@ -10,11 +11,15 @@ public class Log {
     static boolean debug = false;
 
     public static void log(String str) {
+        if(rc.getTeam() != Team.A){
+            return;
+        }
         if (toggle_on) {
             System.out.println(str);
         }
 //        RobotType[] showLogs = {RobotType.POLITICIAN, RobotType.ENLIGHTENMENT_CENTER};
-        RobotType[] showLogs = {};
+//        RobotType[] showLogs = {RobotType.POLITICIAN};
+        RobotType[] showLogs = {RobotType.SLANDERER};
         for(RobotType type : showLogs){
             if(rc.getType() == type){
                 System.out.println(str);
