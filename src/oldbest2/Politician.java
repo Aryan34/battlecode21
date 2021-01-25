@@ -46,6 +46,11 @@ public class Politician extends Robot {
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
 			}
+			else if(info.getType() == RobotType.ENLIGHTENMENT_CENTER && info.getTeam() == myTeam){
+				creatorLoc = info.getLocation();
+				creatorID = info.getID();
+				runEco(nearby);
+			}
 			else if(info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam && rc.getConviction() < 50){
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
