@@ -55,7 +55,7 @@ public class Muckraker extends Robot {
 				int purpose = 2;
 				int robotType = 3; // The type corresponding to an unknown enemy robot
 				int[] xy = Comms.mapLocationToXY(info.getLocation());
-				int inf = Math.min((info.getInfluence() / 100), 15);
+				int inf = Math.min((info.getConviction() / 100), 15);
 				int[] flagArray = {purpose, 4, robotType, 2, xy[0], 7, xy[1], 7, inf, 4};
 				int flag = Comms.concatFlag(flagArray);
 				Log.log("Setting flag to: " + Comms.printFlag(flag));
