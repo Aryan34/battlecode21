@@ -99,6 +99,15 @@ public class Robot {
 			if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
 				RobotInfo[] broadcastInfo = {info};
 				relayRobotLocations(broadcastInfo);
+				// not an attack pol
+				if (myType != RobotType.POLITICIAN || rc.getConviction() % 2 != 0) {
+					// im right next to the EC, so I should move away and let my attack pols take it more easily
+					if (info.getTeam() != myTeam && myLoc.distanceSquaredTo(info.getLocation()) < 4) {
+						Direction away = info.getLocation().directionTo(myLoc);
+						Direction[] dirs = {away.rotateLeft(), away, away.rotateRight()};
+						nav.tryMove(dirs);
+					}
+				}
 			}
 		}
 	}
@@ -189,3 +198,4 @@ public class Robot {
 	}
 
 }
+
