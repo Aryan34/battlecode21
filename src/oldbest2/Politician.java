@@ -42,11 +42,11 @@ public class Politician extends Robot {
 		nearby = rc.senseNearbyRobots();
 		for(RobotInfo info : nearby){
 			int dist = myLoc.distanceSquaredTo(info.getLocation());
-			if((info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.SLANDERER || info.getType() == RobotType.ENLIGHTENMENT_CENTER) && info.getTeam() != myTeam && info.getInfluence() > 50){
+			if((info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.SLANDERER || info.getType() == RobotType.ENLIGHTENMENT_CENTER) && info.getTeam() != myTeam && info.getConviction() > 50){
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
 			}
-			else if(info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam && rc.getInfluence() < 50){
+			else if(info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam && rc.getConviction() < 50){
 				if (rc.canEmpower(dist))
 					rc.empower(dist);
 			}
