@@ -77,6 +77,11 @@ public class EnlightenmentCenter extends Robot {
 		Log.log("Defense polis: " + defendersAlive);
 		Log.log("Mucks: " + mucksAlive);
 
+		DetectedInfo[] allECInfo = Util.getCorrespondingRobots(null, RobotType.ENLIGHTENMENT_CENTER, null);
+		for(DetectedInfo info : allECInfo){
+			Log.log("EC at: " + info.loc.toString() + ", of team: " + info.team.toString());
+		}
+
 		setAttackTarget(attackPoliInfo);
 		updateFlag();
 
@@ -100,29 +105,38 @@ public class EnlightenmentCenter extends Robot {
 			spawnPoliticians(true);
 		}
 		// Save up for big boi attacking poli
-		else if(attackTargetInfo != null){
-			int infNeeded = (int)(attackTargetInfo.influence * 1.5);
+		else if(attackTargetInfo != null) {
+			int infNeeded = (int) (attackTargetInfo.influence * 1.5);
 			int infExpected = getExpectedInfluence(currRound + 10);
-			System.out.println("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
-			if(attackTarget == null && infExpected > infNeeded){
-				Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
-				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
-				if(rc.getInfluence() > infNeeded){
-					// Figure out spawn direction
-					if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, infNeeded)){
-						System.out.println("Successfully spawned a poli!");
-						attackTarget = attackTargetInfo.loc;
-						System.out.println(attackTarget.toString());
+			Log.log("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
+			if (attackTarget == null) {
+				Log.log("Attack target is null");
+			} else {
+				Log.log("Attack target is: " + attackTarget.toString());
+			}
+			if (attackTarget == null) {
+				if (infExpected > infNeeded) {
+					Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
+					Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
+					if (rc.getInfluence() > infNeeded) {
+						// Figure out spawn direction
+						if (Util.tryBuild(RobotType.POLITICIAN, spawnDirs, infNeeded)) {
+							Log.log("Successfully spawned a poli!");
+							attackTarget = attackTargetInfo.loc;
+							Log.log(attackTarget.toString());
+						}
+					} else {
+						Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 					}
-				}
-				else{
-					Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
+				} else {
+					Log.log("Spawning save");
+					int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
+					spawnOrder(order);
 				}
 			}
 			else{
-				Log.log("Spawning save");
-				int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
-				spawnOrder(order);
+				Log.log("Spawning attack");
+				int[] order = {3, 2, 3, 1, 3, 2, 0, 1, 3, 2, 0, 1};
 			}
 		}
 		else if(turnCount < 300){

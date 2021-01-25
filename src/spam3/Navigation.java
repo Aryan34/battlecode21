@@ -142,7 +142,7 @@ public class Navigation {
 		MapLocation myLoc = robot.myLoc;
 		Direction targetDir = myLoc.directionTo(target);
 		MapLocation[] testLocs = {myLoc.add(targetDir), myLoc.add(targetDir.rotateLeft()), myLoc.add(targetDir.rotateRight()),
-				myLoc.add(targetDir.rotateLeft().rotateLeft()).add(targetDir.rotateLeft()), myLoc.add(targetDir.rotateRight().rotateRight()).add(targetDir.rotateRight())};
+				myLoc.add(targetDir.rotateLeft().rotateLeft()).add(targetDir), myLoc.add(targetDir.rotateRight().rotateRight()).add(targetDir)};
 
 		Direction[] correspondingDirections = {targetDir, targetDir.rotateLeft(), targetDir.rotateRight(), targetDir.rotateLeft().rotateLeft(), targetDir.rotateRight().rotateRight()};
 		for (int i = 0; i < testLocs.length; i++) {

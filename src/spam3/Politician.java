@@ -45,6 +45,54 @@ public class Politician extends Robot {
 		// TODO: Write code for this
 	}
 
+	public void runAttack() throws GameActionException {
+		if(rc.canSenseLocation(attackTarget)){
+			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
+				creatorLoc = attackTarget;
+				creatorID = rc.senseRobotAtLocation(attackTarget).getID();
+				attackTarget = null;
+				return;
+			}
+		}
+		Log.log("Attacking!!");
+		int dist = myLoc.distanceSquaredTo(attackTarget);
+		if(dist > myType.actionRadiusSquared){
+			nav.goTo(attackTarget);
+			Log.log("Going closer to the target since I'm too far away!");
+		}
+		else if (dist > 1) {
+			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
+			boolean moved = nav.goTo(attackTarget);
+			if(rc.getCooldownTurns() < 1 && !moved){
+				Log.log("Killing all the bois blocking me!");
+				rc.empower(dist);
+			}
+		}
+		else if (senseFromLoc(myLoc, 1).length > 1) {
+			Log.log("Moving in a circle to avoid annoying enemies");
+			boolean open = false;
+			for(Direction dir : Navigation.cardinalDirections){
+				MapLocation adjLoc = attackTarget.add(dir);
+				if(senseFromLoc(adjLoc, 1).length == 1){
+					boolean moved = nav.goTo(adjLoc);
+					if(rc.getCooldownTurns() > 1 || moved){
+						open = true;
+					}
+				}
+			}
+			if(!open){
+				// If you can't isolate just the EC, then just go ahead and empower
+				// TODO: Other friendly troops should avoid the neutral EC so that my boi can empower alone!!
+				Log.log("Just gonna empower whatever");
+				rc.empower(1);
+			}
+		}
+		else{
+			Log.log("Empowering...distance to target: " + dist);
+			rc.empower(dist);
+		}
+	}
+
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearbyMucks();
 		Log.log("B: " + Clock.getBytecodesLeft());
@@ -113,35 +161,6 @@ public class Politician extends Robot {
 
 	}
 
-	public void runAttack() throws GameActionException {
-		if(rc.canSenseLocation(attackTarget)){
-			if(rc.senseRobotAtLocation(attackTarget).getTeam() == myTeam){
-				creatorLoc = attackTarget;
-				creatorID = rc.senseRobotAtLocation(attackTarget).getID();
-				attackTarget = null;
-				return;
-			}
-		}
-		int dist = myLoc.distanceSquaredTo(attackTarget);
-		if(dist > myType.actionRadiusSquared){
-			nav.goTo(attackTarget);
-		}
-		else if (dist > 1) {
-			// If you're blocked out, just empower to kill all the guys blocking u and atleast do some damage to the EC
-			boolean moved = nav.goTo(attackTarget);
-			if(rc.getCooldownTurns() < 1 && !moved){
-				rc.empower(dist);
-			}
-		}
-		else if (senseFromLoc(myLoc, 1).length > 1) {
-			Log.log("Moving in a circle to avoid annoying enemies");
-			nav.circle(true, 1);
-		}
-		else{
-			Log.log("Empowering...distance to target: " + dist);
-			rc.empower(dist);
-		}
-	}
 
 	public void killNearbyMucks() throws GameActionException {
 		// Try and kill enemy mucks, mainly the ones that are threatening friendly slands
@@ -191,12 +210,13 @@ public class Politician extends Robot {
 		Log.log("It's distance to our closest sland is: " + closestDist);
 		Log.log("BCode: " + Clock.getBytecodesLeft());
 
-		// If the muck can kill our sland
-		if(closestDist <= RobotType.MUCKRAKER.sensorRadiusSquared){
+		// If the muck is really close by
+		// TODO: FIX THIS!!!
+		if(closestDist <= RobotType.MUCKRAKER.actionRadiusSquared){
 			// If we can kill the muck, go for it
 			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
 			Log.log("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
-			if(attackDist <= RobotType.POLITICIAN.actionRadiusSquared && canKill(myLoc, biggestThreat, rc.getInfluence(), biggestThreatInf)){
+			if(attackDist <= myType.actionRadiusSquared && canKill(myLoc, biggestThreat, rc.getInfluence(), biggestThreatInf)){
 				if(rc.canEmpower(attackDist)){
 					Log.log("Empowering to kill the biggest threat");
 					rc.empower(attackDist);
@@ -204,12 +224,16 @@ public class Politician extends Robot {
 			}
 			// Otherwise, go closer to it so we can kill it
 			else{
-				nav.goTo(biggestThreat);
+				boolean moved = nav.goTo(biggestThreat);
+				// If you can't go towards it, just sewercide and hope someone else can finish it off.
+				if(!moved && attackDist <= myType.actionRadiusSquared){
+					rc.empower(attackDist);
+				}
 			}
 		}
-		else if(shouldApproach(biggestThreat)){
-			nav.goTo(biggestThreat);
-		}
+//		else if(shouldApproach(biggestThreat)){
+//			nav.goTo(biggestThreat);
+//		}
 		else{
 			int bestRad = -1;
 			int bestKill = 0;
@@ -240,7 +264,7 @@ public class Politician extends Robot {
 		}
 
 		RobotInfo[] withinRange = senseFromLoc(polLoc, polLoc.distanceSquaredTo(muckLoc));
-		if((polInf - 10) / withinRange.length >= muckInf){
+		if(((polInf - 10) / withinRange.length) * rc.getEmpowerFactor(myTeam, 0) >= muckInf){
 			return true;
 		}
 		return false;

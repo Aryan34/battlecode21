@@ -97,17 +97,24 @@ public class Comms {
     }
 
     static MapLocation xyToMapLocation(int x, int y){
+//        System.out.println("XY to map location!");
+//        System.out.println(x + ", " + y);
         int myX = robot.myLoc.x % 128;
         int myY = robot.myLoc.y % 128;
-        int diffX = (x - myX) % 128;
-        int diffY = (y - myY) % 128;
+//        System.out.println(myX + ", " + myY);
+        int diffX = (x - myX);
+        int diffY = (y - myY);
+        if(diffX < 0){ diffX += 128; }
+        if(diffY < 0){ diffY += 128; }
+//        System.out.println(diffX + ", " + diffY);
         if(diffX > 64){
             diffX = diffX - 128;
         }
         if(diffY > 64){
             diffY = diffY - 128;
         }
-        return new MapLocation(robot.myLoc.x + diffX, robot.myLoc.y + diffY);
+//        System.out.println(diffX + ", " + diffY);
+        return robot.myLoc.translate(diffX, diffY);
     }
 
     static int[] mapLocationToXY(MapLocation loc){
@@ -157,6 +164,10 @@ public class Comms {
                 RobotType detectedType = robotTypes[idx];
                 Team detectedTeam = robotTeams[idx];
 
+//                System.out.println("Checking flag");
+//                System.out.println(splits[2]);
+//                System.out.println(splits[3]);
+
                 MapLocation detectedLoc = xyToMapLocation(splits[2], splits[3]);
                 int detectedInfluence = (splits[4] + 1) * 100;
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
@@ -172,6 +183,7 @@ public class Comms {
                         robot.robotLocations[robot.robotLocationsIdx] = new DetectedInfo(detectedTeam, detectedType, detectedLoc, detectedInfluence);
                         robot.robotLocationsIdx++;
                         Log.log("Detected new robot of type: " + (detectedType == null ? "Unknown" : detectedType.toString()) + " and of team: " + detectedTeam.toString() + " at: " + detectedLoc.toString());
+                        Log.log("" + ID);
                     }
                     else{
                         // Update previously saved robot
