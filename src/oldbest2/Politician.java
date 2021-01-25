@@ -123,7 +123,22 @@ public class Politician extends Robot {
 		if (dist > 1) {
 			nav.goTo(attackTarget);
 		}
-		else if (rc.canEmpower(dist)) {
+		else if (senseFromLoc(myLoc, 1).length > 1) {
+			Log.log("There's other troops nearby, so try moving around the EC to isolate?");
+			Direction right = myLoc.directionTo(attackTarget).rotateRight();
+			Direction left = myLoc.directionTo(attackTarget).rotateLeft();
+			Direction[] tryLocs = {right, left};
+			// Try moving around the EC to get to an open space
+			if(rc.getCooldownTurns() < 1){
+				if(!nav.tryMove(tryLocs)){
+					// If you can't move around the EC, just empower from where u are
+					if(rc.canEmpower(dist)){
+						rc.empower(dist);
+					}
+				}
+			}
+		}
+		else if(rc.canEmpower(dist)) {
 			Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
 		}

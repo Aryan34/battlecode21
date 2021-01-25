@@ -91,7 +91,7 @@ public class EnlightenmentCenter extends Robot {
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
 			spawnOrder(order);
 		}
-		else if(defendersAlive < slandsAlive / 1.5){
+		else if(defendersAlive < slandsAlive){
 			Log.log("Spawning B");
 			spawnPoliticians(true);
 		}
