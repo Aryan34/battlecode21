@@ -29,18 +29,7 @@ public class Politician extends Robot {
 				Log.log("Attacking: " + attackTarget.toString());
 				runAttack();
 			} else {
-				if (rc.getInfluence() > 700 && rc.getEmpowerFactor(myTeam, 0) >= 1.1) {
-					Log.log("Sacrificial politician activated");
-					int dist = myLoc.distanceSquaredTo(creatorLoc);
-					if (rc.canEmpower(dist) && rc.detectNearbyRobots(dist).length == 1) {
-						Log.log("Empowering for suicide");
-						rc.empower(dist);
-					} else {
-						nav.circle(true, 1);
-					}
-				} else {
-					runEco(nearby);
-				}
+				runEco(nearby);
 			}
 
 			if (!setFlagThisRound) {
