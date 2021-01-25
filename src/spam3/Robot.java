@@ -75,9 +75,9 @@ public class Robot {
 
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
-//		if(currRound > 500){
-//			rc.resign();
-//		}
+		if(currRound > 500){
+			rc.resign();
+		}
 		turnCount += 1;
 		currRound = rc.getRoundNum();
 		setFlagThisRound = false;
@@ -95,7 +95,8 @@ public class Robot {
 		}
 		Comms.checkFlag(rc.getID());
 		nearby = rc.senseNearbyRobots();
-		for(RobotInfo info : nearby){
+		for(int i = 0; i < nearby.length; i++){
+			RobotInfo info = nearby[i];
 			if(info.getType() == RobotType.ENLIGHTENMENT_CENTER){
 				RobotInfo[] broadcastInfo = {info};
 				relayRobotLocations(broadcastInfo);

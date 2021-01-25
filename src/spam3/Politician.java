@@ -17,6 +17,8 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 
+		Log.log("A: " + Clock.getBytecodesLeft());
+
 		if(creatorLoc == null){
 			isAttacking = true;
 			runConverted();
@@ -45,33 +47,49 @@ public class Politician extends Robot {
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearbyMucks();
+		Log.log("B: " + Clock.getBytecodesLeft());
 		int minDist = 4; // Default distance
+		int myGridDist = Util.getGridSquareDist(myLoc, creatorLoc);
 		boolean spotted = false;
-		for(RobotInfo info : nearby){
-			// Filter out everything except friendly slanderers / politicians
-			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
-				continue;
+		int polisCW = 0;
+		int polisCCW = 0;
+		if(myGridDist > minDist) {
+			for (int i = 0; i < nearby.length; i++) {
+				RobotInfo info = nearby[i];
+				// Filter out everything except friendly slanderers / politicians
+				if (info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam) {
+					continue;
+				}
+				// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
+				double angleDiff = Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation());
+				if (angleDiff > 45) {
+					continue;
+				}
+				if (Util.isSlanderer(info.getID())) {
+					// Check if its a slanderer ur currently defending
+					int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
+					if(myGridDist < gridDist + 2){
+						minDist = gridDist + 2;
+						break;
+					}
+					minDist = Math.max(minDist, gridDist + 2);
+					spotted = true;
+				} else {
+					// Count how many polis are ccw and how many are cw
+					if (Util.isCCW(myLoc, info.getLocation(), creatorLoc)) {
+						polisCCW++;
+					} else {
+						polisCW++;
+					}
+				}
 			}
-			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
-			if(!Util.isSlanderer(info.getID())){
-				continue;
-			}
-			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
-			if(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()) > 30){
-				Log.log("Friendly slanderer at: " + info.getLocation() + ", but not within my angle");
-				Log.log("" + Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
-				continue;
-			}
-			int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
-			Log.log("Friendly slanderer at: " + info.getLocation());
-			minDist = Math.max(minDist, gridDist + 2);
-			spotted = true;
 		}
+		Log.log("C: " + Clock.getBytecodesLeft());
 		Log.log("My min dist: " + minDist);
-		Log.log("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
+		Log.log("My grid dist: " + myGridDist);
 
 		// If you're too close, move farther away
-		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+		if(myGridDist < minDist){
 			Log.log("Going farther!");
 			Direction targetDir = creatorLoc.directionTo(myLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
@@ -79,7 +97,7 @@ public class Politician extends Robot {
 //			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
 		}
 		// Always make sure theres a friendly slanderer in site
-		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
+		else if(!spotted && myGridDist > minDist){
 			Log.log("Going closer!");
 			Direction targetDir = myLoc.directionTo(creatorLoc);
 			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
@@ -87,10 +105,11 @@ public class Politician extends Robot {
 //			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
 		}
 		else{
-			chooseSide();
+			circlingCCW = polisCW >= polisCCW;
 			nav.circle(circlingCCW, minDist);
 			Log.log("Circling: " + circlingCCW);
 		}
+		Log.log("D: " + Clock.getBytecodesLeft());
 
 	}
 
@@ -129,7 +148,8 @@ public class Politician extends Robot {
 		MapLocation[] enemyMucks = new MapLocation[nearby.length]; int idx1 = 0;
 		MapLocation[] friendlySlands = new MapLocation[nearby.length + 1]; int idx2 = 0;
 
-		for (RobotInfo info : nearby) {
+		for (int i = 0; i < nearby.length; i++) {
+			RobotInfo info = nearby[i];
 			// Only kill enemy mucks, and only kill them if there's a sland nearby (otherwise follow them around)
 			if (info.team == myTeam.opponent() && info.type == RobotType.MUCKRAKER) {
 				enemyMucks[idx1] = info.getLocation(); idx1++;
@@ -138,6 +158,8 @@ public class Politician extends Robot {
 				friendlySlands[idx2] = info.getLocation(); idx2++;
 			}
 		}
+
+		Log.log("HELLO: " + Clock.getBytecodesLeft());
 
 		// Add EC as something to defend
 		friendlySlands[idx2] = creatorLoc; idx2++;
@@ -167,9 +189,10 @@ public class Politician extends Robot {
 		}
 		Log.log("Biggest threat: " + biggestThreat.toString());
 		Log.log("It's distance to our closest sland is: " + closestDist);
+		Log.log("BCode: " + Clock.getBytecodesLeft());
 
 		// If the muck can kill our sland
-		if(closestDist < RobotType.MUCKRAKER.actionRadiusSquared){
+		if(closestDist <= RobotType.MUCKRAKER.sensorRadiusSquared){
 			// If we can kill the muck, go for it
 			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
 			Log.log("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
@@ -228,9 +251,12 @@ public class Politician extends Robot {
 		if(closestPol.location.equals(myLoc)){
 			return true;
 		}
-		if(closestPol.getInfluence() < rc.senseRobotAtLocation(muckLoc).getInfluence()){
+		if(closestPol.getConviction() - 10 < rc.senseRobotAtLocation(muckLoc).getConviction()){
 			return true;
 		}
+//		if(rc.getConviction() <= closestPol.getConviction()){
+//			return true;
+//		}
 		return false;
 	}
 
@@ -252,34 +278,6 @@ public class Politician extends Robot {
 	public void checkOnWall() throws GameActionException {
 		// North wall blocks CCW, East wall blocks ccw, West wall blocks cw, South wall blocks cw
 
-	}
-
-	public void chooseSide() throws GameActionException {
-		int ccwCount = 0; int cwCount = 0;
-		for(RobotInfo info : nearby){
-			// Filter out everything except friendly slanderers / politicians
-			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
-				continue;
-			}
-			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
-			typeInQuestion = null;
-			Comms.checkFlag(info.getID());
-			if(typeInQuestion == RobotType.SLANDERER){
-				continue;
-			}
-			// Check if there's more slanderers to ur ccw than ur cw
-			double angleDiff = Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation());
-			if(angleDiff > 45){
-				continue;
-			}
-			if(Util.isCCW(myLoc, info.getLocation(), creatorLoc)){
-				ccwCount++;
-			}
-			else{
-				cwCount++;
-			}
-		}
-		circlingCCW = cwCount > ccwCount;
 	}
 
 }

@@ -190,11 +190,11 @@ public class Muckraker extends Robot {
 			}
 			else{
 				targetECLoc = detected.loc;
-				nav.fuzzyNav(targetECLoc);
+				nav.goTo(targetECLoc);
 			}
 		}
 		else{
-			nav.fuzzyNav(targetECLoc);
+			nav.goTo(targetECLoc);
 		}
 	}
 
