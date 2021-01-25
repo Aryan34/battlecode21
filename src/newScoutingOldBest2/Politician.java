@@ -1,4 +1,4 @@
-package oldbest2;
+package newScoutingOldBest2;
 
 import battlecode.common.*;
 
@@ -8,12 +8,10 @@ public class Politician extends Robot {
 
 	boolean circlingCCW = true;
 	boolean isAttacking;
-	boolean isGuardian;
 
 	public Politician (RobotController rc) throws GameActionException {
 		super(rc);
 		isAttacking = rc.getInfluence() % 2 == 0;
-		isGuardian = !isAttacking && rc.getInfluence() >= 100;
 	}
 
 	public void run() throws GameActionException {
@@ -23,7 +21,11 @@ public class Politician extends Robot {
 			creatorLoc = null;
 			creatorID = 0;
 		}
-		if(creatorLoc == null){
+
+		if (rc.getTeamVotes() < 750 && rc.getRoundNum() == 1490) {
+			runSuicide();
+		}
+		else if(creatorLoc == null){
 			isAttacking = true;
 			runConverted(nearby);
 		}
@@ -84,26 +86,10 @@ public class Politician extends Robot {
 	}
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
-		if (!isGuardian) {
-			killNearbyMucks();
-		}
-
+		killNearbyMucks();
 		int minDist = 4; // Default distance
 		boolean spotted = false;
-		boolean allCannotKill = true;
-		RobotInfo[] enemyTargets = new RobotInfo[nearby.length]; int idx = 0;
-		RobotInfo[] friendlyPolis = new RobotInfo[nearby.length]; int idx2 = 0;
 		for(RobotInfo info : nearby){
-			// Kill enemy politicians; tries to kill with smallest infl poli in range
-			if(info.getType() == RobotType.POLITICIAN && info.getTeam() != myTeam && info.getConviction() > 10) {
-				enemyTargets[idx++] = info;
-			}
-			if(info.getTeam() != myTeam && info.getConviction() > 50) { // Add thicc mucks to the mix too
-				enemyTargets[idx++] = info;
-			}
-			if(info.getTeam() == myTeam && info.getType() == RobotType.POLITICIAN) {
-				friendlyPolis[idx2++] = info;
-			}
 			// Filter out everything except friendly slanderers / politicians
 			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
 				continue;
@@ -123,33 +109,6 @@ public class Politician extends Robot {
 			minDist = Math.max(minDist, gridDist + 2);
 			spotted = true;
 		}
-		for (RobotInfo enemy : enemyTargets) { // Go through all targets, find who should kill it
-			int minConv = 500; // minimum conviction of a poli that can kill the target
-			boolean thisCanKill = canKill(rc.getLocation(), enemy.getLocation(), rc.getConviction(), enemy.getConviction());
-			if (thisCanKill) { allCannotKill = false; }
-			int dist = rc.getLocation().distanceSquaredTo(enemy.getLocation());
-			for (RobotInfo friendly : friendlyPolis) {
-				int tempDist = friendly.getLocation().distanceSquaredTo(enemy.getLocation());
-				if (tempDist <= RobotType.POLITICIAN.actionRadiusSquared) { // friendly can attack too
-					boolean tempCanKill = canKill(friendly.getLocation(), enemy.getLocation(), friendly.getConviction(), enemy.getConviction());
-					if (tempCanKill) {
-						allCannotKill = false;
-						if (friendly.getConviction() < minConv) { minConv = friendly.getConviction(); }
-					}
-				}
-
-			}
-			if (rc.getConviction() <= minConv && rc.canEmpower(dist)) { // we have the lowest conv, should attack
-			    rc.empower(dist); // TODO: Add code to move closer before empowering?
-				break;
-			}
-			if (allCannotKill && rc.canEmpower(dist)) { // if no one can kill it, just attack anyway
-				rc.empower(dist);
-				break;
-			}
-		}
-
-
 		Log.log("My min dist: " + minDist);
 		Log.log("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
@@ -211,6 +170,12 @@ public class Politician extends Robot {
 		else if(rc.canEmpower(dist)) {
 			Log.log("Empowering...distance to target: " + dist);
 			rc.empower(dist);
+		}
+	}
+
+	public void runSuicide() throws GameActionException {
+		if (rc.senseNearbyRobots(RobotType.POLITICIAN.actionRadiusSquared, myTeam.opponent()).length > 0) {
+			rc.empower(RobotType.POLITICIAN.actionRadiusSquared);
 		}
 	}
 
