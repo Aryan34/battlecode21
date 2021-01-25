@@ -95,10 +95,10 @@ public class EnlightenmentCenter extends Robot {
 			Log.log("Spawning B");
 			spawnPoliticians(true);
 		}
-//		else if(enemyMuckNearby()){
-//			Log.log("Enemy muck nearby so spawning pol");
-//			spawnPoliticians(true);
-//		}
+		else if(enemyMuckNearby()){
+			Log.log("Enemy muck nearby so spawning pol");
+			spawnPoliticians(true);
+		}
 		// Save up for big boi attacking poli
 		else if(attackTargetInfo != null){
 			int infNeeded = (int)(attackTargetInfo.influence * 1.5);
