@@ -32,6 +32,7 @@ public class EnlightenmentCenter extends Robot {
 	int lastBid = -1;
 	int EC_MIN_INFLUENCE = 10;
 	final int DEF_POLI_MIN_COST = 20;
+	final int GUARD_POLI_MIN_COST = 102;
 	final int ATK_POLI_MIN_COST = 50;
 	final int SLAND_MIN_COST = 21;
 	final int ATTACK_MIN_INFLUENCE = 300;
@@ -85,13 +86,15 @@ public class EnlightenmentCenter extends Robot {
 //		Log.log("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
 		// If you sense an enemy poli really close by, spawn mucks in that direction to spread out the effect
-		// TODO: Mucks should swarm high inf enemy polis
 		Direction enemyPoliDir = enemyPoliNearby();
 		if(enemyPoliDir != null){
+			// Try spawning a guardian
+			spawnPoliticians(true, true);
+			// Otherwise spawn a muck to block the boi
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 		}
-		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
+		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck, 5 = guardian poli
 		else if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
@@ -100,11 +103,11 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(defendersAlive < slandsAlive){
 			Log.log("Spawning B");
-			spawnPoliticians(true);
+			spawnPoliticians(true, false);
 		}
 		else if(enemyMuckNearby()){
 			Log.log("Enemy muck nearby so spawning pol");
-			spawnPoliticians(true);
+			spawnPoliticians(true, false);
 		}
 		// Save up for big boi attacking poli
 		else if(attackTargetInfo != null){
@@ -129,18 +132,18 @@ public class EnlightenmentCenter extends Robot {
 			}
 			else{
 				Log.log("Spawning save");
-				int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
+				int[] order = {0, 3, 1, 3, 5, 1, 0, 1, 3, 3, 5, 3};
 				spawnOrder(order);
 			}
 		}
 		else if(turnCount < 300){
 			Log.log("Spawning D");
-			int[] order = {1, 3, 0, 3, 3, 2, 3, 3, 1, 3, 0, 3, 2, 3};
+			int[] order = {1, 3, 0, 3, 3, 2, 3, 3, 5, 1, 3, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
 			Log.log("Spawning E");
-			int[] order = {1, 3, 3, 0, 3, 1, 3, 0, 3, 3, 2, 3, 3, 0, 3, 3};
+			int[] order = {1, 5, 3, 0, 3, 1, 3, 0, 3, 1, 5, 3, 3, 2, 3, 3, 0, 3, 3};
 			spawnOrder(order);
 		}
 
@@ -151,10 +154,11 @@ public class EnlightenmentCenter extends Robot {
 	public void spawnOrder(int[] order) throws GameActionException {
 		int type = order[numSpawned % order.length];
 		if(type == 0){ spawnSlanderers(); }
-		if(type == 1){ spawnPoliticians(true); }
-		if(type == 2){ spawnPoliticians(false); }
+		if(type == 1){ spawnPoliticians(true, false); }
+		if(type == 2){ spawnPoliticians(false, false); }
 		if(type == 3){ spawnMucks(true); }
 		if(type == 4){ spawnMucks(false); }
+		if(type == 5){ spawnPoliticians(true, false); }
 	}
 
 	public void checkRobotFlags() throws GameActionException {
@@ -349,7 +353,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 	}
 
-	public void spawnPoliticians(boolean defense) throws GameActionException {
+	public void spawnPoliticians(boolean defense, boolean guardian) throws GameActionException {
 		Log.log("spawnPoliticians -- Cooldown left: " + rc.getCooldownTurns());
 		// Figure out spawn influence
 		Log.log(rc.getInfluence() + " " + EC_MIN_INFLUENCE);
@@ -362,17 +366,34 @@ public class EnlightenmentCenter extends Robot {
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
-			spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 20));
-			Log.log(spawnInfluence + " " + DEF_POLI_MIN_COST);
-			if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
-			if (spawnInfluence % 2 == 0) {
-				spawnInfluence -= 1;
+			if(guardian){
+				spawnInfluence = Math.min(rc.getInfluence() - GUARD_POLI_MIN_COST, Math.max(GUARD_POLI_MIN_COST, rc.getInfluence() / 5));
+				Log.log(spawnInfluence + " " + GUARD_POLI_MIN_COST);
+				if(spawnInfluence < GUARD_POLI_MIN_COST){ return; }
+				if (spawnInfluence % 2 == 0) {
+					spawnInfluence -= 1;
+				}
+				for(RobotInfo info : nearby){
+					if(info.type == RobotType.POLITICIAN && info.team == myTeam.opponent()){
+						// If you sense an enemy muck nearby, spawn it in the direction of the muck
+						spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
+						break;
+					}
+				}
 			}
-			for(RobotInfo info : nearby){
-				if(info.type == RobotType.MUCKRAKER && info.team == myTeam.opponent()){
-					// If you sense an enemy muck nearby, spawn it in the direction of the muck
-					spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
-					break;
+			else{
+				spawnInfluence = Math.min(rc.getInfluence() - DEF_POLI_MIN_COST, Math.max(DEF_POLI_MIN_COST, rc.getInfluence() / 20));
+				Log.log(spawnInfluence + " " + DEF_POLI_MIN_COST);
+				if(spawnInfluence < DEF_POLI_MIN_COST){ return; }
+				if (spawnInfluence % 2 == 0) {
+					spawnInfluence -= 1;
+				}
+				for(RobotInfo info : nearby){
+					if(info.type == RobotType.MUCKRAKER && info.team == myTeam.opponent()){
+						// If you sense an enemy muck nearby, spawn it in the direction of the muck
+						spawnDirs = Navigation.closeDirections(myLoc.directionTo(info.location));
+						break;
+					}
 				}
 			}
 		}

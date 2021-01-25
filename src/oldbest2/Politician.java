@@ -123,12 +123,14 @@ public class Politician extends Robot {
 			minDist = Math.max(minDist, gridDist + 2);
 			spotted = true;
 		}
-		for (RobotInfo enemy : enemyTargets) { // Go through all targets, find who should kill it
+		for (int i = 0; i < idx; i++) { // Go through all targets, find who should kill it
+			RobotInfo enemy = enemyTargets[i];
 			int minConv = 500; // minimum conviction of a poli that can kill the target
 			boolean thisCanKill = canKill(rc.getLocation(), enemy.getLocation(), rc.getConviction(), enemy.getConviction());
 			if (thisCanKill) { allCannotKill = false; }
 			int dist = rc.getLocation().distanceSquaredTo(enemy.getLocation());
-			for (RobotInfo friendly : friendlyPolis) {
+			for (int j = 0; j < idx2; j++) {
+				RobotInfo friendly = friendlyPolis[j];
 				int tempDist = friendly.getLocation().distanceSquaredTo(enemy.getLocation());
 				if (tempDist <= RobotType.POLITICIAN.actionRadiusSquared) { // friendly can attack too
 					boolean tempCanKill = canKill(friendly.getLocation(), enemy.getLocation(), friendly.getConviction(), enemy.getConviction());
@@ -174,10 +176,6 @@ public class Politician extends Robot {
 			nav.circle(circlingCCW, minDist);
 			Log.log("Circling: " + circlingCCW);
 		}
-
-	}
-
-	public void killInvadingPolis() throws GameActionException {
 
 	}
 
