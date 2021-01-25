@@ -39,7 +39,17 @@ public class Politician extends Robot {
 	}
 
 	public void runConverted() throws GameActionException {
-		// TODO: Write code for this
+		nearby = rc.senseNearbyRobots();
+		for(RobotInfo info : nearby){
+			if(info.getType() == RobotType.ENLIGHTENMENT_CENTER && info.getTeam() != myTeam){
+				int dist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
+				if (rc.canEmpower(dist))
+					rc.empower(dist);
+			}
+			else if(info.getType() == RobotType.POLITICIAN && info.getTeam() != myTeam){
+				rc.empower(Util.getGridSquareDist(info.getLocation(), creatorLoc));
+			}
+		}
 	}
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
