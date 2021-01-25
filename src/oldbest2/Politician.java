@@ -121,6 +121,7 @@ public class Politician extends Robot {
 		}
 		int dist = myLoc.distanceSquaredTo(attackTarget);
 		if (dist > 1) {
+			// TODO: If the EC is blocked off and fuzzynaving towards it doesn't work, j go yeet
 			nav.goTo(attackTarget);
 		}
 		else if (senseFromLoc(myLoc, 1).length > 1) {
@@ -130,8 +131,10 @@ public class Politician extends Robot {
 			Direction[] tryLocs = {right, left};
 			// Try moving around the EC to get to an open space
 			if(rc.getCooldownTurns() < 1){
+				Log.log("Cooldown < 1");
 				if(!nav.tryMove(tryLocs)){
 					// If you can't move around the EC, just empower from where u are
+					Log.log("Couldn't go around the EC, so j gonna yeet it");
 					if(rc.canEmpower(dist)){
 						rc.empower(dist);
 					}

@@ -75,6 +75,7 @@ public class Robot {
 
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
+		Log.log("Cooldown: " + rc.getCooldownTurns());
 //		if(currRound > 500){
 //			rc.resign();
 //		}
@@ -152,7 +153,7 @@ public class Robot {
 			int[] xy = Comms.mapLocationToXY(info.getLocation());
 			int x = xy[0];
 			int y = xy[1];
-			int inf = Math.min((info.getInfluence() / 100), 15);
+			int inf = Math.min((info.getConviction() / 100), 15);
 			// 0: Enemy EC, 1: Friendly EC, 2: Neutral EC, 3: Enemy robot
 			if(info.getTeam() == myTeam.opponent()){
 				int robot_type = 0;

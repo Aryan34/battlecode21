@@ -84,8 +84,15 @@ public class EnlightenmentCenter extends Robot {
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 //		Log.log("Leftover bytecode 4: " + Clock.getBytecodesLeft()); // 2k
 
+		// If you sense an enemy poli really close by, spawn mucks in that direction to spread out the effect
+		// TODO: Mucks should swarm high inf enemy polis
+		Direction enemyPoliDir = enemyPoliNearby();
+		if(enemyPoliDir != null){
+			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
+			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
+		}
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
-		if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
+		else if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
 //			int[] order = {0, 3, 3, 3, 1, 0, 3, 0, 3, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0};
 			int[] order = {0, 3, 3, 3, 1, 0, 3, 1, 3, 0, 1, 3, 0, 0, 1, 1, 3, 1, 1, 0};
@@ -101,6 +108,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		// Save up for big boi attacking poli
 		else if(attackTargetInfo != null){
+			// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
 			int infNeeded = (int)(attackTargetInfo.influence * 1.5);
 			int infExpected = getExpectedInfluence(currRound + 10);
 			System.out.println("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
@@ -245,6 +253,24 @@ public class EnlightenmentCenter extends Robot {
 				spawnedAllies[i] = newInfo;
 			}
 		}
+	}
+
+	public Direction enemyPoliNearby(){
+		int threshold = 9;
+		Direction closestDir = null;
+		int closestDist = Integer.MAX_VALUE;
+		for(int i = 0; i < nearby.length; i++){
+			RobotInfo info = nearby[i];
+			// If there's an enemy poli that can kill me, return that info
+			if(info.getTeam() == myTeam.opponent() && info.getType() == RobotType.POLITICIAN && info.getConviction() > rc.getConviction()){
+				int dist = myLoc.distanceSquaredTo(info.getLocation());
+				if(dist <= threshold && dist < closestDist){
+					closestDist = dist;
+					closestDir = myLoc.directionTo(info.getLocation());
+				}
+			}
+		}
+		return closestDir;
 	}
 
 
