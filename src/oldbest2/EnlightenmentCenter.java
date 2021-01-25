@@ -135,12 +135,12 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(turnCount < 300){
 			Log.log("Spawning D");
-			int[] order = {1, 3, 0, 3, 1, 3, 2, 3, 3, 1, 3, 0, 3, 2, 3};
+			int[] order = {1, 3, 0, 3, 3, 2, 3, 3, 1, 3, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
 			Log.log("Spawning E");
-			int[] order = {1, 3, 3, 0, 3, 1, 3, 2, 3, 3, 2, 3, 1, 0, 3, 1};
+			int[] order = {1, 3, 3, 0, 3, 1, 3, 0, 3, 3, 2, 3, 3, 0, 3, 3};
 			spawnOrder(order);
 		}
 

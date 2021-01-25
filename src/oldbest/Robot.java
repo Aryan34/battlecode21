@@ -75,7 +75,7 @@ public class Robot {
 
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
-		if(currRound > 350){
+		if(currRound > 800){
 			rc.resign();
 		}
 		turnCount += 1;

@@ -17,9 +17,13 @@ public class Politician extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 
+		if(!rc.canGetFlag(creatorID)){
+			creatorLoc = null;
+			creatorID = 0;
+		}
 		if(creatorLoc == null){
 			isAttacking = true;
-			runConverted();
+			runConverted(nearby);
 		}
 		else {
 			Comms.checkFlag(creatorID);
@@ -38,24 +42,37 @@ public class Politician extends Robot {
 		}
 	}
 
-	public void runConverted() throws GameActionException {
-		nearby = rc.senseNearbyRobots();
+	public void runConverted(RobotInfo[] nearby) throws GameActionException {
 		for(RobotInfo info : nearby){
 			int dist = myLoc.distanceSquaredTo(info.getLocation());
-			if((info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.SLANDERER || info.getType() == RobotType.ENLIGHTENMENT_CENTER) && info.getTeam() != myTeam && info.getConviction() > 50){
-				if (rc.canEmpower(dist))
+			if((info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.ENLIGHTENMENT_CENTER) && info.getTeam() != myTeam && info.getConviction() > Math.min(50, rc.getConviction())){
+				Log.log("Tryna convert enemy at: " + info.getLocation());
+				boolean moved = false;
+				if(dist > 2){
+					moved = nav.goTo(info.getLocation());
+				}
+				if (!moved && rc.canEmpower(dist)){
 					rc.empower(dist);
+				}
 			}
 			else if(info.getType() == RobotType.ENLIGHTENMENT_CENTER && info.getTeam() == myTeam){
+				Log.log("Found a new home! at: " + info.getLocation());
 				creatorLoc = info.getLocation();
 				creatorID = info.getID();
 				runEco(nearby);
+				return;
 			}
 			else if(info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam && rc.getConviction() < 50){
-				if (rc.canEmpower(dist))
+				Log.log("Attacking enemy muck at: " + info.getLocation());
+				boolean moved = false;
+				if(dist > 2){
+					moved = nav.goTo(info.getLocation());
+				}
+				if (!moved && rc.canEmpower(dist)){
 					rc.empower(dist);
+				}
 			}
-			if (info.getTeam() == myTeam && (info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.MUCKRAKER)){
+			else if (info.getTeam() == myTeam && (info.getType() == RobotType.POLITICIAN || info.getType() == RobotType.MUCKRAKER)){
 				nav.tryMove(myLoc.directionTo(info.getLocation()));
 			}
 			else{
