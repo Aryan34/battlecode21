@@ -123,12 +123,14 @@ public class Politician extends Robot {
 			minDist = Math.max(minDist, gridDist + 2);
 			spotted = true;
 		}
-		for (RobotInfo enemy : enemyTargets) { // Go through all targets, find who should kill it
+		for (int j = 0; j < idx; j++) { // Go through all targets, find who should kill it
+			RobotInfo enemy = enemyTargets[j];
 			int minConv = 500; // minimum conviction of a poli that can kill the target
 			boolean thisCanKill = canKill(rc.getLocation(), enemy.getLocation(), rc.getConviction(), enemy.getConviction());
 			if (thisCanKill) { allCannotKill = false; }
 			int dist = rc.getLocation().distanceSquaredTo(enemy.getLocation());
-			for (RobotInfo friendly : friendlyPolis) {
+			for (int i = 0; i < idx2; i++) {
+				RobotInfo friendly = friendlyPolis[i];
 				int tempDist = friendly.getLocation().distanceSquaredTo(enemy.getLocation());
 				if (tempDist <= RobotType.POLITICIAN.actionRadiusSquared) { // friendly can attack too
 					boolean tempCanKill = canKill(friendly.getLocation(), enemy.getLocation(), friendly.getConviction(), enemy.getConviction());
@@ -137,7 +139,6 @@ public class Politician extends Robot {
 						if (friendly.getConviction() < minConv) { minConv = friendly.getConviction(); }
 					}
 				}
-
 			}
 			if (rc.getConviction() <= minConv && rc.canEmpower(dist)) { // we have the lowest conv, should attack
 			    rc.empower(dist); // TODO: Add code to move closer before empowering?
