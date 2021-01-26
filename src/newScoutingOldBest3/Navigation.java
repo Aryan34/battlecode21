@@ -1,9 +1,6 @@
 package newScoutingOldBest3;
 
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] directions = {
@@ -182,6 +179,33 @@ public class Navigation {
 		return correspondingDirections[minIdx];
 	}
 
+	public void brownian() throws GameActionException {
+		double netX = 0;
+		double netY = 0;
+		double robotCharge = 0;
+		if (rc.getType() == RobotType.MUCKRAKER) {
+			robotCharge = 1;
+		}
+		else if (rc.getType() == RobotType.POLITICIAN) {
+			robotCharge = 2;
+		}
+
+		for (RobotInfo info : rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam())) {
+			if (info.getType() == rc.getType()) {
+				double force = (robotCharge * robotCharge) / rc.getLocation().distanceSquaredTo(info.getLocation());
+				double magnitude = Math.sqrt(rc.getLocation().distanceSquaredTo(info.getLocation()));
+				double dx = (rc.getLocation().x - info.getLocation().x) * force / magnitude;
+				double dy = (rc.getLocation().y - info.getLocation().y) * force / magnitude;
+				netX += dx;
+				netY += dy;
+			}
+		}
+
+		int x = (int)Math.round(netX);
+		int y = (int)Math.round(netY);
+		//TODO: convert x and y to direction and move if direction isn't center (x and y aren't 0)
+	}
+
 	public int indexOf(double[] arr, double val) {
 		for (int i = 0; i < arr.length; i++) {
 			if (arr[i] == val) {
@@ -228,10 +252,4 @@ public class Navigation {
 		Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 		tryMove(options);
 	}
-
-
-
-
-
-
 }
