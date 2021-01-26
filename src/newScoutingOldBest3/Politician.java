@@ -87,6 +87,7 @@ public class Politician extends Robot {
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearbyMucks();
+		efficientKill();
 		int minDist = 4; // Default distance
 		boolean spotted = false;
 		for(RobotInfo info : nearby){
