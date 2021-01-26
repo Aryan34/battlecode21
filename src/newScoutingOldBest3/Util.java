@@ -156,7 +156,7 @@ public class Util {
 		System.out.println("SPAWNING");
 		System.out.println(rc.getInfluence() / div_factor);
 		System.out.println(rc.getInfluence() - troop_min);
-		int spawnInfluence = (int)Math.min(rc.getInfluence() - troop_min, rc.getInfluence() / div_factor);
+		int spawnInfluence = (int)Math.max(troop_min, rc.getInfluence() / div_factor);
 		System.out.println(spawnInfluence);
 		spawnInfluence = Math.min(spawnInfluence, troop_max);
 		System.out.println(spawnInfluence);
@@ -167,6 +167,14 @@ public class Util {
 			spawnInfluence += 1;
 		}
 		return spawnInfluence;
+	}
+
+	// Scales val from the range (currMin, currMax) to the range (scaledMin, scaledMax)
+	static double scaleValue(double currMin, double currMax, double scaledMin, double scaledMax, double val){
+		double ratio = (scaledMax - scaledMin) / (currMax - currMin);
+		double baseVal = val - currMin;
+		double scaledVal = (baseVal * ratio) + scaledMin;
+		return scaledVal;
 	}
 
 

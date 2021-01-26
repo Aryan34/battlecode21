@@ -86,17 +86,18 @@ public class EnlightenmentCenter extends Robot {
 		// TODO: Mucks should swarm / try surrounding high inf enemy polis?
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
+		double defenderToSlandRatio = Util.scaleValue(0, 100, 0, 1, Math.min(currRound, 100));
 		if(enemyPoliDir != null){
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 		}
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
-		else if(rc.getRoundNum() - turnCount < 3 && !enemySpotted){ // If ur the initial EC
+		else if(currRound - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
-			int[] order = {0, 3, 3, 3, 3, 0, 3, 3, 3, 0, 3, 3, 3, 0, 3, 3, 3, 0};
+			int[] order = {0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3};
 			spawnOrder(order);
 		}
-		else if(defendersAlive < slandsAlive){
+		else if(defendersAlive < defenderToSlandRatio * slandsAlive){
 			Log.log("Spawning B");
 			spawnPoliticians(true);
 		}
@@ -273,10 +274,9 @@ public class EnlightenmentCenter extends Robot {
 		// TODO: Fix this
 		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
 		if (scout) {
-			Direction[] allDirs = Direction.allDirections();
-			Direction spawnDir = allDirs[mucksSpawned % 8];
+			Direction[] spawnDirs = Navigation.closeDirections(Navigation.directions[mucksSpawned % 8]);
 			if (mucksSpawned < 24) {
-				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDir, mucksSpawned + 2)) {
+				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
 					return;
 				}
 			}

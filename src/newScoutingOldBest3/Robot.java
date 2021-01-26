@@ -50,6 +50,7 @@ public class Robot {
 	boolean wonPrevVote = false;
 	int teamVotes;
 	boolean enemySpotted = false;
+	boolean neutralSpotted = false;
 
 
 	public Robot (RobotController rc) throws GameActionException {
