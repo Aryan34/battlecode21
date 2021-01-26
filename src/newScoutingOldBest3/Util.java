@@ -153,8 +153,13 @@ public class Util {
 		if(troop_min > troop_max){
 			return -1;
 		}
+		System.out.println("SPAWNING");
+		System.out.println(rc.getInfluence() / div_factor);
+		System.out.println(rc.getInfluence() - troop_min);
 		int spawnInfluence = (int)Math.min(rc.getInfluence() - troop_min, rc.getInfluence() / div_factor);
+		System.out.println(spawnInfluence);
 		spawnInfluence = Math.min(spawnInfluence, troop_max);
+		System.out.println(spawnInfluence);
 		if(spawnInfluence % 2 == 0 && make_odd){
 			spawnInfluence -= 1;
 		}

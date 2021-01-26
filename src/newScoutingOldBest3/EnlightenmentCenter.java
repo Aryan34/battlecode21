@@ -303,33 +303,19 @@ public class EnlightenmentCenter extends Robot {
 			return;
 		}
 		// Spawn super high inf slanderers early on. Could make this a linear scale or smth
-		int spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.5));
-		if(currRound < 100){
-			spawnInfluence = Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, (int)(rc.getInfluence() / 1.15));
-		}
-		if(spawnInfluence < SLAND_MIN_COST){
+		double divFactor = currRound < 100 ? 1.15 : 1.5;
+		int spawnInfluence = Util.getSpawnInfluence(SLAND_MIN_COST, rc.getInfluence() - EC_MIN_INFLUENCE, divFactor, false, false);
+		if(spawnInfluence == -1){
 			return;
 		}
-		// Setup so that it becomes an attack poli instead of a defense poli
-		if(spawnInfluence % 2 == 1){
-			spawnInfluence -= 1;
-		}
 
+		Direction[] spawnDirs = Navigation.randomizedDirs(); // Default: random spawn direction
 		// Try spawning in the direction opposite of the nearest enemy EC
-		Direction[] spawnDirs = null;
-		if(spawnDirs == null){
-			DetectedInfo enemyECInfo = Util.getClosestEnemyEC();
-			if(enemyECInfo != null){
-				spawnDirs = Navigation.closeDirections(myLoc.directionTo(enemyECInfo.loc).opposite());
-			}
+		DetectedInfo enemyECInfo = Util.getClosestEnemyEC();
+		if(enemyECInfo != null){
+			spawnDirs = Navigation.closeDirections(myLoc.directionTo(enemyECInfo.loc).opposite());
 		}
-		// Just spawn in a random direction
-		if(spawnDirs == null){
-			spawnDirs = Navigation.randomizedDirs();
-		}
-		for (Direction dir : spawnDirs) {
-			Util.tryBuild(RobotType.SLANDERER, dir, spawnInfluence);
-		}
+		Util.tryBuild(RobotType.SLANDERER, spawnDirs, spawnInfluence);
 	}
 
 	public void spawnPoliticians(boolean defense) throws GameActionException {

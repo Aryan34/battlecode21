@@ -192,14 +192,14 @@ public class Politician extends Robot {
 
 		for (int radius : radii) {
 			int killCount = 0;
-			RobotInfo[] nearby = rc.senseNearbyRobots(radius);
+			RobotInfo[] nearbyRadius = rc.senseNearbyRobots(radius);
 			RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(radius, myTeam.opponent());
-			if (nearby.length == 0) {
+			if (nearbyRadius.length == 0) {
 				continue;
 			}
 
 			double netConvictionLost = rc.getConviction();
-			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearby.length) * rc.getEmpowerFactor(myTeam, 0);
+			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearbyRadius.length) * rc.getEmpowerFactor(myTeam, 0);
 			for (RobotInfo info : nearbyEnemies) {
 				if (info.getConviction() - empowerStrength <= -1.0) {
 					killCount++;
