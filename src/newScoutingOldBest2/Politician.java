@@ -174,8 +174,47 @@ public class Politician extends Robot {
 	}
 
 	public void runSuicide() throws GameActionException {
-		if (rc.senseNearbyRobots(RobotType.POLITICIAN.actionRadiusSquared, myTeam.opponent()).length > 0) {
-			rc.empower(RobotType.POLITICIAN.actionRadiusSquared);
+		if (rc.senseNearbyRobots(9, myTeam.opponent()).length > 0) {
+			rc.empower(9);
+		}
+	}
+
+	public void efficientKill() throws GameActionException {
+		if (rc.senseNearbyRobots(9, myTeam.opponent()).length == 0) {
+			return;
+		}
+		int maxKills = -1;
+		int bestRadius = 0;
+		// TODO: better formula for conviction -> kill ratio
+		int maxConvictionPerKill = 3 + rc.getRoundNum() / 300;
+		int[] radii = {1, 2, 4, 5, 8, 9};
+
+		for (int radius : radii) {
+			int killCount = 0;
+			RobotInfo[] nearby = rc.senseNearbyRobots(radius);
+			RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(radius, myTeam.opponent());
+			if (nearby.length == 0) {
+				continue;
+			}
+
+			double netConvictionLost = rc.getConviction();
+			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearby.length) * rc.getEmpowerFactor(myTeam, 0);
+			for (RobotInfo info : nearbyEnemies) {
+				if (info.getConviction() - empowerStrength < -1.0) {
+					killCount++;
+				}
+				netConvictionLost -= Math.min(empowerStrength, info.getConviction());
+			}
+
+			if (killCount > 0 && Math.floorDiv((int)netConvictionLost, killCount) <= maxConvictionPerKill && killCount > maxKills) {
+				maxKills = killCount;
+				bestRadius = radius;
+			}
+		}
+
+		if (maxKills > 0) {
+			Log.log("Found efficient kill(s)!");
+			rc.empower(bestRadius);
 		}
 	}
 
