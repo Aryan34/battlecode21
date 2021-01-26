@@ -200,7 +200,7 @@ public class Politician extends Robot {
 			double netConvictionLost = rc.getConviction();
 			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearby.length) * rc.getEmpowerFactor(myTeam, 0);
 			for (RobotInfo info : nearbyEnemies) {
-				if (info.getConviction() - empowerStrength < -1.0) {
+				if (info.getConviction() - empowerStrength <= -1.0) {
 					killCount++;
 				}
 				netConvictionLost -= Math.min(empowerStrength, info.getConviction());
