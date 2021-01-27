@@ -388,7 +388,7 @@ public class Politician extends Robot {
 		}
 
 		RobotInfo[] withinRange = senseFromLoc(polLoc, polLoc.distanceSquaredTo(muckLoc));
-		if(Math.floor((polInf - 10) * rc.getEmpowerFactor(myTeam, 0) / withinRange.length) > muckInf){
+		if((int)Math.floor(Math.floorDiv((polInf - 10), withinRange.length) * rc.getEmpowerFactor(myTeam, 0)) > muckInf){
 			Log.log("I can do enough damage to kill it!");
 			return true;
 		}
