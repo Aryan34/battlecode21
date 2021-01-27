@@ -1,4 +1,4 @@
-package hope4;
+package hope5;
 
 import battlecode.common.*;
 
@@ -252,11 +252,13 @@ public class Comms {
                 }
                 break;
             case 8:
-                if(splits[1] == 0){
-                    robot.runningBrownian = false;
+                if(splits[1] == 1){
+                    Log.log("Got the command to run brownian");
+                    robot.runningBrownian = true;
                 }
                 else{
-                    robot.runningBrownian = true;
+                    Log.log("Got the command to stop running brownian");
+                    robot.runningBrownian = false;
                 }
                 break;
         }

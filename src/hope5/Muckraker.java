@@ -1,4 +1,4 @@
-package hope4;
+package hope5;
 
 import battlecode.common.*;
 
@@ -24,8 +24,8 @@ public class Muckraker extends Robot {
 		Comms.checkFlag(creatorID);
 		checkEnemiesNearby(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
-		if(isAttacking && attackTarget != null){
-			Log.log("Yam attacking: " + attackTarget.toString());
+		if(isAttacking){
+			Log.log("Yam attacking");
 			runAttack();
 		}
 		else{
@@ -81,7 +81,7 @@ public class Muckraker extends Robot {
 			int[] dp = getDxDy(muckNum);
 			scoutTarget = creatorLoc.translate(dp[0] * 64, dp[1] * 64);
 		}
-//		Log.log("My scout target: " + scoutTarget.toString());
+		Log.log("My scout target: " + scoutTarget.toString());
 
 		// Check if you can sense an out of bounds area
 		for(int i = 0; i < 4; i++){
