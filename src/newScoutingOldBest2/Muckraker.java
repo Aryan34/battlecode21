@@ -50,8 +50,9 @@ public class Muckraker extends Robot {
 		if(setFlagThisRound){
 			return;
 		}
-		for(RobotInfo info : nearby){
-			if(info.getTeam() != myTeam){
+		for(int i = 0; i < nearby.length; i++){
+			RobotInfo info = nearby[i];
+			if(info.getTeam() == myTeam.opponent()){
 				enemySpotted = true;
 				int purpose = 2;
 				int robotType = 3; // The type corresponding to an unknown enemy robot

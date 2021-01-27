@@ -1,9 +1,6 @@
 package newScoutingOldBest2;
 
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 public class Navigation {
 	static final Direction[] directions = {
@@ -182,6 +179,33 @@ public class Navigation {
 		return correspondingDirections[minIdx];
 	}
 
+	public void brownian() throws GameActionException {
+		double netX = 0;
+		double netY = 0;
+		double robotCharge = 0;
+		if (rc.getType() == RobotType.MUCKRAKER) {
+			robotCharge = 1;
+		}
+		else if (rc.getType() == RobotType.POLITICIAN) {
+			robotCharge = 2;
+		}
+
+		for (RobotInfo info : rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam())) {
+			if (info.getType() == rc.getType()) {
+				double force = (robotCharge * robotCharge) / rc.getLocation().distanceSquaredTo(info.getLocation());
+				double magnitude = Math.sqrt(rc.getLocation().distanceSquaredTo(info.getLocation()));
+				double dx = (rc.getLocation().x - info.getLocation().x) * force / magnitude;
+				double dy = (rc.getLocation().y - info.getLocation().y) * force / magnitude;
+				netX += dx;
+				netY += dy;
+			}
+		}
+
+		int x = (int)Math.round(netX);
+		int y = (int)Math.round(netY);
+		//TODO: convert x and y to direction and move if direction isn't center (x and y aren't 0)
+	}
+
 	public int indexOf(double[] arr, double val) {
 		for (int i = 0; i < arr.length; i++) {
 			if (arr[i] == val) {
@@ -211,117 +235,6 @@ public class Navigation {
 		return false;
 	}
 
-	public void goToGrid(int minDist) throws GameActionException {
-		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
-		if(rc.getCooldownTurns() > 1){
-			return;
-		}
-
-		// If you can move into a non-occupied grid location, go for it
-		for(Direction dir : cardinalDirections){
-			MapLocation target = myLoc.add(dir);
-			if(Util.isGridSquare(target, creatorLoc) && Util.getGridSquareDist(target, creatorLoc) >= minDist && rc.canMove(dir)){
-				Log.log("Found a nearby cardinal location: " + target.toString());
-				tryMove(dir);
-				return;
-			}
-		}
-
-		// Try moving away from the center
-		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			Log.log("Moving away from center");
-			Direction targetDir = creatorLoc.directionTo(myLoc);
-			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
-		}
-
-		// Find the closest location
-		int bestDist = Integer.MAX_VALUE;
-		MapLocation bestLoc = null;
-
-		for(int dx = -4; dx <= 4; dx++){
-			for(int dy = -4; dy <= 4; dy++){
-				MapLocation loc = new MapLocation(myLoc.x + dx, myLoc.y + dy);
-				if(!Util.isGridSquare(loc, creatorLoc)){
-					continue;
-				}
-				if(!rc.canSenseLocation(loc) || rc.isLocationOccupied(loc) || !rc.onTheMap(loc)){
-					continue;
-				}
-				int dist = myLoc.distanceSquaredTo(loc);
-				if(dist < bestDist){
-					bestDist = dist;
-					bestLoc = loc;
-				}
-			}
-		}
-		if(bestLoc != null){
-			Log.log("Going towards: " + bestLoc.toString());
-			goTo(bestLoc);
-		}
-		else{
-			// Move outwards?
-			Log.log("Moving outwards");
-			Direction targetDir = creatorLoc.directionTo(myLoc);
-			goTo(myLoc.add(targetDir).add(targetDir).add(targetDir).add(targetDir));
-		}
-	}
-
-	public void maintainGrid(int minDist) throws GameActionException {
-		MapLocation myLoc = robot.myLoc; MapLocation creatorLoc = robot.creatorLoc;
-		int dist = Util.getGridSquareDist(myLoc, creatorLoc);
-		MapLocation[] closerLocs = new MapLocation[2];
-		MapLocation[] sameDistLocs = new MapLocation[2];
-		boolean foundCloser = false; boolean foundSameDist = false;
-		// See if you can go towards an inner circle
-		for(Direction dir : Navigation.directions){
-			MapLocation newLoc = myLoc.add(dir);
-			if(Navigation.isCardinal(dir)){
-				newLoc = myLoc.add(dir).add(dir);
-			}
-			if(!rc.onTheMap(newLoc) || rc.isLocationOccupied(newLoc) || !rc.canMove(myLoc.directionTo(newLoc))){
-				continue;
-			}
-			int newDist = Util.getGridSquareDist(newLoc, creatorLoc);
-			if(newDist == dist - 1 && newDist >= minDist){ // Go closer to the EC if you can, but avoid going right next to it (so it still has place to spawn other troops)
-				int idx = foundCloser ? 1 : 0;
-				closerLocs[idx] = newLoc;
-				foundCloser = true;
-			}
-			else if(newDist == dist){
-				int idx = foundSameDist ? 1 : 0;
-				sameDistLocs[idx] = newLoc;
-				foundSameDist = true;
-			}
-		}
-		// If you can, go to the more counterclockwise one
-		if(foundCloser){
-			MapLocation option1 = closerLocs[0]; MapLocation option2 = closerLocs[1];
-			if(Util.isCCW(myLoc, option1, creatorLoc)) {
-				tryMove(myLoc.directionTo(option1));
-			}
-			else if(option2 != null && Util.isCCW(myLoc, option2, creatorLoc)){
-				tryMove(myLoc.directionTo(option2));
-			}
-			return;
-		}
-		else if(foundSameDist){
-			MapLocation option1 = sameDistLocs[0]; MapLocation option2 = sameDistLocs[1];
-			if(Util.isCCW(myLoc, option1, creatorLoc)) {
-				if(tryMove(myLoc.directionTo(option1).rotateRight())){ return; }
-				if(tryMove(myLoc.directionTo(option1))){ return; }
-			}
-			else if(option2 != null && Util.isCCW(myLoc, option2, creatorLoc)){
-				if(tryMove(myLoc.directionTo(option2).rotateRight())){ return; }
-				if(tryMove(myLoc.directionTo(option2))){ return; }
-			}
-			return;
-		}
-
-		// TODO: If you've hit an edge, then try going clockwise
-		// TODO: Some kind of expansion code
-	}
-
-
 	public Direction rotateCW(Direction dir){ return dir.rotateLeft().rotateLeft(); }
 	public Direction rotateCCW(Direction dir){ return dir.rotateRight().rotateRight(); }
 
@@ -339,10 +252,4 @@ public class Navigation {
 		Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
 		tryMove(options);
 	}
-
-
-
-
-
-
 }

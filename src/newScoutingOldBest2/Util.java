@@ -7,6 +7,8 @@ import java.util.Random;
 
 public class Util {
 
+	static final int SLAND_FLAG = 5242880;
+
 	static final Direction[] directions = {
 			Direction.NORTH,
 			Direction.NORTHEAST,
@@ -143,9 +145,44 @@ public class Util {
 	}
 
 	static boolean isSlanderer(int id) throws GameActionException {
-		robot.typeInQuestion = null;
-		Comms.checkFlag(id);
-		return robot.typeInQuestion == RobotType.SLANDERER;
+//		robot.typeInQuestion = null;
+//		Comms.checkFlag(id);
+//		return robot.typeInQuestion == RobotType.SLANDERER;
+		if(rc.canGetFlag(id)){
+			if(rc.getFlag(id) == SLAND_FLAG){
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// Helper function to figure out how much influence to spawn a troop with
+	static int getSpawnInfluence(int troop_min, int troop_max, double div_factor, boolean make_odd, boolean make_even){
+		if(troop_min > troop_max){
+			return -1;
+		}
+		System.out.println("SPAWNING");
+		System.out.println(rc.getInfluence() / div_factor);
+		System.out.println(rc.getInfluence() - troop_min);
+		int spawnInfluence = (int)Math.max(troop_min, rc.getInfluence() / div_factor);
+		System.out.println(spawnInfluence);
+		spawnInfluence = Math.min(spawnInfluence, troop_max);
+		System.out.println(spawnInfluence);
+		if(spawnInfluence % 2 == 0 && make_odd){
+			spawnInfluence -= 1;
+		}
+		if(spawnInfluence % 2 == 1 && make_even){
+			spawnInfluence += 1;
+		}
+		return spawnInfluence;
+	}
+
+	// Scales val from the range (currMin, currMax) to the range (scaledMin, scaledMax)
+	static double scaleValue(double currMin, double currMax, double scaledMin, double scaledMax, double val){
+		double ratio = (scaledMax - scaledMin) / (currMax - currMin);
+		double baseVal = val - currMin;
+		double scaledVal = (baseVal * ratio) + scaledMin;
+		return scaledVal;
 	}
 
 

@@ -122,6 +122,7 @@ public class Comms {
     }
 
     static void checkFlag(int ID) throws GameActionException {
+//        Log.log("Checking the flag of: " + ID);
         if(!rc.canGetFlag(ID)){
             return;
         }
@@ -167,9 +168,13 @@ public class Comms {
                 int detectedInfluence = (splits[4] + 1) * 100;
                 DetectedInfo[] savedLocations = Util.getCorrespondingRobots(null, null, detectedLoc);
 
-                if(detectedTeam != robot.myTeam && !robot.enemySpotted){
+                if(detectedTeam == robot.myTeam.opponent() && !robot.enemySpotted){
                     robot.enemySpotted = true;
                     Log.log("ENEMY SPOTTED !!!!!");
+                }
+                else if(detectedTeam == Team.NEUTRAL && !robot.neutralSpotted){
+                    robot.neutralSpotted = true;
+                    Log.log("NEUTRAL SPOTTED !!!!!");
                 }
 
                 // Don't save it if its not an enlightenment center

@@ -50,6 +50,7 @@ public class Robot {
 	boolean wonPrevVote = false;
 	int teamVotes;
 	boolean enemySpotted = false;
+	boolean neutralSpotted = false;
 
 
 	public Robot (RobotController rc) throws GameActionException {
@@ -76,7 +77,7 @@ public class Robot {
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
 		Log.log("Cooldown: " + rc.getCooldownTurns());
-//		if(currRound > 800){
+//		if(currRound > 500){
 //			rc.resign();
 //		}
 		turnCount += 1;
