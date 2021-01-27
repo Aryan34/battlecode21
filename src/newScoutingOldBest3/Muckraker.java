@@ -271,7 +271,12 @@ public class Muckraker extends Robot {
 			return;
 		}
 
-		nav.goTo(scoutTarget);
+		if(rc.canMove(myLoc.directionTo(scoutTarget))) {
+			rc.move(myLoc.directionTo(scoutTarget));
+		}
+		else {
+			nav.goTo(scoutTarget);
+		}
 	}
 
 	// Heuristic used to spread out when searching
@@ -343,7 +348,7 @@ public class Muckraker extends Robot {
 			DetectedInfo detected = Util.getClosestEnemyEC();
 			if(detected == null){
 				// TODO: Search for closest enemy EC instead of just moving randomly
-				nav.tryMove(nav.randomDirection());
+				nav.brownian();
 			}
 			else{
 				targetECLoc = detected.loc;

@@ -112,28 +112,29 @@ public class Politician extends Robot {
 		Log.log("My min dist: " + minDist);
 		Log.log("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
-		// If you're too close, move farther away
-		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			Log.log("Going farther!");
-			Direction targetDir = creatorLoc.directionTo(myLoc);
-			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
-			nav.tryMove(options);
-//			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
-		}
-		// Always make sure theres a friendly slanderer in site
-		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
-			Log.log("Going closer!");
-			Direction targetDir = myLoc.directionTo(creatorLoc);
-			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
-			nav.tryMove(options);
-//			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
-		}
-		else{
-			chooseSide();
-			nav.circle(circlingCCW, minDist);
-			Log.log("Circling: " + circlingCCW);
-		}
+		nav.brownian();
 
+//		// If you're too close, move farther away
+//		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+//			Log.log("Going farther!");
+//			Direction targetDir = creatorLoc.directionTo(myLoc);
+//			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+//			nav.tryMove(options);
+////			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
+//		}
+//		// Always make sure theres a friendly slanderer in site
+//		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
+//			Log.log("Going closer!");
+//			Direction targetDir = myLoc.directionTo(creatorLoc);
+//			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+//			nav.tryMove(options);
+////			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
+//		}
+//		else{
+//			chooseSide();
+//			nav.circle(circlingCCW, minDist);
+//			Log.log("Circling: " + circlingCCW);
+//		}
 	}
 
 	public void runAttack() throws GameActionException {

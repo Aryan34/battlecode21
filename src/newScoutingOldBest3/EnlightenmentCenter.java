@@ -90,7 +90,25 @@ public class EnlightenmentCenter extends Robot {
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
 		double defenderToSlandRatio = Util.scaleValue(0, 200, 0, 1.5, Math.min(currRound, 200));
-		if(enemyPoliDir != null){
+
+		// Save up for big boi attacking poli
+		if(saveForAttack && slandsAlive > 5){
+			if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
+				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
+				Log.log("Spawning big captuerer boi!: " + capturerInf);
+				if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
+					attackTarget = attackTargetInfo.loc;
+					saveForAttack = false;
+					capturerInf = -1;
+				}
+			}
+		}
+		else if(attackTargetInfo != null){
+			Log.log("Spawning eco buildup");
+			int[] order = {0, 3, 1};
+			spawnOrder(order);
+		}
+		else if(enemyPoliDir != null){
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 		}
@@ -107,23 +125,6 @@ public class EnlightenmentCenter extends Robot {
 		else if(nearestMuck != null){
 			Log.log("Enemy muck nearby so spawning pol");
 			spawnPoliticians(true);
-		}
-		// Save up for big boi attacking poli
-		else if(saveForAttack){
-			if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
-				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
-				Log.log("Spawning big captuerer boi!");
-				if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
-					attackTarget = attackTargetInfo.loc;
-					saveForAttack = false;
-					capturerInf = -1;
-				}
-			}
-		}
-		else if(attackTargetInfo != null){
-			Log.log("Spawning eco buildup");
-			int[] order = {0, 3, 1};
-			spawnOrder(order);
 		}
 		else if(turnCount < 400){
 			Log.log("Spawning early game");
@@ -271,7 +272,7 @@ public class EnlightenmentCenter extends Robot {
 		if (scout) {
 			Direction[] spawnDirs = Navigation.closeDirections(Navigation.directions[mucksSpawned % 8]);
 			if (mucksSpawned < 24) {
-				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
+				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2 + mucksSpawned)) {
 					return;
 				}
 			}
@@ -390,6 +391,7 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void checkReadyToAttack() throws GameActionException {
+		double ratio = currRound < 300 ? 1.5 : 1.75;
 		if(attackTarget != null || attackTargetInfo == null){
 			return;
 		}
@@ -400,12 +402,12 @@ public class EnlightenmentCenter extends Robot {
 			attackInf += attackPoliInfo[i].spawnInfluence - 10;
 		}
 		Log.log("Attack influence: " + attackInf);
-		if(attackInf > attackTargetInfo.influence * 1.75){
+		if(attackInf > attackTargetInfo.influence * ratio){
 			attackTarget = attackTargetInfo.loc;
 			return;
 		}
 		// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
-		int infNeeded = (int)(attackTargetInfo.influence * 1.75);
+		int infNeeded = (int)(attackTargetInfo.influence * ratio);
 		int infExpected = getExpectedInfluence(currRound + 10);
 		if(infExpected > infNeeded + EC_MIN_INFLUENCE){
 			capturerInf = infNeeded;
