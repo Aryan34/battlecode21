@@ -125,7 +125,7 @@ public class Politician extends Robot {
 		}
 		for (int j = 0; j < idx; j++) { // Go through all targets, find who should kill it
 			RobotInfo enemy = enemyTargets[j];
-			int minConv = 500; // minimum conviction of a poli that can kill the target
+			int minConv = Integer.MAX_VALUE; // minimum conviction of a poli that can kill the target
 			boolean thisCanKill = canKill(rc.getLocation(), enemy.getLocation(), rc.getConviction(), enemy.getConviction());
 			if (thisCanKill) { allCannotKill = false; }
 			int dist = rc.getLocation().distanceSquaredTo(enemy.getLocation());

@@ -87,7 +87,6 @@ public class Politician extends Robot {
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearbyMucks();
-		efficientKill();
 		int minDist = 4; // Default distance
 		boolean spotted = false;
 		for(RobotInfo info : nearby){
@@ -180,17 +179,88 @@ public class Politician extends Robot {
 		}
 	}
 
+//	public void jasonKill() throws GameActionException {
+//		RobotInfo[] enemyTargets = new RobotInfo[nearby.length];
+//		boolean[] threatening = new boolean[nearby.length];
+//		int idx = 0;
+//		RobotInfo[] friendlyPolis = new RobotInfo[nearby.length];
+//		int idx2 = 0;
+//		RobotInfo[] friendlySlands = new RobotInfo[nearby.length];
+//		int idx3 = 0;
+//		for (int i = 0; i < nearby.length; i++) {
+//			RobotInfo info = nearby[i];
+//			if(info.getTeam() == myTeam && Util.isSlanderer(info.getID())){
+//				friendlySlands[idx3++] = info;
+//			}
+//		}
+//		for (int i = 0; i < nearby.length; i++) {
+//			RobotInfo info = nearby[i];
+//			// Kill enemy politicians; tries to kill with smallest infl poli in range
+//			if (info.getType() == RobotType.POLITICIAN && info.getTeam() != myTeam && info.getConviction() > 10) {
+//				if(info.getLocation().distanceSquaredTo(creatorLoc) <= info.getType().sensorRadiusSquared){ // Using sensorRadius instead of actionRadius cuz i dont wanna cut it too close
+//					threatening[idx] = true;
+//				}
+//				enemyTargets[idx++] = info;
+//			}
+//			else if (info.getType() == RobotType.MUCKRAKER && info.getTeam() != myTeam) { // Add mucks to the mix too
+//				for(int j = 0; j < friendlySlands.length; j++){
+//					if(info.getLocation().distanceSquaredTo(friendlySlands[j].getLocation()) <= info.getType().sensorRadiusSquared){
+//						threatening[idx] = true;
+//					}
+//				}
+//				enemyTargets[idx++] = info;
+//			}
+//			else if (info.getTeam() == myTeam && info.getType() == RobotType.POLITICIAN) {
+//				friendlyPolis[idx2++] = info;
+//			}
+//		}
+//		for (int j = 0; j < idx; j++) { // Go through all targets, find who should kill it
+//			RobotInfo enemy = enemyTargets[j];
+//			int minConv = Integer.MAX_VALUE; // minimum conviction of a poli that can kill the target
+//			boolean someoneCanKill = true;
+//			boolean thisCanKill = canKill(myLoc, enemy.getLocation(), rc.getConviction(), enemy.getConviction());
+//			someoneCanKill |= thisCanKill;
+//			int dist = myLoc.distanceSquaredTo(enemy.getLocation());
+//			for (int i = 0; i < idx2; i++) {
+//				RobotInfo friendly = friendlyPolis[i];
+//				int tempDist = friendly.getLocation().distanceSquaredTo(enemy.getLocation());
+//				if (tempDist <= RobotType.POLITICIAN.actionRadiusSquared) { // friendly can attack too
+//					boolean tempCanKill = canKill(friendly.getLocation(), enemy.getLocation(), friendly.getConviction(), enemy.getConviction());
+//					if (tempCanKill) {
+//						minConv = Math.min(minConv, friendly.getConviction());
+//					}
+//				}
+//				someoneCanKill |= thisCanKill;
+//			}
+//			if (rc.getConviction() <= minConv && rc.canEmpower(dist)) { // we have the lowest conv, should attack
+//				rc.empower(dist); // TODO: Add code to move closer before empowering?
+//				break;
+//			}
+//			if (!someoneCanKill) { // if no one can kill it, just attack anyway
+//				if(threatening[j] && rc.canEmpower(dist)){
+//					rc.empower(dist);
+//				}
+//				break;
+//			}
+//		}
+//
+//	}
+
+
 	public void efficientKill() throws GameActionException {
 		if (rc.senseNearbyRobots(9, myTeam.opponent()).length == 0) {
 			return;
 		}
+		Log.log("Attempting to do efficient kill");
 		int maxKills = -1;
 		int bestRadius = 0;
 		// TODO: better formula for conviction -> kill ratio
-		int maxConvictionPerKill = 3 + rc.getRoundNum() / 300;
+//		int maxConvictionPerKill = 3 + rc.getRoundNum() / 300;
+		int maxConvictionPerKill = Integer.MAX_VALUE;
 		int[] radii = {1, 2, 4, 5, 8, 9};
 
 		for (int radius : radii) {
+			Log.log("Testing radius: " + radius);
 			int killCount = 0;
 			RobotInfo[] nearbyRadius = rc.senseNearbyRobots(radius);
 			RobotInfo[] nearbyEnemies = rc.senseNearbyRobots(radius, myTeam.opponent());
@@ -199,13 +269,17 @@ public class Politician extends Robot {
 			}
 
 			double netConvictionLost = rc.getConviction();
-			double empowerStrength = Math.floorDiv(rc.getConviction() - 10, nearbyRadius.length) * rc.getEmpowerFactor(myTeam, 0);
-			for (RobotInfo info : nearbyEnemies) {
+			int empowerStrength = (int)Math.floor(Math.floorDiv(rc.getConviction() - 10, nearbyRadius.length) * rc.getEmpowerFactor(myTeam, 0));
+			Log.log("Empower strength: " + empowerStrength);
+			for (int i = 0; i < nearbyEnemies.length; i++) {
+				RobotInfo info = nearbyEnemies[i];
 				if (info.getConviction() - empowerStrength <= -1.0) {
 					killCount++;
 				}
 				netConvictionLost -= Math.min(empowerStrength, info.getConviction());
 			}
+
+			Log.log("Kill count: " + killCount);
 
 			if (killCount > 0 && Math.floorDiv((int)netConvictionLost, killCount) <= maxConvictionPerKill && killCount > maxKills) {
 				maxKills = killCount;
@@ -224,18 +298,19 @@ public class Politician extends Robot {
 		MapLocation[] enemyMucks = new MapLocation[nearby.length]; int idx1 = 0;
 		MapLocation[] friendlySlands = new MapLocation[nearby.length + 1]; int idx2 = 0;
 
-		for (RobotInfo info : nearby) {
+		for (int i = 0; i < nearby.length; i++) {
+			RobotInfo info = nearby[i];
 			// Only kill enemy mucks, and only kill them if there's a sland nearby (otherwise follow them around)
 			if (info.team == myTeam.opponent() && info.type == RobotType.MUCKRAKER) {
-				enemyMucks[idx1] = info.getLocation(); idx1++;
+				enemyMucks[idx1++] = info.getLocation();
 			}
 			else if (info.team == myTeam && info.type == RobotType.POLITICIAN && Util.isSlanderer(info.getID())) {
-				friendlySlands[idx2] = info.getLocation(); idx2++;
+				friendlySlands[idx2++] = info.getLocation();
 			}
 		}
 
 		// Add EC as something to defend
-		friendlySlands[idx2] = creatorLoc; idx2++;
+		friendlySlands[idx2++] = creatorLoc;
 
 		// If there's no mucks, we gucci
 		if(idx1 == 0){
@@ -264,7 +339,7 @@ public class Politician extends Robot {
 		Log.log("It's distance to our closest sland is: " + closestDist);
 
 		// If the muck can kill our sland
-		if(closestDist < RobotType.MUCKRAKER.sensorRadiusSquared){
+		if(closestDist <= RobotType.MUCKRAKER.actionRadiusSquared){
 			// If we can kill the muck, go for it
 			int attackDist = myLoc.distanceSquaredTo(biggestThreat);
 			Log.log("Biggest threat can kill our closest slanderer, and is at: " + biggestThreat.toString());
@@ -276,38 +351,23 @@ public class Politician extends Robot {
 			}
 			// Otherwise, go closer to it so we can kill it
 			else{
-				boolean moved = nav.goTo(biggestThreat);
-				if(!moved && rc.getCooldownTurns() < 1){
-					// If you can't go closer, then just sewercide ig
-					if(rc.canEmpower(attackDist)){
-						rc.empower(attackDist);
+				Log.log("Going towards the biggestThreat to kill it");
+				boolean moved = false;
+				for(Direction dir : Direction.allDirections()){
+					if(myLoc.add(dir).distanceSquaredTo(biggestThreat) < attackDist && rc.canMove(dir)){
+						moved |= nav.tryMove(dir);
 					}
 				}
+				if(!moved && rc.canEmpower(attackDist)){
+					// If you can't go closer, then just try doing as much damage as possible
+					rc.empower(attackDist);
+				}
 			}
-		}
-		else if(shouldApproach(biggestThreat)){
-			nav.goTo(biggestThreat);
 		}
 		else{
-			int bestRad = -1;
-			int bestKill = 0;
-			for(int radius = 1; radius <= myType.actionRadiusSquared; radius++){
-				int canKill = 0;
-				RobotInfo[] robotsInKillRange = senseFromLoc(myLoc, radius);
-				int damage = (int)Math.floor((rc.getConviction() - 10) / robotsInKillRange.length);
-				for(RobotInfo info : robotsInKillRange){
-					if(info.getType() == RobotType.MUCKRAKER && info.getTeam() == myTeam.opponent() && info.getConviction() < damage){
-						canKill++;
-					}
-				}
-				if(canKill > bestKill){
-					bestKill = canKill;
-					bestRad = radius;
-				}
-			}
-			if(bestKill >= 2 && rc.canEmpower(bestRad)){
-				Log.log("Empowering because I can kill multiple mucks");
-				rc.empower(bestRad);
+			efficientKill();
+			if(biggestThreat != null && shouldApproach(biggestThreat)){
+				nav.goTo(biggestThreat);
 			}
 		}
 	}
@@ -320,6 +380,7 @@ public class Politician extends Robot {
 
 		RobotInfo[] withinRange = senseFromLoc(polLoc, polLoc.distanceSquaredTo(muckLoc));
 		if(Math.floor((polInf - 10) / withinRange.length) > muckInf){
+			Log.log("I can do enough damage to kill it!");
 			return true;
 		}
 		return false;
@@ -331,6 +392,9 @@ public class Politician extends Robot {
 			return true;
 		}
 		if(closestPol.getConviction() < rc.senseRobotAtLocation(muckLoc).getConviction()){
+			return true;
+		}
+		if(rc.getConviction() <= closestPol.getConviction() && rc.getConviction() > rc.senseRobotAtLocation(muckLoc).getConviction()){
 			return true;
 		}
 		return false;

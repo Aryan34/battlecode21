@@ -7,6 +7,8 @@ import java.util.Random;
 
 public class Util {
 
+	static final int SLAND_FLAG = 5242880;
+
 	static final Direction[] directions = {
 			Direction.NORTH,
 			Direction.NORTHEAST,
@@ -143,9 +145,15 @@ public class Util {
 	}
 
 	static boolean isSlanderer(int id) throws GameActionException {
-		robot.typeInQuestion = null;
-		Comms.checkFlag(id);
-		return robot.typeInQuestion == RobotType.SLANDERER;
+//		robot.typeInQuestion = null;
+//		Comms.checkFlag(id);
+//		return robot.typeInQuestion == RobotType.SLANDERER;
+		if(rc.canGetFlag(id)){
+			if(rc.getFlag(id) == SLAND_FLAG){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// Helper function to figure out how much influence to spawn a troop with

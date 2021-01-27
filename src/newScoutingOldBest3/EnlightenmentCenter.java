@@ -30,13 +30,15 @@ public class EnlightenmentCenter extends Robot {
 
 	int lastBid = -1;
 	int EC_MIN_INFLUENCE = 10;
-	final int DEF_POLI_MIN_COST = 20;
+	final int DEF_POLI_MIN_COST = 24;
 	final int ATK_POLI_MIN_COST = 50;
 	final int SLAND_MIN_COST = 21;
 	int[] slandBenefits = new int[1500];
 	int numVotes = 0;
 	DetectedInfo attackTargetInfo = null;
 	RobotInfo nearestMuck = null;
+	boolean saveForAttack = false;
+	int capturerInf = -1;
 
 	// Troop spawning variables
 	SpawnInfo[] spawnedAllies = new SpawnInfo[1500];
@@ -73,6 +75,7 @@ public class EnlightenmentCenter extends Robot {
 		Log.log("Mucks: " + mucksAlive);
 
 		setAttackTarget();
+		checkReadyToAttack();
 		updateFlag();
 
 		if(attackTargetInfo != null){ Log.log("Saving up for: " + attackTargetInfo.loc.toString()); }
@@ -86,7 +89,7 @@ public class EnlightenmentCenter extends Robot {
 		// TODO: Mucks should swarm / try surrounding high inf enemy polis?
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
-		double defenderToSlandRatio = Util.scaleValue(0, 100, 0, 1, Math.min(currRound, 100));
+		double defenderToSlandRatio = Util.scaleValue(0, 200, 0, 1.5, Math.min(currRound, 200));
 		if(enemyPoliDir != null){
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
@@ -94,7 +97,7 @@ public class EnlightenmentCenter extends Robot {
 		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
 		else if(currRound - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
-			int[] order = {0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0, 3};
+			int[] order = {0, 3, 0, 3, 1, 0, 3, 1, 3, 0, 3, 0, 1, 0, 3};
 			spawnOrder(order);
 		}
 		else if(defendersAlive < defenderToSlandRatio * slandsAlive){
@@ -106,42 +109,34 @@ public class EnlightenmentCenter extends Robot {
 			spawnPoliticians(true);
 		}
 		// Save up for big boi attacking poli
-		else if(attackTargetInfo != null){
-			// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
-			int infNeeded = (int)(attackTargetInfo.influence * 1.25);
-			int infExpected = getExpectedInfluence(currRound + 10);
-			System.out.println("Inf needed: " + infNeeded + ", inf expected: " + infExpected);
-			if(attackTarget == null && infExpected > infNeeded){
-				Log.log("Saving up for big boi, influence needed: " + infNeeded + ", currInf: " + rc.getInfluence());
+		else if(saveForAttack){
+			if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
 				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
-				if(rc.getInfluence() > infNeeded){
-					// Figure out spawn direction
-					if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, infNeeded)){
-						System.out.println("Successfully spawned a poli!");
-						attackTarget = attackTargetInfo.loc;
-						System.out.println(attackTarget.toString());
-					}
+				Log.log("Spawning big captuerer boi!");
+				if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
+					attackTarget = attackTargetInfo.loc;
+					saveForAttack = false;
+					capturerInf = -1;
 				}
-				else{
-					Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
-				}
-			}
-			else{
-				Log.log("Spawning save");
-				int[] order = {0, 3, 1, 3, 1, 1, 0, 1, 3, 3, 1, 3};
-				spawnOrder(order);
 			}
 		}
-		else if(turnCount < 300){
-			Log.log("Spawning D");
-			int[] order = {1, 3, 0, 3, 3, 2, 3, 3, 1, 3, 0, 3, 2, 3};
+		else if(attackTargetInfo != null){
+			Log.log("Spawning eco buildup");
+			int[] order = {0, 3, 1};
+			spawnOrder(order);
+		}
+		else if(turnCount < 400){
+			Log.log("Spawning early game");
+			int[] order = {0, 3, 0, 3, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
-			Log.log("Spawning E");
-			int[] order = {1, 3, 3, 0, 3, 1, 3, 0, 3, 3, 2, 3, 3, 0, 3, 3};
+			Log.log("Spawning late game");
+			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
 			spawnOrder(order);
 		}
+		// If you didn't have the eco to spawn anything this round, j spawn a muck
+		spawnMucks(true);
 	}
 
 	public void spawnOrder(int[] order) throws GameActionException {
@@ -331,7 +326,7 @@ public class EnlightenmentCenter extends Robot {
 		// Defense politicians have odd influence, attack politicians have even influence
 		int spawnInfluence;
 		if (defense) {
-			spawnInfluence = Util.getSpawnInfluence(DEF_POLI_MIN_COST, Math.min(rc.getInfluence() - EC_MIN_INFLUENCE, DEF_POLI_MIN_COST), 20, true, false);
+			spawnInfluence = Util.getSpawnInfluence(DEF_POLI_MIN_COST, rc.getInfluence() - EC_MIN_INFLUENCE, 20, true, false);
 			if(nearestMuck != null){
 				// If you sense an enemy muck nearby, spawn it in the direction of the muck
 				spawnDirs = Navigation.closeDirections(myLoc.directionTo(nearestMuck.location));
@@ -353,13 +348,6 @@ public class EnlightenmentCenter extends Robot {
 
 	// Find a target EC to attack!
 	public void setAttackTarget() throws GameActionException {
-		// Check if ready to attack
-		int attackInf = 0;
-		for(int i = 0; i < attackPolisSpawned; i++){
-			if(!attackPoliInfo[i].alive){ continue; }
-			attackInf += attackPoliInfo[i].spawnInfluence - 10;
-		}
-		Log.log("Attack influence: " + attackInf);
 		if(attackTargetInfo != null){
 			DetectedInfo[] targetInfo = Util.getCorrespondingRobots(null, null, attackTargetInfo.loc);
 			assert(targetInfo.length > 0);
@@ -397,12 +385,31 @@ public class EnlightenmentCenter extends Robot {
 		}
 
 		if(bestTarget != null){
-			Log.log("Best target: " + bestTarget.loc.toString());
-			// Guess how much it costs to capture? Send waves of 200 maybe?
 			attackTargetInfo = bestTarget;
 		}
-		else{
-			Log.log("No best target found :((");
+	}
+
+	public void checkReadyToAttack() throws GameActionException {
+		if(attackTarget != null || attackTargetInfo == null){
+			return;
+		}
+		// Check if ready to attack
+		int attackInf = 0;
+		for(int i = 0; i < attackPolisSpawned; i++){
+			if(!attackPoliInfo[i].alive){ continue; }
+			attackInf += attackPoliInfo[i].spawnInfluence - 10;
+		}
+		Log.log("Attack influence: " + attackInf);
+		if(attackInf > attackTargetInfo.influence * 1.75){
+			attackTarget = attackTargetInfo.loc;
+			return;
+		}
+		// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
+		int infNeeded = (int)(attackTargetInfo.influence * 1.75);
+		int infExpected = getExpectedInfluence(currRound + 10);
+		if(infExpected > infNeeded + EC_MIN_INFLUENCE){
+			capturerInf = infNeeded;
+			saveForAttack = true;
 		}
 	}
 

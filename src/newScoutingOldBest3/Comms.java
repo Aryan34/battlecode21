@@ -122,7 +122,7 @@ public class Comms {
     }
 
     static void checkFlag(int ID) throws GameActionException {
-        Log.log("Checking the flag of: " + ID);
+//        Log.log("Checking the flag of: " + ID);
         if(!rc.canGetFlag(ID)){
             return;
         }
