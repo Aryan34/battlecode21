@@ -87,6 +87,8 @@ public class EnlightenmentCenter extends Robot {
 	public void spawn() throws GameActionException{
 		// If you sense an enemy poli really close by, spawn mucks in that direction to spread out the effect
 		// TODO: Mucks should swarm / try surrounding high inf enemy polis?
+		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
+
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
 		double defenderToSlandRatio = Util.scaleValue(0, 200, 0, 1.5, Math.min(currRound, 200));
@@ -94,7 +96,9 @@ public class EnlightenmentCenter extends Robot {
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 		}
-		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
+		else if (!enemySpotted && saveForAttack){
+			spawnSave();
+		}
 		else if(currRound - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
 			int[] order = {0, 3, 0, 3, 1, 0, 3, 1, 3, 0, 3, 0, 1, 0, 3};
@@ -110,15 +114,7 @@ public class EnlightenmentCenter extends Robot {
 		}
 		// Save up for big boi attacking poli
 		else if(saveForAttack){
-			if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
-				Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
-				Log.log("Spawning big captuerer boi!");
-				if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
-					attackTarget = attackTargetInfo.loc;
-					saveForAttack = false;
-					capturerInf = -1;
-				}
-			}
+			spawnSave();
 		}
 		else if(attackTargetInfo != null){
 			Log.log("Spawning eco buildup");
@@ -146,6 +142,18 @@ public class EnlightenmentCenter extends Robot {
 		if(type == 2){ spawnPoliticians(false); }
 		if(type == 3){ spawnMucks(true); }
 		if(type == 4){ spawnMucks(false); }
+	}
+
+	public void spawnSave() throws GameActionException {
+		if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
+			Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
+			Log.log("Spawning big captuerer boi!");
+			if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
+				attackTarget = attackTargetInfo.loc;
+				saveForAttack = false;
+				capturerInf = -1;
+			}
+		}
 	}
 
 	public void checkRobotFlags() throws GameActionException {

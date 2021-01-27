@@ -182,17 +182,11 @@ public class Navigation {
 	public void brownian() throws GameActionException {
 		double netX = 0;
 		double netY = 0;
-		double robotCharge = 0;
-		if (rc.getType() == RobotType.MUCKRAKER) {
-			robotCharge = 1;
-		}
-		else if (rc.getType() == RobotType.POLITICIAN) {
-			robotCharge = 2;
-		}
+		double robotCharge = 100;
 
 		for (RobotInfo info : rc.senseNearbyRobots(rc.getType().sensorRadiusSquared, rc.getTeam())) {
-			if (info.getType() == rc.getType()) {
-				double force = (robotCharge * robotCharge) / rc.getLocation().distanceSquaredTo(info.getLocation());
+			if (info.getType() == rc.getType() || info.getType() == RobotType.SLANDERER) {
+				double force = robotCharge / rc.getLocation().distanceSquaredTo(info.getLocation());
 				double magnitude = Math.sqrt(rc.getLocation().distanceSquaredTo(info.getLocation()));
 				double dx = (rc.getLocation().x - info.getLocation().x) * force / magnitude;
 				double dy = (rc.getLocation().y - info.getLocation().y) * force / magnitude;
@@ -200,10 +194,46 @@ public class Navigation {
 				netY += dy;
 			}
 		}
+		Log.log("After repelling off teammates, my dp is: " + netX + ", " + netY);
+		// Bounce off walls
+		double wallForce = 500;
+		for(Direction dir : Navigation.cardinalDirections){
+			MapLocation reachLoc = robot.myLoc.add(Direction.CENTER);
+			while(robot.myLoc.distanceSquaredTo(reachLoc) <= robot.myType.sensorRadiusSquared){
+				reachLoc = reachLoc.add(dir);
+				if(robot.myLoc.distanceSquaredTo(reachLoc) < robot.myType.sensorRadiusSquared && !rc.onTheMap(reachLoc)){
+					Log.log("Reach loc: " + reachLoc.toString());
+					double force = wallForce / rc.getLocation().distanceSquaredTo(reachLoc);
+					double magnitude = robot.myLoc.distanceSquaredTo(reachLoc);
+					double dx = (rc.getLocation().x - reachLoc.x) * force / magnitude;
+					double dy = (rc.getLocation().y - reachLoc.y) * force / magnitude;
+					netX += dx;
+					netY += dy;
+					break;
+				}
+			}
+		}
+
+		Log.log("After bouncing off walls, my dp is: " + netX + ", " + netY);
+
+		double ECForce = -500;
+		if(rc.getLocation().distanceSquaredTo(robot.creatorLoc) < RobotType.ENLIGHTENMENT_CENTER.sensorRadiusSquared){
+			ECForce = -ECForce;
+		}
+		double force = ECForce / rc.getLocation().distanceSquaredTo(robot.creatorLoc);
+		double magnitude = robot.myLoc.distanceSquaredTo(robot.creatorLoc);
+		double dx = (rc.getLocation().x - robot.creatorLoc.x) * force / magnitude;
+		double dy = (rc.getLocation().y - robot.creatorLoc.y) * force / magnitude;
+		netX += dx;
+		netY += dy;
+
 
 		int x = (int)Math.round(netX);
 		int y = (int)Math.round(netY);
-		//TODO: convert x and y to direction and move if direction isn't center (x and y aren't 0)
+		MapLocation destination = robot.myLoc.translate(x, y);
+		if(!robot.myLoc.equals(destination)){
+			goTo(destination);
+		}
 	}
 
 	public int indexOf(double[] arr, double val) {

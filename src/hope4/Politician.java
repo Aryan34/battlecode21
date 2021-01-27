@@ -89,6 +89,7 @@ public class Politician extends Robot {
 		killNearbyMucks();
 		int minDist = 4; // Default distance
 		boolean spotted = false;
+		int currGridDist = Util.getGridSquareDist(myLoc, creatorLoc);
 		for(RobotInfo info : nearby){
 			// Filter out everything except friendly slanderers / politicians
 			if(info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam){
@@ -96,6 +97,21 @@ public class Politician extends Robot {
 			}
 			// Unfortunately, slanderers appear as politicians, so we have to read their flag to figure out if they're actually politicians
 			if(!Util.isSlanderer(info.getID())){
+				// Count defender polis as "spotted"
+				if(info.getInfluence() % 2 == 1){
+					// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
+					if(Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()) > 30){
+						Log.log("Friendly politician at: " + info.getLocation() + ", but not within my angle");
+						Log.log("" + Navigation.getAngleDiff(creatorLoc, myLoc, info.getLocation()));
+						continue;
+					}
+					int gridDist = Util.getGridSquareDist(info.getLocation(), creatorLoc);
+					Log.log("Friendly politician at: " + info.getLocation());
+					if(gridDist <= currGridDist){
+						minDist = Math.max(minDist, gridDist + 2);
+						spotted = true;
+					}
+				}
 				continue;
 			}
 			// Stay a gridDistance of atleast two farther away from the nearest slanderer that you're currently guarding
@@ -112,27 +128,42 @@ public class Politician extends Robot {
 		Log.log("My min dist: " + minDist);
 		Log.log("My grid dist: " + Util.getGridSquareDist(myLoc, creatorLoc));
 
-		// If you're too close, move farther away
-		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
-			Log.log("Going farther!");
-			Direction targetDir = creatorLoc.directionTo(myLoc);
-			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
-			nav.tryMove(options);
-//			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
-		}
-		// Always make sure theres a friendly slanderer in site
-		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
-			Log.log("Going closer!");
-			Direction targetDir = myLoc.directionTo(creatorLoc);
-			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
-			nav.tryMove(options);
-//			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
-		}
-		else{
-			chooseSide();
-			nav.circle(circlingCCW, minDist);
-			Log.log("Circling: " + circlingCCW);
-		}
+
+//		spotted = false;
+//		for(RobotInfo info : nearby) {
+//			// Filter out everything except friendly slanderers / politicians
+//			if (info.getType() != RobotType.POLITICIAN || info.getTeam() != myTeam) {
+//				continue;
+//			}
+//			if (!spotted) {
+//
+//			}
+//		}
+
+
+		nav.brownian();
+
+//		// If you're too close, move farther away
+//		if(Util.getGridSquareDist(myLoc, creatorLoc) < minDist){
+//			Log.log("Going farther!");
+//			Direction targetDir = creatorLoc.directionTo(myLoc);
+//			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+//			nav.tryMove(options);
+////			nav.goTo(myLoc.add(creatorLoc.directionTo(myLoc)));
+//		}
+//		// Always make sure theres a friendly slanderer in site
+//		else if(!spotted && Util.getGridSquareDist(myLoc, creatorLoc) > minDist){
+//			Log.log("Going closer!");
+//			Direction targetDir = myLoc.directionTo(creatorLoc);
+//			Direction[] options = {targetDir, targetDir.rotateRight(), targetDir.rotateLeft(), targetDir.rotateRight().rotateRight(), targetDir.rotateLeft().rotateLeft()};
+//			nav.tryMove(options);
+////			nav.goTo(myLoc.add(myLoc.directionTo(creatorLoc)));
+//		}
+//		else{
+//			chooseSide();
+//			nav.circle(circlingCCW, minDist);
+//			Log.log("Circling: " + circlingCCW);
+//		}
 
 	}
 
