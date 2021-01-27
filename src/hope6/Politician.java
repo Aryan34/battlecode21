@@ -1,4 +1,4 @@
-package hope5;
+package hope6;
 
 import battlecode.common.*;
 
@@ -88,7 +88,7 @@ public class Politician extends Robot {
 
 	public void runEco(RobotInfo[] nearby) throws GameActionException {
 		killNearbyMucks();
-//		killLargerEnemies(nearby);
+		killLargerEnemies(nearby);
 		int minDist = 4; // Default distance
 		boolean spotted = false;
 		if(runningBrownian){
