@@ -56,6 +56,7 @@ public class Robot {
 	boolean enemySpotted = false;
 	boolean neutralSpotted = false;
 	MapLocation lastBuilt;
+	Direction[] avoidDirs = new Direction[1];
 
 
 	public Robot (RobotController rc) throws GameActionException {
@@ -159,7 +160,7 @@ public class Robot {
 			int[] xy = Comms.mapLocationToXY(info.getLocation());
 			int x = xy[0];
 			int y = xy[1];
-			int inf = Math.min((info.getConviction() / 100), 15);
+			int inf = Math.min(((info.getConviction() - 1) / 100), 15);
 			// 0: Enemy EC, 1: Friendly EC, 2: Neutral EC, 3: Enemy robot
 			if(info.getTeam() == myTeam.opponent()){
 				int robot_type = 0;

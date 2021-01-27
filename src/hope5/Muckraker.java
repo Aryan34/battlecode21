@@ -18,6 +18,7 @@ public class Muckraker extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// If you see any slanderers, kill them
+		moveAwayFromCenter();
 		int[] dxDy = getDxDy(muckNum);
 		isAttacking = dxDy[0] == 0 && dxDy[1] == 0;
 		exposeSlanderers(nearby);
@@ -41,6 +42,12 @@ public class Muckraker extends Robot {
 			if(rc.canExpose(info.getLocation())){
 				rc.expose(info.getLocation());
 			}
+		}
+	}
+
+	public void moveAwayFromCenter() throws GameActionException {
+		if(Util.getGridSquareDist(myLoc, creatorLoc) <= 2){
+			nav.tryMove(Navigation.closeDirections(myLoc.directionTo(creatorLoc).opposite()));
 		}
 	}
 
@@ -153,7 +160,30 @@ public class Muckraker extends Robot {
 			return;
 		}
 
+		if(Util.getGridSquareDist(myLoc.add(myLoc.directionTo(scoutTarget)), creatorLoc) <= 2){
+			// Go around EC loc
+			boolean ccw = true;
+			// If there's a wall to ur left, then circle CW
+			Direction[] testDirs = {myLoc.directionTo(creatorLoc).rotateLeft(), myLoc.directionTo(creatorLoc).rotateLeft().rotateLeft(), myLoc.directionTo(creatorLoc).rotateLeft().rotateLeft().rotateLeft()};
+			for(Direction dir : testDirs){
+				if(hitsWall(dir)){
+					ccw = false;
+				}
+			}
+			nav.circle(ccw, 3);
+		}
 		nav.goTo(scoutTarget);
+	}
+
+	public boolean hitsWall(Direction dir) throws GameActionException {
+		MapLocation senseLoc = myLoc.translate(0, 0);
+		while(myLoc.distanceSquaredTo(senseLoc) <= myType.sensorRadiusSquared){
+			if(!rc.onTheMap(senseLoc)){
+				return true;
+			}
+			senseLoc = senseLoc.add(dir);
+		}
+		return false;
 	}
 
 	// Heuristic used to spread out when searching

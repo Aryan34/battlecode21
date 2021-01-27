@@ -50,6 +50,11 @@ public class Util {
 	}
 
 	static boolean tryBuild(RobotType type, Direction dir, int influence) throws GameActionException {
+		for(Direction dir2 : robot.avoidDirs){
+			if(dir2 != null && dir.equals(dir2)){
+				return false;
+			}
+		}
 		if (rc.canBuildRobot(type, dir, influence)) {
 			Log.debug("Built robot of type: " + type.toString() + ", with influence: " + influence);
 			rc.buildRobot(type, dir, influence);
