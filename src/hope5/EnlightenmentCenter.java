@@ -91,10 +91,13 @@ public class EnlightenmentCenter extends Robot {
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 
 		spawn();
-		updateFlag();
 
-		setBrownian();
-
+		if(currRound % 2 == 0){
+			updateFlag();
+		}
+		else{
+			setBrownian();
+		}
 	}
 
 	public void checkSlandLatticeDir() throws GameActionException {
