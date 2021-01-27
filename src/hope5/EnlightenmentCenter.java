@@ -196,10 +196,12 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(defendersAlive < defenderToSlandRatio * slandsAlive){
 			Log.log("Spawning B");
+			avoidDirs = new Direction[1];
 			spawnPoliticians(true);
 		}
 		else if(nearestMuck != null){
 			Log.log("Enemy muck nearby so spawning pol");
+			avoidDirs = new Direction[1];
 			spawnPoliticians(true);
 		}
 		// Save up for big boi attacking poli
@@ -262,6 +264,7 @@ public class EnlightenmentCenter extends Robot {
 				attackTarget = attackTargetInfo.loc;
 				saveForAttack = false;
 				capturerInf = -1;
+				avoidDirs = new Direction[1];
 			}
 		}
 	}
@@ -554,20 +557,29 @@ public class EnlightenmentCenter extends Robot {
 		}
 		int infNeeded = (int)(attackTargetInfo.influence * multiple) - attackInf + 10;
 		int infExpected = getExpectedInfluence(currRound + 10);
+		Log.log("Inf needed: " + infNeeded);
+		Log.log("Inf expected: " + infExpected);
 		if(infExpected > infNeeded + EC_MIN_INFLUENCE){
 			capturerInf = infNeeded;
 			saveForAttack = true;
+			avoidDirs = new Direction[1];
+			avoidDirs[0] = myLoc.directionTo(attackTargetInfo.loc);
 		}
 	}
 
-	public void updateFlag() throws  GameActionException{
+	public void updateFlag() throws GameActionException {
 		int purpose = 4;
 		int[] xy = {0, 0};
 		int attackType = 3; // Stop attacking
 		if(attackTarget != null){
 			System.out.println("Setting flag to attack!: " + attackTarget.toString());
 			xy = Comms.mapLocationToXY(attackTarget);
-			attackType = 2; // Everyone attack!
+			if(attackTargetInfo.team == myTeam.opponent()){
+				attackType = 2; // Everyone attack!
+			}
+			else{
+				attackType = 0; // Only politicians attack!
+			}
 		}
 		int[] flagArray = {purpose, 4, xy[0], 7, xy[1], 7, attackType, 2};
 		int flag = Comms.concatFlag(flagArray);

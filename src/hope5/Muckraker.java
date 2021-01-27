@@ -19,6 +19,7 @@ public class Muckraker extends Robot {
 	public void run() throws GameActionException {
 		super.run();
 		// If you see any slanderers, kill them
+		moveAwayFromCenter();
 		int[] dxDy = getDxDy(muckNum);
 		isAttacking = dxDy[0] == 0 && dxDy[1] == 0;
 		exposeSlanderers(nearby);
@@ -42,6 +43,12 @@ public class Muckraker extends Robot {
 			if(rc.canExpose(info.getLocation())){
 				rc.expose(info.getLocation());
 			}
+		}
+	}
+
+	public void moveAwayFromCenter() throws GameActionException {
+		if(Util.getGridSquareDist(myLoc, creatorLoc) <= 2){
+			nav.tryMove(Navigation.closeDirections(myLoc.directionTo(creatorLoc).opposite()));
 		}
 	}
 
@@ -115,11 +122,34 @@ public class Muckraker extends Robot {
 			return;
 		}
 
+		if(Util.getGridSquareDist(myLoc.add(myLoc.directionTo(scoutTarget)), creatorLoc) <= 2){
+			// Go around EC loc
+			boolean ccw = true;
+			// If there's a wall to ur left, then circle CW
+			Direction[] testDirs = {myLoc.directionTo(creatorLoc).rotateLeft(), myLoc.directionTo(creatorLoc).rotateLeft().rotateLeft(), myLoc.directionTo(creatorLoc).rotateLeft().rotateLeft().rotateLeft()};
+			for(Direction dir : testDirs){
+				if(hitsWall(dir)){
+					ccw = false;
+				}
+			}
+			nav.circle(ccw, 3);
+		}
 		nav.goTo(scoutTarget);
 	}
 
 	public void runAttack() throws GameActionException {
 		nav.brownian();
+	}
+
+	public boolean hitsWall(Direction dir) throws GameActionException {
+		MapLocation senseLoc = myLoc.translate(0, 0);
+		while(myLoc.distanceSquaredTo(senseLoc) <= myType.sensorRadiusSquared){
+			if(!rc.onTheMap(senseLoc)){
+				return true;
+			}
+			senseLoc = senseLoc.add(dir);
+		}
+		return false;
 	}
 
 	// Heuristic used to spread out when searching
@@ -169,20 +199,20 @@ public class Muckraker extends Robot {
 	}
 
 	public int addBoundaryFlag(Direction boundaryDir, MapLocation outOfBounds) throws GameActionException {
-			// I've found the OB location, so set my flag to correspond with that
-			int purpose = 1;
-			int directionCode = 0;
-			int borderValue = 0;
-			if(boundaryDir == Direction.WEST) { directionCode = 0; borderValue = outOfBounds.x + 1; }
-			if(boundaryDir == Direction.EAST) { directionCode = 1; borderValue = outOfBounds.x - 1; }
-			if(boundaryDir == Direction.SOUTH) { directionCode = 2; borderValue = outOfBounds.y + 1; }
-			if(boundaryDir == Direction.NORTH) { directionCode = 3; borderValue = outOfBounds.y - 1; }
-			assert(borderValue > 0);
+		// I've found the OB location, so set my flag to correspond with that
+		int purpose = 1;
+		int directionCode = 0;
+		int borderValue = 0;
+		if(boundaryDir == Direction.WEST) { directionCode = 0; borderValue = outOfBounds.x + 1; }
+		if(boundaryDir == Direction.EAST) { directionCode = 1; borderValue = outOfBounds.x - 1; }
+		if(boundaryDir == Direction.SOUTH) { directionCode = 2; borderValue = outOfBounds.y + 1; }
+		if(boundaryDir == Direction.NORTH) { directionCode = 3; borderValue = outOfBounds.y - 1; }
+		assert(borderValue > 0);
 
-			int[] flagArray = {purpose, 4, directionCode, 2, borderValue, 15};
-			int flag = Comms.concatFlag(flagArray);
-			Comms.setFlag(flag);
-			return borderValue;
+		int[] flagArray = {purpose, 4, directionCode, 2, borderValue, 15};
+		int flag = Comms.concatFlag(flagArray);
+		Comms.setFlag(flag);
+		return borderValue;
 	}
 
 	public int[] getDxDy(int muckNum) throws GameActionException {
@@ -308,5 +338,4 @@ public class Muckraker extends Robot {
 		int[] arr = {dx, dy};
 		return arr;
 	}
-
 }
