@@ -64,7 +64,12 @@ public class EnlightenmentCenter extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
+		if(turnCount <= 200){
+			maxBidProportion = 0.05;
+			bid();
+		}
 		if(turnCount > 200){
+			maxBidProportion = 0.15;
 			bid();
 		}
 
@@ -179,7 +184,7 @@ public class EnlightenmentCenter extends Robot {
 
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
-		double defenderToSlandRatio = Util.scaleValue(0, 200, 0, 1.5, Math.min(currRound, 200));
+		double defenderToSlandRatio = Util.scaleValue(0, 400, 0, 4, Math.min(currRound, 400));
 		if(enemyPoliDir != null){
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
@@ -211,12 +216,12 @@ public class EnlightenmentCenter extends Robot {
 		else if(attackTargetInfo != null){
 			if(attackTargetInfo.team == myTeam.opponent()){
 				Log.log("Spawning eco buildup against opponent");
-				int[] order = {0, 1, 5};
+				int[] order = {0, 1, 5, 2, 3};
 				spawnOrder(order);
 			}
 			else{
 				Log.log("Spawning eco buildup against neutral");
-				int[] order = {0, 2, 3};
+				int[] order = {0, 2, 3, 1};
 				spawnOrder(order);
 			}
 		}
