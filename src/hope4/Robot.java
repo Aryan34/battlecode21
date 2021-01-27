@@ -82,7 +82,7 @@ public class Robot {
 	public void run() throws GameActionException {
 		Log.log("---------------------------------");
 		Log.log("Cooldown: " + rc.getCooldownTurns());
-		if(currRound > 150){
+		if(currRound > 500){
 			rc.resign();
 		}
 		turnCount += 1;

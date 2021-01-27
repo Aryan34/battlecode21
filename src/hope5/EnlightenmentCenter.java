@@ -209,18 +209,25 @@ public class EnlightenmentCenter extends Robot {
 			spawnSave();
 		}
 		else if(attackTargetInfo != null){
-			Log.log("Spawning eco buildup");
-			int[] order = {0, 1, 3};
-			spawnOrder(order);
+			if(attackTargetInfo.team == myTeam.opponent()){
+				Log.log("Spawning eco buildup against opponent");
+				int[] order = {0, 1, 5};
+				spawnOrder(order);
+			}
+			else{
+				Log.log("Spawning eco buildup against neutral");
+				int[] order = {0, 2, 3};
+				spawnOrder(order);
+			}
 		}
-		else if(turnCount < 400){
+		else if(turnCount < 300){
 			Log.log("Spawning early game");
 			int[] order = {0, 3, 0, 3, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
-			Log.log("Spawning late game");
-			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
+			System.out.println("Spawning late game");
+			int[] order = {1, 0, 3, 0, 3, 2, 5, 0, 3, 1, 0, 3, 0, 5, 3};
 			spawnOrder(order);
 		}
 
@@ -244,16 +251,18 @@ public class EnlightenmentCenter extends Robot {
 //			spawnOrder(order);
 //		}
 		// If you didn't have the eco to spawn anything this round, j spawn a muck
-		spawnMucks(true);
+		spawnMucks(true, false);
 	}
 
 	public void spawnOrder(int[] order) throws GameActionException {
 		int type = order[numSpawned % order.length];
+		System.out.println("Spawn type: " + type);
 		if(type == 0){ spawnSlanderers(); }
 		if(type == 1){ spawnPoliticians(true); }
 		if(type == 2){ spawnPoliticians(false); }
-		if(type == 3){ spawnMucks(true); }
-		if(type == 4){ spawnMucks(false); }
+		if(type == 3){ spawnMucks(true, false); }
+		if(type == 4){ spawnMucks(false, false); }
+		if(type == 5){ spawnMucks(false, true); }
 	}
 
 	public void spawnSave() throws GameActionException {
@@ -398,10 +407,13 @@ public class EnlightenmentCenter extends Robot {
 		Log.log("Setting muck flag: " + Comms.printFlag(flag));
 	}
 
-	public void spawnMucks(boolean scout) throws GameActionException {
+	public void spawnMucks(boolean scout, boolean buffraker) throws GameActionException {
 		// TODO: Fix this
 		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
 		Log.log("Spawning scout muck: " + scout + ", num of mucks spawned: " + mucksSpawned);
+		if(buffraker){
+			scout = false;
+		}
 		if (scout) {
 			Direction[] spawnDirs = Navigation.closeDirections(Navigation.directions[mucksSpawned % 8]);
 			if (mucksSpawned < 24 && !setFlagThisRound) {
@@ -423,8 +435,14 @@ public class EnlightenmentCenter extends Robot {
 			if (attackTarget != null) {
 				spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTarget));
 			}
+			int influence = 1;
+			if(buffraker){
+				System.out.println("SPAWNING BUFFRAKER!!!");
+				double divFactor = 3.0;
+				influence = Util.getSpawnInfluence(1, rc.getInfluence() - EC_MIN_INFLUENCE, divFactor, false, false);
+			}
 			// Build attacking muck - influence of 1
-			if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
+			if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, influence)) {
 				return;
 			}
 		}
