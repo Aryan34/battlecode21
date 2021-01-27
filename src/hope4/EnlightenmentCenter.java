@@ -39,6 +39,7 @@ public class EnlightenmentCenter extends Robot {
 	RobotInfo nearestMuck = null;
 	boolean saveForAttack = false;
 	int capturerInf = -1;
+	int nextRoundFlag = 0;
 
 	// Troop spawning variables
 	SpawnInfo[] spawnedAllies = new SpawnInfo[1500];
@@ -65,6 +66,14 @@ public class EnlightenmentCenter extends Robot {
 			bid();
 		}
 
+		checkSlandLatticeDir();
+		if(nextRoundFlag != 0){
+			Comms.setFlag(nextRoundFlag);
+			nextRoundFlag = 0;
+		}
+
+		setBrownian();
+
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 
@@ -76,12 +85,89 @@ public class EnlightenmentCenter extends Robot {
 
 		setAttackTarget();
 		checkReadyToAttack();
-		updateFlag();
 
 		if(attackTargetInfo != null){ Log.log("Saving up for: " + attackTargetInfo.loc.toString()); }
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 
 		spawn();
+		updateFlag();
+	}
+
+	public void checkSlandLatticeDir() throws GameActionException {
+		if(!enemySpotted){
+			return;
+		}
+		DetectedInfo[] enemies = Util.getCorrespondingRobots(myTeam.opponent(), null, null);
+		int closest = Integer.MAX_VALUE;
+		MapLocation closestLoc = null;
+		for(int i = 0; i < enemies.length; i++){
+			int dist = myLoc.distanceSquaredTo(enemies[i].loc);
+			if(dist < closest){
+				closest = dist;
+				closestLoc = enemies[i].loc;
+			}
+		}
+		int levels = numSlandLevels();
+		if(closestLoc != null && Util.getGridSquareDist(closestLoc, myLoc) > levels + 4){ // If the enemy is really close, relay that info asap
+			int[] xy = Comms.mapLocationToXY(closestLoc);
+			int purpose = 7;
+			int[] flagArray = {purpose, 4, 1, 1, xy[0], 7, xy[1], 7};
+			int flag = Comms.concatFlag(flagArray);
+			Comms.setFlag(flag);
+			Log.log("Broadcasting that there's a nearby threat at: ");
+			Comms.printFlag(flag);
+			earlyScoutingLoc = closestLoc;
+		}
+		else if(earlyScoutingLoc != null){
+			int[] xy = Comms.mapLocationToXY(myLoc);
+			int purpose = 7;
+			int[] flagArray = {purpose, 4, 0, 1, xy[0], 7, xy[1], 7};
+			int flag = Comms.concatFlag(flagArray);
+			Comms.setFlag(flag);
+			Log.log("Broadcasting that there's no nearby threat");
+			earlyScoutingLoc = null;
+		}
+	}
+
+	public int numSlandLevels() throws GameActionException{
+		int startLevel = 8;
+		int temp = slandsAlive;
+		int levels = 1;
+		while(temp > 0){
+			temp -= startLevel;
+			startLevel += 4;
+			levels++;
+		}
+		return levels;
+	}
+
+	public void setBrownian() throws GameActionException {
+		if(setFlagThisRound){
+			return;
+		}
+		int purpose = 8;
+		if(!runningBrownian){
+			int outerLevel = numSlandLevels();
+			int defendersNeeded = (outerLevel + 2) * 8;
+			if(defendersAlive > defendersNeeded + 5) {
+				int runBrown = 1;
+				int[] flagArray = {purpose, 4, runBrown, 1};
+				int flag = Comms.concatFlag(flagArray);
+				Comms.setFlag(flag);
+				runningBrownian = true;
+			}
+		}
+		else{
+			int outerLevel = numSlandLevels();
+			int defendersNeeded = (outerLevel + 2) * 8;
+			if(defendersAlive < defendersNeeded) {
+				int runBrown = 0;
+				int[] flagArray = {purpose, 4, runBrown, 1};
+				int flag = Comms.concatFlag(flagArray);
+				Comms.setFlag(flag);
+				runningBrownian = false;
+			}
+		}
 	}
 
 	public void spawn() throws GameActionException{
@@ -273,21 +359,37 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 
+	public void setMuckFlag(int numMucks) throws GameActionException {
+		int purpose = 6;
+		int[] xy = Comms.mapLocationToXY(lastBuilt);
+		int[] flagArray = {purpose, 4, numMucks, 6, xy[0], 7, xy[1], 7};
+		int flag = Comms.concatFlag(flagArray);
+//		Comms.setFlag(flag);
+		nextRoundFlag = flag;
+		Log.log("Setting muck flag: " + Comms.printFlag(flag));
+	}
+
 	public void spawnMucks(boolean scout) throws GameActionException {
 		// TODO: Fix this
 		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
+		Log.log("Spawning scout mucK? " + scout);
 		if (scout) {
 			Direction[] spawnDirs = Navigation.closeDirections(Navigation.directions[mucksSpawned % 8]);
-			if (mucksSpawned < 24) {
+			if (mucksSpawned < 24 && !setFlagThisRound) {
+				int numMucks = mucksSpawned;
 				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
+					Log.log("Successfully built muck, now setting my flag to display " + numMucks);
+					setMuckFlag(numMucks);
 					return;
 				}
+				else{
+					Log.log("Failed to build muck rip");
+				}
 			}
-			else {
-				scout = false;
-			}
+			scout = false;
 		}
 		if (!scout) {
+			Log.log("Spawning attack muck!");
 			Direction[] spawnDirs = Navigation.randomizedDirs();
 			if (attackTarget != null) {
 				spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTarget));

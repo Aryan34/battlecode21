@@ -1,4 +1,4 @@
-package hope4;
+package hope5;
 
 import battlecode.common.*;
 

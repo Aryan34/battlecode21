@@ -1,4 +1,4 @@
-package newScoutingOldBest3;
+package hope5;
 
 import battlecode.common.*;
 
@@ -34,11 +34,14 @@ public class EnlightenmentCenter extends Robot {
 	final int ATK_POLI_MIN_COST = 50;
 	final int SLAND_MIN_COST = 21;
 	int[] slandBenefits = new int[1500];
+	int[] activeSlands = new int[1500];
 	int numVotes = 0;
 	DetectedInfo attackTargetInfo = null;
 	RobotInfo nearestMuck = null;
 	boolean saveForAttack = false;
 	int capturerInf = -1;
+	int nextRoundFlag = 0;
+	double maxBidProportion = 0.1; // Never bid more than this much
 
 	// Troop spawning variables
 	SpawnInfo[] spawnedAllies = new SpawnInfo[1500];
@@ -65,55 +68,124 @@ public class EnlightenmentCenter extends Robot {
 			bid();
 		}
 
+		checkSlandLatticeDir();
+		if(nextRoundFlag != 0){
+			Comms.setFlag(nextRoundFlag);
+			nextRoundFlag = 0;
+		}
+
+		setBrownian();
+
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
 
 		Log.log("Troop count:" + (slandsAlive + attackersAlive + defendersAlive + mucksAlive));
 		Log.log("Slanderers: " + slandsAlive);
+		Log.log("Active slands: " + activeSlands[currRound]);
 		Log.log("Attack polis: " + attackersAlive);
 		Log.log("Defense polis: " + defendersAlive);
 		Log.log("Mucks: " + mucksAlive);
 
 		setAttackTarget();
 		checkReadyToAttack();
-		updateFlag();
 
 		if(attackTargetInfo != null){ Log.log("Saving up for: " + attackTargetInfo.loc.toString()); }
 		if(attackTarget != null){ Log.log("ATTACKING: " + attackTarget.toString()); }
 
 		spawn();
+		updateFlag();
+	}
+
+	public void checkSlandLatticeDir() throws GameActionException {
+		if(!enemySpotted){
+			return;
+		}
+		DetectedInfo[] enemies = Util.getCorrespondingRobots(myTeam.opponent(), null, null);
+		int closest = Integer.MAX_VALUE;
+		MapLocation closestLoc = null;
+		for(int i = 0; i < enemies.length; i++){
+			int dist = myLoc.distanceSquaredTo(enemies[i].loc);
+			if(dist < closest){
+				closest = dist;
+				closestLoc = enemies[i].loc;
+			}
+		}
+		int levels = numSlandLevels();
+		if(closestLoc != null && Util.getGridSquareDist(closestLoc, myLoc) > levels + 4){ // If the enemy is really close, relay that info asap
+			int[] xy = Comms.mapLocationToXY(closestLoc);
+			int purpose = 7;
+			int[] flagArray = {purpose, 4, 1, 1, xy[0], 7, xy[1], 7};
+			int flag = Comms.concatFlag(flagArray);
+			Comms.setFlag(flag);
+			Log.log("Broadcasting that there's a nearby threat at: ");
+			Comms.printFlag(flag);
+			earlyScoutingLoc = closestLoc;
+		}
+		else if(earlyScoutingLoc != null){
+			int[] xy = Comms.mapLocationToXY(myLoc);
+			int purpose = 7;
+			int[] flagArray = {purpose, 4, 0, 1, xy[0], 7, xy[1], 7};
+			int flag = Comms.concatFlag(flagArray);
+			Comms.setFlag(flag);
+			Log.log("Broadcasting that there's no nearby threat");
+			earlyScoutingLoc = null;
+		}
+	}
+
+	public int numSlandLevels() throws GameActionException{
+		int startLevel = 8;
+		int temp = slandsAlive;
+		int levels = 1;
+		while(temp > 0){
+			temp -= startLevel;
+			startLevel += 4;
+			levels++;
+		}
+		return levels;
+	}
+
+	public void setBrownian() throws GameActionException {
+		if(setFlagThisRound){
+			return;
+		}
+		int purpose = 8;
+		int outerLevel = numSlandLevels();
+		int defendersNeeded = (outerLevel + 2) * 6;
+		Log.log("Outer level: " + outerLevel + ", defenders needed: " + defendersNeeded + ", defenders alive: " + defendersAlive);
+		int currDefenders = defendersAlive;
+		if(attackTarget == null){
+			currDefenders += attackersAlive;
+		}
+		Log.log("Curr defenders: " + currDefenders);
+		int runBrown = 0;
+		if(currDefenders > defendersNeeded) {
+			runBrown = 1;
+		}
+		int[] flagArray = {purpose, 4, runBrown, 1};
+		int flag = Comms.concatFlag(flagArray);
+		Comms.setFlag(flag);
+		Log.log("Setting flag to run brownian");
+		runningBrownian = true;
 	}
 
 	public void spawn() throws GameActionException{
 		// If you sense an enemy poli really close by, spawn mucks in that direction to spread out the effect
 		// TODO: Mucks should swarm / try surrounding high inf enemy polis?
+		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
+
 		Direction enemyPoliDir = enemyPoliNearby();
 		nearestMuck = enemyMuckNearby();
 		double defenderToSlandRatio = Util.scaleValue(0, 200, 0, 1.5, Math.min(currRound, 200));
-
-		// Save up for big boi attacking poli
-		if(saveForAttack && slandsAlive > 5 && (rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf)){
-			Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
-			Log.log("Spawning big captuerer boi!: " + capturerInf);
-			if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
-				attackTarget = attackTargetInfo.loc;
-				saveForAttack = false;
-				capturerInf = -1;
-			}
-		}
-		else if(attackTargetInfo != null){
-			Log.log("Spawning eco buildup");
-			int[] order = {0, 3, 1};
-			spawnOrder(order);
-		}
-		else if(enemyPoliDir != null){
+		if(enemyPoliDir != null){
 			Direction[] spawnDirs = {enemyPoliDir, enemyPoliDir.rotateLeft(), enemyPoliDir.rotateRight()};
 			Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 2);
 		}
-		// When spawning: 0 = slanderer, 1 = defensive poli, 2 = attacking poli, 3 = scout muck, 4 = attack muck
+		else if (!enemySpotted && saveForAttack){
+			spawnSave();
+		}
 		else if(currRound - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
-			int[] order = {0, 3, 0, 3, 1, 0, 3, 1, 3, 0, 3, 0, 1, 0, 3};
+			int[] order = {0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 1, 3, 3, 0, 3, 3};
 			spawnOrder(order);
 		}
 		else if(defendersAlive < defenderToSlandRatio * slandsAlive){
@@ -124,16 +196,32 @@ public class EnlightenmentCenter extends Robot {
 			Log.log("Enemy muck nearby so spawning pol");
 			spawnPoliticians(true);
 		}
-		else if(turnCount < 400){
-			Log.log("Spawning early game");
-			int[] order = {0, 3, 0, 3, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3};
+		// Save up for big boi attacking poli
+		else if(saveForAttack){
+			spawnSave();
+		}
+		else if(attackTargetInfo != null){
+			Log.log("Spawning eco buildup");
+			int[] order = {0, 3, 1, 3};
 			spawnOrder(order);
 		}
-		else{
-			Log.log("Spawning late game");
-			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
-			spawnOrder(order);
+		else if(activeSlands[currRound] < slandsAlive / 5 || slandsAlive < (defendersAlive + attackersAlive) / 3){
+			Log.log("Spawning slands cuz we're low on active ones rn");
+			spawnSlanderers();
 		}
+		else if(defendersAlive < mucksAlive){
+			spawnPoliticians(false);
+		}
+//		else if(turnCount < 400){
+//			Log.log("Spawning early game");
+//			int[] order = {0, 3, 2, 1, 3, 0, 1, 3};
+//			spawnOrder(order);
+//		}
+//		else{
+//			Log.log("Spawning late game");
+//			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
+//			spawnOrder(order);
+//		}
 		// If you didn't have the eco to spawn anything this round, j spawn a muck
 		spawnMucks(true);
 	}
@@ -145,6 +233,18 @@ public class EnlightenmentCenter extends Robot {
 		if(type == 2){ spawnPoliticians(false); }
 		if(type == 3){ spawnMucks(true); }
 		if(type == 4){ spawnMucks(false); }
+	}
+
+	public void spawnSave() throws GameActionException {
+		if(rc.getInfluence() - EC_MIN_INFLUENCE >= capturerInf){
+			Direction[] spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTargetInfo.loc));
+			Log.log("Spawning big captuerer boi!");
+			if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, capturerInf)){
+				attackTarget = attackTargetInfo.loc;
+				saveForAttack = false;
+				capturerInf = -1;
+			}
+		}
 	}
 
 	public void checkRobotFlags() throws GameActionException {
@@ -191,6 +291,7 @@ public class EnlightenmentCenter extends Robot {
 						slandsAlive++;
 						for(int i = 0; i < 50; i++){
 							slandBenefits[currRound + i] += Util.slandBenefitPerRound(spawnInfo.spawnInfluence);
+							activeSlands[currRound + i] += 1;
 						}
 					}
 					else if(info.getType() == RobotType.POLITICIAN && info.getInfluence() % 2 == 0){
@@ -225,6 +326,7 @@ public class EnlightenmentCenter extends Robot {
 						slandsAlive--;
 						for(int j = currRound; j < info.spawnRound + 50; j++){
 							slandBenefits[currRound + j] -= Util.slandBenefitPerRound(info.spawnInfluence);
+							activeSlands[currRound + j] -= 1;
 						}
 					}
 					else if(info.type == RobotType.POLITICIAN && info.spawnInfluence % 2 == 0){ attackersAlive--; }
@@ -263,24 +365,38 @@ public class EnlightenmentCenter extends Robot {
 		return closestDir;
 	}
 
+
+	public void setMuckFlag(int numMucks) throws GameActionException {
+		int purpose = 6;
+		int[] xy = Comms.mapLocationToXY(lastBuilt);
+		int[] flagArray = {purpose, 4, numMucks, 6, xy[0], 7, xy[1], 7};
+		int flag = Comms.concatFlag(flagArray);
+//		Comms.setFlag(flag);
+		nextRoundFlag = flag;
+		Log.log("Setting muck flag: " + Comms.printFlag(flag));
+	}
+
 	public void spawnMucks(boolean scout) throws GameActionException {
 		// TODO: Fix this
 		Log.log("spawnMucks -- Cooldown left: " + rc.getCooldownTurns());
+		Log.log("Spawning scout muck: " + scout + ", num of mucks spawned: " + mucksSpawned);
 		if (scout) {
 			Direction[] spawnDirs = Navigation.closeDirections(Navigation.directions[mucksSpawned % 8]);
-			if (mucksSpawned < 24) {
-//				if(!setFlagThisRound){
-//					int numMucks = mucksSpawned;
-//					if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
-					if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, mucksSpawned + 2)) {
-//						setMuckFlag(numMucks);
-						return;
-					}
-//				}
+			if (mucksSpawned < 24 && !setFlagThisRound) {
+				int numMucks = mucksSpawned;
+				if (Util.tryBuild(RobotType.MUCKRAKER, spawnDirs, 1)) {
+					Log.log("Successfully built muck, now setting my flag to display " + numMucks);
+					setMuckFlag(numMucks);
+					return;
+				}
+				else{
+					Log.log("Failed to build muck rip");
+				}
 			}
 			scout = false;
 		}
 		if (!scout) {
+			Log.log("Spawning attack muck!");
 			Direction[] spawnDirs = Navigation.randomizedDirs();
 			if (attackTarget != null) {
 				spawnDirs = Navigation.closeDirections(myLoc.directionTo(attackTarget));
@@ -299,7 +415,7 @@ public class EnlightenmentCenter extends Robot {
 			return;
 		}
 		// Spawn super high inf slanderers early on. Could make this a linear scale or smth
-		double divFactor = currRound < 100 ? 1.15 : 1.5;
+		double divFactor = 1.15;
 		int spawnInfluence = Util.getSpawnInfluence(SLAND_MIN_COST, rc.getInfluence() - EC_MIN_INFLUENCE, divFactor, false, false);
 		if(spawnInfluence == -1){
 			return;
@@ -344,7 +460,12 @@ public class EnlightenmentCenter extends Robot {
 			return;
 		}
 
-		Util.tryBuild(RobotType.POLITICIAN, spawnDirs, spawnInfluence);
+		if(Util.tryBuild(RobotType.POLITICIAN, spawnDirs, spawnInfluence)){
+			Log.log("Successfully built politician!");
+		}
+		else{
+			Log.log("Failed to build defense politician :((");
+		}
 	}
 
 	// Find a target EC to attack!
@@ -375,7 +496,7 @@ public class EnlightenmentCenter extends Robot {
 			int dist = info.loc.distanceSquaredTo(myLoc);
 			int inf = info.influence;
 			Team team = info.team;
-			int heuristic = (inf / 10) + dist;
+			int heuristic = (inf / 10) + (int)Math.sqrt(dist);
 			if(team == myTeam.opponent()){
 				heuristic *= 2.5;
 			}
@@ -391,7 +512,6 @@ public class EnlightenmentCenter extends Robot {
 	}
 
 	public void checkReadyToAttack() throws GameActionException {
-		double ratio = currRound < 300 ? 1.5 : 1.75;
 		if(attackTarget != null || attackTargetInfo == null){
 			return;
 		}
@@ -402,12 +522,12 @@ public class EnlightenmentCenter extends Robot {
 			attackInf += attackPoliInfo[i].spawnInfluence - 10;
 		}
 		Log.log("Attack influence: " + attackInf);
-		if(attackInf > attackTargetInfo.influence * ratio){
+		if(attackInf > attackTargetInfo.influence * 1.75){
 			attackTarget = attackTargetInfo.loc;
 			return;
 		}
 		// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
-		int infNeeded = (int)(attackTargetInfo.influence * ratio);
+		int infNeeded = (int)(attackTargetInfo.influence * 1.75);
 		int infExpected = getExpectedInfluence(currRound + 10);
 		if(infExpected > infNeeded + EC_MIN_INFLUENCE){
 			capturerInf = infNeeded;
@@ -472,6 +592,10 @@ public class EnlightenmentCenter extends Robot {
 		if(bid > rc.getInfluence()){
 			bid = rc.getInfluence() - EC_MIN_INFLUENCE;
 		}
+		bid = Math.min(bid, (int)(rc.getInfluence() * maxBidProportion));
+		Log.log("Curr inf: " + rc.getInfluence());
+		Log.log("Max bid: " + (int)(rc.getInfluence() * maxBidProportion));
+		Log.log("Bidding: " + bid);
 		if(rc.canBid(bid)){
 			rc.bid(bid);
 			lastBid = bid;
