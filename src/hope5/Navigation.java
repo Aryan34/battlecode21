@@ -231,6 +231,9 @@ public class Navigation {
 		int x = (int)Math.round(netX);
 		int y = (int)Math.round(netY);
 		MapLocation destination = robot.myLoc.translate(x, y);
+		if(destination.equals(robot.myLoc)){
+			destination = robot.creatorLoc;
+		}
 		if(!robot.myLoc.equals(destination)){
 			goTo(destination);
 		}

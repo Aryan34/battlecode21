@@ -68,13 +68,11 @@ public class EnlightenmentCenter extends Robot {
 			bid();
 		}
 
-		checkSlandLatticeDir();
+//		checkSlandLatticeDir();
 		if(nextRoundFlag != 0){
 			Comms.setFlag(nextRoundFlag);
 			nextRoundFlag = 0;
 		}
-
-		setBrownian();
 
 		saveSpawnedAlliesIDs();
 		checkRobotFlags();
@@ -94,6 +92,9 @@ public class EnlightenmentCenter extends Robot {
 
 		spawn();
 		updateFlag();
+
+		setBrownian();
+
 	}
 
 	public void checkSlandLatticeDir() throws GameActionException {
@@ -185,7 +186,9 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(currRound - turnCount < 3 && !enemySpotted){ // If ur the initial EC
 			Log.log("Spawning A");
-			int[] order = {0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 3, 1, 3, 0, 1, 3, 3, 0, 3, 3};
+//			int[] order = {0, 3, 1, 0, 3, 1, 3};
+//			int[] order = {0, 3, 0, 3, 1, 0, 3, 1, 3, 0, 3, 0, 1, 0, 3};
+			int[] order = {0, 3, 1, 3, 0, 1, 3, 0, 3, 1, 3, 3, 0, 3};
 			spawnOrder(order);
 		}
 		else if(defendersAlive < defenderToSlandRatio * slandsAlive){
@@ -202,19 +205,32 @@ public class EnlightenmentCenter extends Robot {
 		}
 		else if(attackTargetInfo != null){
 			Log.log("Spawning eco buildup");
-			int[] order = {0, 3, 1, 3};
+			int[] order = {0, 1, 3};
 			spawnOrder(order);
 		}
-		else if(activeSlands[currRound] < slandsAlive / 5 || slandsAlive < (defendersAlive + attackersAlive) / 3){
-			Log.log("Spawning slands cuz we're low on active ones rn");
-			spawnSlanderers();
+		else if(turnCount < 400){
+			Log.log("Spawning early game");
+			int[] order = {0, 3, 0, 3, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3};
+			spawnOrder(order);
 		}
-		else if(defendersAlive < mucksAlive){
-			spawnPoliticians(false);
+		else{
+			Log.log("Spawning late game");
+			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
+			spawnOrder(order);
 		}
-//		else if(turnCount < 400){
+
+//		else if(attackTargetInfo != null){
+//			Log.log("Spawning eco buildup");
+//			int[] order = {0, 3, 2, 1, 0, 3};
+//			spawnOrder(order);
+//		}
+//		else if(activeSlands[currRound] < slandsAlive / 5){
+//			Log.log("Spawning slands cuz we're low on active ones rn");
+//			spawnSlanderers();
+//		}
+//		else{
 //			Log.log("Spawning early game");
-//			int[] order = {0, 3, 2, 1, 3, 0, 1, 3};
+//			int[] order = {0, 3, 2, 3, 0, 1, 3};
 //			spawnOrder(order);
 //		}
 //		else{
@@ -480,6 +496,8 @@ public class EnlightenmentCenter extends Robot {
 				attackTarget = null;
 				attackTargetInfo = null;
 			}
+		}
+		if(attackTarget != null){
 			return;
 		}
 
@@ -521,13 +539,17 @@ public class EnlightenmentCenter extends Robot {
 			if(!attackPoliInfo[i].alive){ continue; }
 			attackInf += attackPoliInfo[i].spawnInfluence - 10;
 		}
+		Log.log("Potential attack target: " + attackTargetInfo.loc.toString());
 		Log.log("Attack influence: " + attackInf);
-		if(attackInf > attackTargetInfo.influence * 1.75){
+		if(attackInf > attackTargetInfo.influence * 2.0){
 			attackTarget = attackTargetInfo.loc;
 			return;
 		}
-		// TODO: Once you spawn the big boi, start spawning a bunch of small bois?
-		int infNeeded = (int)(attackTargetInfo.influence * 1.75);
+		double multiple = 1.5;
+		if(attackTargetInfo.team == myTeam.opponent()){
+			multiple = 2.5;
+		}
+		int infNeeded = (int)(attackTargetInfo.influence * multiple) - attackInf + 10;
 		int infExpected = getExpectedInfluence(currRound + 10);
 		if(infExpected > infNeeded + EC_MIN_INFLUENCE){
 			capturerInf = infNeeded;
