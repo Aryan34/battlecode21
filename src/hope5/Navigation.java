@@ -135,7 +135,9 @@ public class Navigation {
 	}
 
 	public Direction fuzzyNav(MapLocation target) throws GameActionException {
-
+		if (rc.getType() == RobotType.MUCKRAKER && rc.canMove(rc.getLocation().directionTo(target))) {
+			return rc.getLocation().directionTo(target);
+		}
 		double[] distances = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 		MapLocation myLoc = robot.myLoc;
 		Direction targetDir = myLoc.directionTo(target);

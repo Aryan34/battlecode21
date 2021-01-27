@@ -10,6 +10,7 @@ public class Muckraker extends Robot {
 	MapLocation targetECLoc = null;
 	MapLocation scoutTarget = null;
 	boolean isAttacking;
+	int[] dp = new int[2];
 
 	public Muckraker (RobotController rc) throws GameActionException {
 		super(rc);
@@ -78,7 +79,7 @@ public class Muckraker extends Robot {
 		}
 
 		if (scoutTarget == null) {
-			int[] dp = getDxDy(muckNum);
+			dp = getDxDy(muckNum);
 			scoutTarget = creatorLoc.translate(dp[0] * 64, dp[1] * 64);
 		}
 		Log.log("My scout target: " + scoutTarget.toString());
@@ -98,52 +99,13 @@ public class Muckraker extends Robot {
 						break;
 					}
 
-					int rand = (int)Math.round(Math.random());
-					Direction scoutDir = myLoc.directionTo(scoutTarget);
-					if (scoutDir == Direction.EAST && scoutDir == dir) {
-						// Go NORTH or SOUTH
-						if (rand == 1) {
-							scoutTarget = myLoc.translate(0, 64);
-						}
-						else {
-							scoutTarget = myLoc.translate(0, -64);
-						}
+					if ((dp[0] > 0 && dir == Direction.EAST) || (dp[0] < 0 && dir == Direction.WEST)) {
+						dp[0] *= -1;
 					}
-					else if (scoutDir == Direction.NORTH && scoutDir == dir) {
-						// Go EAST or WEST
-						if (rand == 1) {
-							scoutTarget = myLoc.translate(64, 0);
-						}
-						else {
-							scoutTarget = myLoc.translate(-64, 0);
-						}
+					if ((dp[1] > 0 && dir == Direction.NORTH) || (dp[1] < 0 && dir == Direction.SOUTH)) {
+						dp[1] *= -1;
 					}
-					else if (scoutDir == Direction.WEST && scoutDir == dir) {
-						// Go NORTH or SOUTH
-						if (rand == 1) {
-							scoutTarget = myLoc.translate(0, 64);
-						}
-						else {
-							scoutTarget = myLoc.translate(0, -64);
-						}
-					}
-					else if (scoutDir == Direction.SOUTH && scoutDir == dir) {
-						// Go EAST or WEST
-						if (rand == 1) {
-							scoutTarget = myLoc.translate(64, 0);
-						}
-						else {
-							scoutTarget = myLoc.translate(-64, 0);
-						}
-					}
-					else if (scoutDir.dx == dir.dx || scoutDir.dy == dir.dy) {
-						int oldDX = scoutDir.dx;
-						int oldDY = scoutDir.dy;
-						Log.log("OLD: " + oldDX + ", " + oldDY);
-						Log.log("Direction of wall: " + dir.toString());
-						scoutTarget = myLoc.translate((oldDX + dir.opposite().dx) * 64, (oldDY + dir.opposite().dy) * 64);
-						Log.log("NEW: " + myLoc.directionTo(scoutTarget).dx + ", " + myLoc.directionTo(scoutTarget).dy);
-					}
+					scoutTarget = myLoc.translate(dp[0] * 64, dp[1] * 64);
 				}
 				curr = curr.add(dir);
 			}
@@ -154,6 +116,10 @@ public class Muckraker extends Robot {
 		}
 
 		nav.goTo(scoutTarget);
+	}
+
+	public void runAttack() throws GameActionException {
+		nav.brownian();
 	}
 
 	// Heuristic used to spread out when searching
@@ -217,16 +183,6 @@ public class Muckraker extends Robot {
 			int flag = Comms.concatFlag(flagArray);
 			Comms.setFlag(flag);
 			return borderValue;
-	}
-
-	public void runAttack() throws GameActionException {
-		// Go towards closest enemy EC
-		if(attackTarget != null){
-			nav.goTo(attackTarget);
-		}
-		else{
-			nav.brownian();
-		}
 	}
 
 	public int[] getDxDy(int muckNum) throws GameActionException {
