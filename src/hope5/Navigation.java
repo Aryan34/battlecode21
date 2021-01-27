@@ -199,8 +199,8 @@ public class Navigation {
 		double wallForce = 500;
 		for(Direction dir : Navigation.cardinalDirections){
 			MapLocation reachLoc = robot.myLoc.add(Direction.CENTER);
+			reachLoc = reachLoc.add(dir);
 			while(robot.myLoc.distanceSquaredTo(reachLoc) <= robot.myType.sensorRadiusSquared){
-				reachLoc = reachLoc.add(dir);
 				if(robot.myLoc.distanceSquaredTo(reachLoc) < robot.myType.sensorRadiusSquared && !rc.onTheMap(reachLoc)){
 					Log.log("Reach loc: " + reachLoc.toString());
 					double force = wallForce / rc.getLocation().distanceSquaredTo(reachLoc);
@@ -211,6 +211,7 @@ public class Navigation {
 					netY += dy;
 					break;
 				}
+				reachLoc = reachLoc.add(dir);
 			}
 		}
 

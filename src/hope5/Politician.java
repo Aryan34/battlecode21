@@ -154,7 +154,10 @@ public class Politician extends Robot {
 		int dist = myLoc.distanceSquaredTo(attackTarget);
 		if (dist > 1) {
 			// TODO: If the EC is blocked off and fuzzynaving towards it doesn't work, j go yeet
-			nav.goTo(attackTarget);
+			boolean moved = nav.goTo(attackTarget);
+			if(!moved && rc.canEmpower(dist)){
+				rc.empower(dist);
+			}
 		}
 		else if (senseFromLoc(myLoc, 1).length > 1) {
 			Log.log("There's other troops nearby, so try moving around the EC to isolate?");
@@ -359,7 +362,7 @@ public class Politician extends Robot {
 			else{
 				Log.log("Going towards the biggestThreat to kill it");
 				boolean moved = false;
-				for(Direction dir : Direction.allDirections()){
+				for(Direction dir : Navigation.closeDirections(myLoc.directionTo(biggestThreat))){
 					if(myLoc.add(dir).distanceSquaredTo(biggestThreat) < attackDist && rc.canMove(dir)){
 						moved |= nav.tryMove(dir);
 					}
@@ -385,7 +388,7 @@ public class Politician extends Robot {
 		}
 
 		RobotInfo[] withinRange = senseFromLoc(polLoc, polLoc.distanceSquaredTo(muckLoc));
-		if(Math.floor((polInf - 10) / withinRange.length) > muckInf){
+		if(Math.floor((polInf - 10) * rc.getEmpowerFactor(myTeam, 0) / withinRange.length) > muckInf){
 			Log.log("I can do enough damage to kill it!");
 			return true;
 		}
