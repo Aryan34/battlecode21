@@ -24,8 +24,10 @@ public class Muckraker extends Robot {
 		Comms.checkFlag(creatorID);
 		checkEnemiesNearby(nearby);
 		// TODO: Change this to an actual if statement (maybe when you hit some round number?)
-		if(isAttacking && attackTarget != null){
-			Log.log("Yam attacking: " + attackTarget.toString());
+		if(isAttacking){
+			if (attackTarget != null) {
+				Log.log("Yam attacking: " + attackTarget.toString());
+			}
 			runAttack();
 		}
 		else{
@@ -344,20 +346,21 @@ public class Muckraker extends Robot {
 
 	public void runAttack() throws GameActionException {
 		// Go towards closest enemy EC
-		if(targetECLoc == null){
-			DetectedInfo detected = Util.getClosestEnemyEC();
-			if(detected == null){
-				// TODO: Search for closest enemy EC instead of just moving randomly
-				nav.brownian();
-			}
-			else{
-				targetECLoc = detected.loc;
-				nav.fuzzyNav(targetECLoc);
-			}
-		}
-		else{
-			nav.fuzzyNav(targetECLoc);
-		}
+//		if(targetECLoc == null){
+//			DetectedInfo detected = Util.getClosestEnemyEC();
+//			if(detected == null){
+//				// TODO: Search for closest enemy EC instead of just moving randomly
+//				nav.brownian();
+//			}
+//			else{
+//				targetECLoc = detected.loc;
+//				nav.fuzzyNav(targetECLoc);
+//			}
+//		}
+//		else{
+//			nav.fuzzyNav(targetECLoc);
+//		}
+		nav.brownian();
 	}
 
 }
