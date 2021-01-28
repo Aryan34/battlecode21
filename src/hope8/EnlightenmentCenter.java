@@ -1,4 +1,4 @@
-package hope7;
+package hope8;
 
 import battlecode.common.*;
 
@@ -64,6 +64,10 @@ public class EnlightenmentCenter extends Robot {
 
 	public void run() throws GameActionException {
 		super.run();
+		if(turnCount >= 200){
+			maxBidProportion = 0.05;
+			bid();
+		}
 		if(turnCount > 200){
 			bid();
 		}
@@ -211,45 +215,26 @@ public class EnlightenmentCenter extends Robot {
 		else if(attackTargetInfo != null){
 			if(attackTargetInfo.team == myTeam.opponent()){
 				Log.log("Spawning eco buildup against opponent");
-				int[] order = {0, 1, 5, 2, 3};
+				int[] order = {0, 1, 5, 3};
 				spawnOrder(order);
 			}
 			else{
 				Log.log("Spawning eco buildup against neutral");
-				int[] order = {0, 2, 3, 1};
+				int[] order = {0, 3, 1};
 				spawnOrder(order);
 			}
 		}
 		else if(turnCount < 300){
 			Log.log("Spawning early game");
-			int[] order = {0, 3, 0, 3, 0, 3, 2, 3, 0, 1, 0, 3, 2, 3};
+			int[] order = {1, 3, 0, 2, 3, 5, 3, 2, 1, 0, 1, 0, 3, 2, 3};
 			spawnOrder(order);
 		}
 		else{
 			System.out.println("Spawning late game");
-			int[] order = {1, 0, 3, 0, 3, 2, 5, 0, 3, 1, 0, 3, 0, 5, 3};
+			int[] order = {1, 2, 3, 0, 3, 2, 5, 0, 3, 1, 0, 3, 2, 5, 3};
 			spawnOrder(order);
 		}
 
-//		else if(attackTargetInfo != null){
-//			Log.log("Spawning eco buildup");
-//			int[] order = {0, 3, 2, 1, 0, 3};
-//			spawnOrder(order);
-//		}
-//		else if(activeSlands[currRound] < slandsAlive / 5){
-//			Log.log("Spawning slands cuz we're low on active ones rn");
-//			spawnSlanderers();
-//		}
-//		else{
-//			Log.log("Spawning early game");
-//			int[] order = {0, 3, 2, 3, 0, 1, 3};
-//			spawnOrder(order);
-//		}
-//		else{
-//			Log.log("Spawning late game");
-//			int[] order = {1, 0, 3, 0, 3, 2, 3, 0, 3, 1, 0, 3, 0, 3, 3};
-//			spawnOrder(order);
-//		}
 		// If you didn't have the eco to spawn anything this round, j spawn a muck
 		spawnMucks(true, false);
 	}
